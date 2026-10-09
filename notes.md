@@ -1,1 +1,1 @@
-• Fondo animado del menú en alta calidad (1080p)
+• Sonido ambiente en el menú: viento, bandera flameando y antorchas, hasta que empieza la música
