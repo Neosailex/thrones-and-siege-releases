@@ -21,9 +21,13 @@ jobs:
           cd shell
           npm install --no-audit --no-fund
           npx electron-builder --win nsis --x64 --publish never
+          echo "VER=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
       - name: Publicar en Releases
         uses: softprops/action-gh-release@v2
         with:
           files: shell/release/*.exe
-          name: Thrones & Siege ${{ github.ref_name }}
+          tag_name: v${{ env.VER }}
+          target_commitish: main
+          make_latest: true
+          name: Thrones & Siege ${{ env.VER }}
           body_path: notes.md
