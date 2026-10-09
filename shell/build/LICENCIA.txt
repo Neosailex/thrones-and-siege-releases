@@ -1,0 +1,10 @@
+\xef\xbb\xbfASEDIO - VERSIÓN DE PRUEBA
+
+Esta es una versión de prueba privada, para compartir con amigos. No se vende ni se usa con fines comerciales.
+
+Créditos
+- Reglas basadas en Castle Wars 2 (juego Flash).
+- Gráficos, sonidos y música: Argentum Online 20 © Noland Studios, bajo licencia Creative Commons BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/). Recursos originales: https://github.com/ao-org/Recursos. Se usan sin modificaciones.
+- Código del juego © Juan Pablo Miguez.
+
+El programa se entrega "tal cual", sin garantías de ningún tipo. Al instalarlo aceptás usarlo solo para jugar y probar, sin fines comerciales y sin redistribuir los gráficos y sonidos por separado.

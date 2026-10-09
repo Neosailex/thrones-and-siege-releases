@@ -1,0 +1,75 @@
+{
+  "name": "asedio",
+  "productName": "Asedio",
+  "version": "0.41.0",
+  "description": "Thrones & Siege - juego de cartas y castillos",
+  "author": "Juan Pablo Miguez",
+  "main": "main.cjs",
+  "private": true,
+  "scripts": {
+    "prepare-app": "node prepare.cjs",
+    "start": "electron .",
+    "dist": "node prepare.cjs && electron-builder --win nsis --x64"
+  },
+  "build": {
+    "appId": "ar.asedio.game",
+    "productName": "Asedio",
+    "copyright": "Código © Juan Pablo Miguez. Gráficos y sonidos: Argentum Online 20 © Noland Studios (CC BY-NC-ND 4.0)",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "updater.cjs",
+      "launcher.html",
+      "app/**/*",
+      "app-server/**/*",
+      "!node_modules/msgpackr-extract/**",
+      "!node_modules/**/*.node",
+      "!node_modules/**/{test,tests,docs,example,examples}/**"
+    ],
+    "asar": false,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": true
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Thrones & Siege",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "license": "build/LICENCIA.txt",
+      "artifactName": "Thrones-and-Siege-Setup-${version}.exe",
+      "language": "3082",
+      "installerLanguages": [
+        "es_ES"
+      ]
+    },
+    "npmRebuild": false
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "@colyseus/core": "^0.18.18",
+    "@colyseus/schema": "^5.0.34",
+    "@colyseus/ws-transport": "^0.18.4",
+    "express": "^4.22.3",
+    "nat-upnp": "^1.1.1"
+  }
+}

@@ -1,0 +1,29 @@
+name: Instalador
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Armar el instalador
+        shell: bash
+        run: |
+          cp -r game/app shell/app
+          cp -r game/app-server shell/app-server
+          cd shell
+          npm install --no-audit --no-fund
+          npx electron-builder --win nsis --x64 --publish never
+      - name: Publicar en Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: shell/release/*.exe
+          name: Thrones & Siege ${{ github.ref_name }}
+          body_path: notes.md

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Thrones &amp; Siege</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<style>
+  :root { --gold: #e2b45a; --ink: #f1e6d0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #15110d; color: var(--ink); font: 15px/1.4 "Segoe UI", Tahoma, sans-serif; overflow: hidden; user-select: none; }
+  .bg { position: fixed; inset: 0; background: url("app/menu-bg.jpg") center/cover no-repeat; filter: brightness(.55) saturate(1.1); transform: scale(1.04); }
+  .shade { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 40%, transparent 30%, #000a 100%); }
+  main { position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; }
+  h1 { margin: 0; font: 700 clamp(48px, 8vw, 96px)/.95 Georgia, serif; background: linear-gradient(180deg, #ffe9a8, #e2b45a 55%, #a9772e); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 24px #e2b45a55); white-space: nowrap; }
+  h1 .amp { font-size: .62em; vertical-align: .18em; }
+  .ver { color: #cdbb9a; font-size: 14px; letter-spacing: .04em; }
+  .panel { width: min(560px, 92vw); background: #120d08e0; border: 1px solid #e2b45a88; border-radius: 16px; padding: 18px 22px; box-shadow: 0 12px 40px #000c; display: flex; flex-direction: column; gap: 12px; }
+  .status { font-size: 16px; min-height: 22px; text-align: center; }
+  .bar { height: 12px; border-radius: 8px; background: #2b2118; overflow: hidden; border: 1px solid #000; display: none; }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #a9772e, #ffd36a); transition: width .2s; }
+  .notes { display: none; font-size: 13.5px; color: #d8cbb5; background: #0006; border-radius: 10px; padding: 10px 12px; max-height: 150px; overflow: auto; white-space: pre-line; }
+  .notes b { color: var(--gold); display: block; margin-bottom: 4px; }
+  button.play { align-self: center; font: 700 26px Georgia, serif; padding: 14px 64px; border-radius: 14px; border: 0; cursor: pointer; color: #2a1a08; background: linear-gradient(180deg, #ffe08a, #e2b45a 60%, #b8862f); box-shadow: 0 4px 0 #6b4a17, 0 0 0 1px #000; }
+  button.play:disabled { filter: grayscale(.8) brightness(.6); cursor: default; }
+  button.play:not(:disabled) { animation: glow 1.6s ease-in-out infinite; }
+  @keyframes glow { 50% { box-shadow: 0 4px 0 #6b4a17, 0 0 28px 6px #ffd36acc; } }
+  .small { font-size: 12.5px; color: #a8987c; text-align: center; }
+  a { color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="shade"></div>
+<main>
+  <h1>Thrones <span class="amp">&amp;</span> Siege</h1>
+  <div class="ver" id="ver"></div>
+  <div class="panel">
+    <div class="status" id="status">Buscando actualizaciones…</div>
+    <div class="bar" id="bar"><i id="fill"></i></div>
+    <div class="notes" id="notes"></div>
+    <button class="play" id="play" disabled>JUGAR</button>
+    <div class="small" id="small"></div>
+  </div>
+</main>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const L = window.launcher;
+  const mb = (n) => (n / 1048576).toFixed(1).replace('.', ',') + ' MB';
+  function ready(text, small = '') { $('status').textContent = text; $('small').innerHTML = small; $('play').disabled = false; $('play').focus(); }
+  $('play').onclick = () => { $('play').disabled = true; $('status').textContent = 'Abriendo…'; L.play(); };
+  document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !$('play').disabled) $('play').click(); });
+  L.onProgress((p) => {
+    if (p.phase === 'download') { $('bar').style.display = 'block'; const pct = Math.round((p.done / p.total) * 100); $('fill').style.width = pct + '%'; $('status').textContent = `Descargando actualización… ${pct}%  (${mb(p.done)} de ${mb(p.total)})`; }
+    if (p.phase === 'install') $('status').textContent = 'Instalando…';
+  });
+  (async () => {
+    const info = await L.info(); $('ver').textContent = 'Versión ' + info.current;
+    let c;
+    try { c = await L.check(); } catch (e) { return ready('Sin conexión: jugás con la versión ' + info.current, 'No se pudo buscar actualizaciones. Se va a intentar de nuevo la próxima vez.'); }
+    if (c.notes) { $('notes').style.display = 'block'; $('notes').innerHTML = `<b>Novedades ${c.latest}</b>${c.notes.replace(/[<>&]/g, (m) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[m]))}`; }
+    if (!c.available) return ready('Tenés la última versión');
+    if (c.needsShell) return ready(`Hay una versión nueva (${c.latest}) que necesita reinstalar el juego`, `Bajala de <a href="#" id="pg">la página de descargas</a>. Mientras tanto podés jugar la versión ${c.current}.`), ($('pg').onclick = (e) => { e.preventDefault(); L.open(c.page); });
+    try {
+      const r = await L.update();
+      $('ver').textContent = 'Versión ' + r.version; $('fill').style.width = '100%';
+      ready('¡Actualizado a la versión ' + r.version + '!', r.downloaded ? `Se bajaron ${r.downloaded} archivo${r.downloaded > 1 ? 's' : ''} nuevos.` : '');
+    } catch (e) { ready('No se pudo actualizar: jugás con la versión ' + c.current, 'Se va a intentar de nuevo la próxima vez.'); }
+  })();
+</script>
+</body>
+</html>
