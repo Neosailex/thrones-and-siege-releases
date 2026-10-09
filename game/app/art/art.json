@@ -1,0 +1,277 @@
+{
+ "h_torre": {
+  "file": "art/h_torre.png",
+  "w": 256,
+  "h": 261
+ },
+ "h_techo": {
+  "file": "art/h_techo.png",
+  "w": 232,
+  "h": 294
+ },
+ "h_muro_top": {
+  "file": "art/h_muro_top.png",
+  "w": 340,
+  "h": 86
+ },
+ "h_muro_body": {
+  "file": "art/h_muro_body.png",
+  "w": 340,
+  "h": 84
+ },
+ "h_muro_base": {
+  "file": "art/h_muro_base.png",
+  "w": 340,
+  "h": 32
+ },
+ "h_puerta": {
+  "file": "art/h_puerta.png",
+  "w": 150,
+  "h": 258
+ },
+ "enano_torre": {
+  "file": "art/enano_torre.png",
+  "w": 256,
+  "h": 282
+ },
+ "enano_techo": {
+  "file": "art/enano_techo.png",
+  "w": 256,
+  "h": 369
+ },
+ "enano_muro_top": {
+  "file": "art/enano_muro_top.png",
+  "w": 340,
+  "h": 72
+ },
+ "enano_muro_body": {
+  "file": "art/enano_muro_body.png",
+  "w": 340,
+  "h": 125
+ },
+ "enano_muro_base": {
+  "file": "art/enano_muro_base.png",
+  "w": 340,
+  "h": 40
+ },
+ "enano_puerta": {
+  "file": "art/enano_puerta.png",
+  "w": 150,
+  "h": 319
+ },
+ "elfo_torre": {
+  "file": "art/elfo_torre.png",
+  "w": 256,
+  "h": 263
+ },
+ "elfo_techo": {
+  "file": "art/elfo_techo.png",
+  "w": 256,
+  "h": 464
+ },
+ "elfo_muro_top": {
+  "file": "art/elfo_muro_top.png",
+  "w": 340,
+  "h": 82
+ },
+ "elfo_muro_body": {
+  "file": "art/elfo_muro_body.png",
+  "w": 340,
+  "h": 83
+ },
+ "elfo_puerta": {
+  "file": "art/elfo_puerta.png",
+  "w": 150,
+  "h": 336
+ },
+ "drow_torre": {
+  "file": "art/drow_torre.png",
+  "w": 256,
+  "h": 426
+ },
+ "drow_techo": {
+  "file": "art/drow_techo.png",
+  "w": 256,
+  "h": 426
+ },
+ "drow_muro_top": {
+  "file": "art/drow_muro_top.png",
+  "w": 340,
+  "h": 117
+ },
+ "drow_muro_body": {
+  "file": "art/drow_muro_body.png",
+  "w": 340,
+  "h": 118
+ },
+ "drow_muro_base": {
+  "file": "art/drow_muro_base.png",
+  "w": 340,
+  "h": 52
+ },
+ "drow_puerta": {
+  "file": "art/drow_puerta.png",
+  "w": 150,
+  "h": 375
+ },
+ "gnomo_torre": {
+  "file": "art/gnomo_torre.png",
+  "w": 256,
+  "h": 269
+ },
+ "gnomo_techo": {
+  "file": "art/gnomo_techo.png",
+  "w": 256,
+  "h": 416
+ },
+ "gnomo_muro_top": {
+  "file": "art/gnomo_muro_top.png",
+  "w": 340,
+  "h": 67
+ },
+ "gnomo_muro_body": {
+  "file": "art/gnomo_muro_body.png",
+  "w": 340,
+  "h": 94
+ },
+ "gnomo_muro_base": {
+  "file": "art/gnomo_muro_base.png",
+  "w": 340,
+  "h": 34
+ },
+ "gnomo_puerta": {
+  "file": "art/gnomo_puerta.png",
+  "w": 150,
+  "h": 384
+ },
+ "orco_torre": {
+  "file": "art/orco_torre.png",
+  "w": 256,
+  "h": 275
+ },
+ "orco_techo": {
+  "file": "art/orco_techo.png",
+  "w": 256,
+  "h": 351
+ },
+ "orco_muro_top": {
+  "file": "art/orco_muro_top.png",
+  "w": 340,
+  "h": 82
+ },
+ "orco_muro_body": {
+  "file": "art/orco_muro_body.png",
+  "w": 340,
+  "h": 172
+ },
+ "orco_muro_base": {
+  "file": "art/orco_muro_base.png",
+  "w": 340,
+  "h": 45
+ },
+ "orco_puerta": {
+  "file": "art/orco_puerta.png",
+  "w": 150,
+  "h": 437
+ },
+ "aldea_cuartel1": {
+  "file": "art/aldea_cuartel1.png",
+  "w": 200,
+  "h": 128
+ },
+ "aldea_cuartel2": {
+  "file": "art/aldea_cuartel2.png",
+  "w": 260,
+  "h": 200
+ },
+ "aldea_cuartel3": {
+  "file": "art/aldea_cuartel3.png",
+  "w": 330,
+  "h": 308
+ },
+ "aldea_academia1": {
+  "file": "art/aldea_academia1.png",
+  "w": 200,
+  "h": 123
+ },
+ "aldea_academia2": {
+  "file": "art/aldea_academia2.png",
+  "w": 270,
+  "h": 194
+ },
+ "aldea_academia3": {
+  "file": "art/aldea_academia3.png",
+  "w": 300,
+  "h": 489
+ },
+ "aldea_taller1": {
+  "file": "art/aldea_taller1.png",
+  "w": 200,
+  "h": 174
+ },
+ "aldea_taller2": {
+  "file": "art/aldea_taller2.png",
+  "w": 250,
+  "h": 320
+ },
+ "aldea_taller3": {
+  "file": "art/aldea_taller3.png",
+  "w": 300,
+  "h": 474
+ },
+ "torre_magos": {
+  "file": "art/torre_magos.png",
+  "w": 160,
+  "h": 294
+ },
+ "catapulta": {
+  "file": "art/catapulta.png",
+  "w": 220,
+  "h": 146
+ },
+ "deco_pino": {
+  "file": "art/deco_pino.png",
+  "w": 110,
+  "h": 223
+ },
+ "deco_roble": {
+  "file": "art/deco_roble.png",
+  "w": 150,
+  "h": 176
+ },
+ "deco_sauce": {
+  "file": "art/deco_sauce.png",
+  "w": 150,
+  "h": 172
+ },
+ "deco_arbolito": {
+  "file": "art/deco_arbolito.png",
+  "w": 120,
+  "h": 143
+ },
+ "deco_cerca": {
+  "file": "art/deco_cerca.png",
+  "w": 300,
+  "h": 93
+ },
+ "deco_flores": {
+  "file": "art/deco_flores.png",
+  "w": 90,
+  "h": 62
+ },
+ "deco_piedras": {
+  "file": "art/deco_piedras.png",
+  "w": 140,
+  "h": 93
+ },
+ "fogata_base": {
+  "file": "art/fogata_base.png",
+  "w": 110,
+  "h": 69
+ },
+ "fogata_llama": {
+  "file": "art/fogata_llama.png",
+  "w": 100,
+  "h": 72
+ }
+}
