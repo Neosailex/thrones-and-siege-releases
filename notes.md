@@ -1,5 +1,4 @@
-• Editor de mazos rehecho: guarda solo, estantería de mazos, búsqueda y filtros
-• Mazos oficiales con candado: tocás uno y se crea tu copia
-• Muestra el costo real con el descuento de tu raza
-• Mazos incompletos avisan y no se pueden elegir para jugar
-• Varios arreglos visuales y en celular
+• Revisadas las 179 cartas: ahora todas hacen exactamente lo que dicen
+• Arreglos en Contrahechizo, Horda, Espejismo, Venganza, Luto, Reloj de arena, Reforma y más
+• Textos más claros en varias cartas y pasivas
+• Los números de las cartas muestran el valor real en todos los casos

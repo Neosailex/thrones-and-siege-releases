@@ -2,8 +2,8 @@
 export const RACES = {
   humano: { name: 'Humanos', passive: 'Cada turno producen +1 del recurso que menos tienen (si tienen menos de 6)', cards: [62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 130, 131, 132, 168, 169], favor: 'Oro' },
   enano:  { name: 'Enanos', passive: 'El muro recibe un 20% menos de daño y las cartas de muro dan +2', cards: [72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 133, 134, 135, 170, 171], favor: 'Runas' },
-  elfo:   { name: 'Elfos', passive: 'Pueden cambiar 2 cartas por turno en vez de 1, y los hechizos cuestan 2 cristales menos', cards: [82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 136, 137, 138, 172, 173], favor: 'Savia' },
-  drow:   { name: 'Elfos oscuros', passive: 'Las maldiciones quitan el doble y el Ladrón roba 4 extra', cards: [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 139, 140, 141, 174, 175], favor: 'Sombra' },
+  elfo:   { name: 'Elfos', passive: 'Pueden cambiar 2 cartas por turno en vez de 1, y las cartas de cristales cuestan 2 cristales menos (mínimo 1)', cards: [82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 136, 137, 138, 172, 173], favor: 'Savia' },
+  drow:   { name: 'Elfos oscuros', passive: 'Las cartas que le quitan recursos al rival quitan el doble y el Ladrón roba 4 extra', cards: [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 139, 140, 141, 174, 175], favor: 'Sombra' },
   gnomo:  { name: 'Gnomos', passive: 'Las cartas de 6 armas o más cuestan 2 menos', cards: [102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 142, 143, 144, 176, 177], favor: 'Engranajes' },
   orco:   { name: 'Orcos', passive: 'Cada ataque de 6 o más de daño hace +1, pero las cartas de muro dan 1 menos', cards: [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 145, 146, 147, 178, 179], favor: 'Sangre' },
 };
@@ -54,7 +54,7 @@ export const RACE_CARDS = {
   93: ['Asesino', 'Rival −1 soldado y daño 6', c(0, 9), Z, o({ so: 1, dmg: 6 })],
   94: ['Sombras', 'Escudo y rival −5 cristales', c(0, 0, 7), Z, o({ cr: 5 }), { k: 'shield' }],
   95: ['Espía oscuro', 'Mirás la mano rival', c(0, 2), Z, Z, { k: 'spy' }],
-  96: ['Saboteador', 'Descartás 1 carta del rival', c(0, 6), Z, Z, { k: 'sabotage' }],
+  96: ['Saboteador', 'Descartás 1 carta de la mano rival (sale del juego)', c(0, 6), Z, Z, { k: 'sabotage' }],
   97: ['Pacto', 'Castillo +16, muro −4', c(0, 0, 12), s({ castle: 16, wall: -4 }), Z],
   98: ['Maldición', 'Rival −1 de cada unidad', c(0, 0, 17), Z, o({ bu: 1, so: 1, ma: 1 })],
   99: ['Incursión', 'Daño 13 y armas +4', c(0, 11), s({ w: 4 }), o({ dmg: 13 })],
@@ -81,7 +81,7 @@ export const RACE_CARDS = {
   118: ['Chamán', 'Daño 8, cristales +2', c(0, 0, 8), s({ cr: 2 }), o({ dmg: 8 })],
   119: ['Empalizada orca', 'Muro +6', c(5), s({ wall: 6 }), Z],
   120: ['Jefe de guerra', 'Daño 18, soldados +1 y tu próximo ataque hace el doble', c(0, 16), s({ so: 1 }), o({ dmg: 18 }), { k: 'double' }],
-  121: ['Horda', 'Todos tus soldados atacan: daño igual a tus armas más 3 por soldado; perdés todas las armas', c(0, 12), Z, Z, { k: 'horde' }],
+  121: ['Horda', 'Todos tus soldados atacan: daño igual a tus armas más 3 por soldado, +1; perdés todas las armas', c(0, 12), Z, Z, { k: 'horde' }],
 };
 // Reyes: cada raza tiene un rey en el balcón del castillo. Carga 1 por turno propio y al completar el período actúa.
 export const KINGS = {
@@ -128,13 +128,13 @@ export const FAVOR_CARDS = {
 // Trampas (saltan en el turno rival), efectos duraderos (actúan al inicio de tus turnos), condicionales y cartas de rey (148-179)
 export const TACTIC_CARDS = {
   148: ['Foso', 'Trampa: la próxima carga enemiga pierde la mitad del daño', c(8), Z, Z, { k: 'trap', t: 'moat' }],
-  149: ['Contrahechizo', 'Trampa: anula el próximo hechizo rival y te da 5 cristales', c(0, 0, 10), Z, Z, { k: 'trap', t: 'counterspell' }],
+  149: ['Contrahechizo', 'Trampa: anula el próximo hechizo rival que te afecte (daño, quitarte algo o tu rey) y te da 5 cristales', c(0, 0, 10), Z, Z, { k: 'trap', t: 'counterspell' }],
   150: ['Emboscada en el camino', 'Trampa: si el rival juega una carta de armas, recibe 6 de daño', c(0, 9), Z, Z, { k: 'trap', t: 'ambush' }],
-  151: ['Red de espías', 'Trampa: cuando el rival juegue una carta de 10 o más, ganás 8 cristales y ves su mano', c(0, 0, 6), Z, Z, { k: 'trap', t: 'spynet' }],
+  151: ['Red de espías', 'Trampa: cuando el rival juegue una carta que cueste 10 o más, ganás 8 cristales y ves su mano al empezar tu turno', c(0, 0, 6), Z, Z, { k: 'trap', t: 'spynet' }],
   152: ['Lluvia de piedras', '3 turnos: 5 de daño al rival al inicio de cada turno tuyo', c(0, 14), Z, Z, { k: 'effect', e: 'rain', turns: 3 }],
   153: ['Cantera activa', '3 turnos: +4 ladrillos al inicio de cada turno tuyo', c(10), Z, Z, { k: 'effect', e: 'quarry', turns: 3 }],
   154: ['Muro vivo', '3 turnos: muro +5 al inicio de cada turno tuyo', c(0, 0, 12), Z, Z, { k: 'effect', e: 'livingwall', turns: 3 }],
-  155: ['Asedio prolongado', '3 turnos: el rival no puede subir el muro', c(0, 13), Z, Z, { k: 'effect', e: 'siegelock', turns: 3, onOpp: true }],
+  155: ['Asedio prolongado', '3 turnos: las cartas del rival no le suben el muro', c(0, 13), Z, Z, { k: 'effect', e: 'siegelock', turns: 3, onOpp: true }],
   156: ['Diezmo real', '3 turnos: tu rey gana +1 de carga por turno', c(8), Z, Z, { k: 'effect', e: 'tithe', turns: 3 }],
   157: ['Golpe de gracia', 'Daño 10; 20 si el castillo rival tiene menos de 30', c(0, 14), Z, Z, { k: 'cond' }],
   158: ['Última defensa', 'Muro +6; +18 más si tu castillo tiene menos de 25', c(6), Z, Z, { k: 'cond' }],
