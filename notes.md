@@ -1,1 +1,1 @@
-• Sonido ambiente en el menú: viento, bandera flameando y antorchas, hasta que empieza la música
+• Sonido del menú más suave: bandera flameando real y antorchas más bajas

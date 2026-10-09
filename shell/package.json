@@ -1,7 +1,7 @@
 {
   "name": "asedio",
   "productName": "Asedio",
-  "version": "0.44.2",
+  "version": "0.44.3",
   "description": "Thrones & Siege - juego de cartas y castillos",
   "author": "Juan Pablo Miguez",
   "main": "main.cjs",
