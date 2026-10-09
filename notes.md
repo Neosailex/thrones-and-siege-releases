@@ -1,1 +1,1 @@
-• Vuelve el modo desarrollador completo: editor de manos con buscador y filtro por raza
+• El menú principal ahora tiene el fondo animado: bandera ondeando, antorchas y fogatas vivas
