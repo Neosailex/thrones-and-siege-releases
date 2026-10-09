@@ -5,27 +5,41 @@
 <title>Thrones &amp; Siege</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:">
 <style>
-  :root { --gold: #e2b45a; --ink: #f1e6d0; }
+  @font-face { font-family: 'Cinzel'; font-weight: 700; src: url("app/fonts/cinzel-latin-700-normal.woff2") format("woff2"); }
+  @font-face { font-family: 'Cinzel'; font-weight: 900; src: url("app/fonts/cinzel-latin-900-normal.woff2") format("woff2"); }
+  @font-face { font-family: 'Alegreya Sans'; font-weight: 500; src: url("app/fonts/alegreya-sans-latin-500-normal.woff2") format("woff2"); }
+  :root { --gold: #e2b45a; --ink: #f1e6d0; --f-title: 'Cinzel', Georgia, serif; --f-text: 'Alegreya Sans', 'Segoe UI', Tahoma, sans-serif; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: #15110d; color: var(--ink); font: 15px/1.4 "Segoe UI", Tahoma, sans-serif; overflow: hidden; user-select: none; }
-  .bg { position: fixed; inset: 0; background: url("app/menu-bg.jpg") center/cover no-repeat; filter: brightness(.55) saturate(1.1); transform: scale(1.04); }
-  .shade { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 40%, transparent 30%, #000a 100%); }
-  main { position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; }
-  h1 { margin: 0; font: 700 clamp(48px, 8vw, 96px)/.95 Georgia, serif; background: linear-gradient(180deg, #ffe9a8, #e2b45a 55%, #a9772e); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 0 #000) drop-shadow(0 0 24px #e2b45a55); white-space: nowrap; }
-  h1 .amp { font-size: .62em; vertical-align: .18em; }
-  .ver { color: #cdbb9a; font-size: 14px; letter-spacing: .04em; }
-  .panel { width: min(560px, 92vw); background: #120d08e0; border: 1px solid #e2b45a88; border-radius: 16px; padding: 18px 22px; box-shadow: 0 12px 40px #000c; display: flex; flex-direction: column; gap: 12px; }
-  .status { font-size: 16px; min-height: 22px; text-align: center; }
-  .bar { height: 12px; border-radius: 8px; background: #2b2118; overflow: hidden; border: 1px solid #000; display: none; }
-  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #a9772e, #ffd36a); transition: width .2s; }
-  .notes { display: none; font-size: 13.5px; color: #d8cbb5; background: #0006; border-radius: 10px; padding: 10px 12px; max-height: 150px; overflow: auto; white-space: pre-line; }
-  .notes b { color: var(--gold); display: block; margin-bottom: 4px; }
-  button.play { align-self: center; font: 700 26px Georgia, serif; padding: 14px 64px; border-radius: 14px; border: 0; cursor: pointer; color: #2a1a08; background: linear-gradient(180deg, #ffe08a, #e2b45a 60%, #b8862f); box-shadow: 0 4px 0 #6b4a17, 0 0 0 1px #000; }
-  button.play:disabled { filter: grayscale(.8) brightness(.6); cursor: default; }
-  button.play:not(:disabled) { animation: glow 1.6s ease-in-out infinite; }
-  @keyframes glow { 50% { box-shadow: 0 4px 0 #6b4a17, 0 0 28px 6px #ffd36acc; } }
-  .small { font-size: 12.5px; color: #a8987c; text-align: center; }
+  html, body { margin: 0; height: 100%; background: #120d0a; color: var(--ink); font: 500 16px/1.4 var(--f-text); overflow: hidden; user-select: none; }
+  /* fondo: ui2/fondo_launcher (si falta, la imagen de siempre) */
+  .bg { position: fixed; inset: -2%; background: url("app/ui2/fondo_launcher.webp") center/cover no-repeat, url("app/menu-bg.jpg") center/cover no-repeat; filter: brightness(.78) saturate(1.05); animation: drift 40s ease-in-out infinite alternate; }
+  @keyframes drift { to { transform: scale(1.05) translate(-1%, -.5%); } }
+  .shade { position: fixed; inset: 0; background: radial-gradient(ellipse 70% 65% at 50% 45%, transparent 35%, #000c 100%), linear-gradient(180deg, #0008, transparent 30%, transparent 70%, #000a); }
+  main { position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; }
+  h1 { margin: 0; font: 900 clamp(40px, 6.4vw, 84px)/1 var(--f-title); letter-spacing: .02em; text-transform: uppercase; white-space: nowrap;
+    background: linear-gradient(180deg, #fffbe6 0%, #fbe39a 18%, #e9b65a 40%, #a8691f 49%, #6e410f 52%, #b9822f 60%, #f2cb72 80%, #fff0c0 90%, #a8742a 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+    -webkit-text-stroke: 1.2px rgba(70,38,8,.9); filter: drop-shadow(0 -1px 0 rgba(255,244,205,.55)) drop-shadow(0 2px 0 #3a2007) drop-shadow(0 4px 3px #000c) drop-shadow(0 0 24px rgba(255,180,80,.3)); }
+  h1 .amp { font-size: .6em; vertical-align: .2em; font-weight: 700; }
+  .ver { color: #dccaa5; font: 700 14px var(--f-title); letter-spacing: .08em; text-shadow: 0 1px 3px #000; margin-bottom: 8px; }
+  .panel { width: min(600px, 92vw); display: flex; flex-direction: column; gap: 14px; padding: 8px 20px 4px;
+    border: 46px solid transparent; border-image: url("app/ui2/ventana_marco_chico.webp") 250 / 46px stretch;
+    background: linear-gradient(rgba(20,14,10,.86), rgba(13,9,6,.92)), url("app/ui2/textura_piedra.webp") center/480px; background-origin: border-box; filter: drop-shadow(0 18px 30px #000d); }
+  .status { font-size: 18px; min-height: 24px; text-align: center; text-shadow: 0 1px 2px #000; }
+  .bar { height: 30px; display: none; border-style: solid; border-color: transparent; border-width: 0 26px; border-image: url("app/ui2/barra_marco.webp") 0 200 fill / 0 26px stretch; padding: 9px 0; }
+  .bar i { display: block; height: 100%; width: 0; border-radius: 6px; background: linear-gradient(180deg, #ffe7a0, #e2b45a 50%, #9a6a22); box-shadow: 0 0 10px #ffcb6a99; transition: width .2s; }
+  .notes { display: none; font-size: 15px; color: #e3d5b8; background: #0008; border: 1px solid #b0884a55; padding: 10px 14px; max-height: 150px; overflow: auto; white-space: pre-line; }
+  .notes b { color: var(--gold); display: block; margin-bottom: 4px; font-family: var(--f-title); letter-spacing: .04em; }
+  button.play { align-self: center; min-width: 320px; height: 78px; padding: 0 10px 4px; border-style: solid; border-color: transparent; border-width: 0 94px; cursor: pointer; background: none;
+    border-image: url("app/ui2/boton_principal.webp") 0 270 fill / 0 94px stretch; font: 900 30px/1 var(--f-title); letter-spacing: .14em; color: #2e1a05; text-shadow: 0 1px 0 rgba(255,238,180,.75);
+    filter: drop-shadow(0 5px 6px #000b); transition: filter .14s, transform .08s; }
+  button.play:hover:not(:disabled), button.play:focus-visible { filter: brightness(1.12) drop-shadow(0 0 14px rgba(255,200,90,.8)) drop-shadow(0 5px 6px #000b); outline: none; }
+  button.play:active:not(:disabled) { transform: translateY(3px); filter: brightness(.88); }
+  button.play:disabled { filter: grayscale(.85) brightness(.6); cursor: default; }
+  button.play:not(:disabled) { animation: glow 1.8s ease-in-out infinite; }
+  @keyframes glow { 50% { filter: brightness(1.08) drop-shadow(0 0 16px rgba(255,200,90,.75)) drop-shadow(0 5px 6px #000b); } }
+  .small { font-size: 14px; color: #b9a886; text-align: center; min-height: 18px; }
   a { color: var(--gold); }
+  @media (prefers-reduced-motion: reduce) { .bg, button.play:not(:disabled) { animation: none; } }
 </style>
 </head>
 <body>

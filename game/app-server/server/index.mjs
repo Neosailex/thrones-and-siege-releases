@@ -19,7 +19,7 @@ app.use('/jugar', express.static(staticDir));
 app.use(express.static(staticDir));
 app.get('/health', (_q, r) => r.send('ok'));
 app.get('/api/leaderboard', (_q, r) => r.json(DB.leaderboard(20)));
-app.get('/api/profile/:id', (q, r) => { const p = DB.profile(q.params.id); p ? r.json(p) : r.status(404).json({ error: 'sin partidas' }); });
+app.get('/api/profile/:id', (q, r) => { const p = DB.profile(q.params.id); p ? r.json(p) : r.status(q.query.soft ? 200 : 404).json({ error: 'sin partidas' }); }); // soft: sin 404 en la consola del cliente
 app.get('/stats', async (_q, r) => {
   const rooms = await matchMaker.query({ name: 'asedio' });
   r.json({ online: rooms.reduce((a, x) => a + x.clients, 0), waiting: rooms.filter((x) => x.clients === 1 && !x.locked).length });
