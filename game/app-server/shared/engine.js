@@ -190,11 +190,18 @@ function kingAct(g, p) {
     case 'enano': p.wall += 12; p.castle += 2; break;
     case 'elfo': p.crystal += 3; if (p.hand.length < handCap(p)) { p.hand.push(draw(g, p)); fx.push('draw'); } break;
     case 'drow': for (const k of ['brick', 'weapon', 'crystal']) o[k] = Math.max(0, o[k] - 6); break;
-    case 'gnomo': { // el Inventor: la peor carta de la mano se cambia por una máquina gnoma, a mitad de costo este turno
-      let worst = 0, wv = Infinity;
-      p.hand.forEach((cid, j) => { const cc = CARDS[cid][0], tot = cc[1] + cc[3] + cc[5] + (cc[8] || 0) * 2; const v = (playable(p, cid) ? 100 : 0) + (playable(p, cid) ? tot : -tot); if (v < wv) { wv = v; worst = j; } });
+    case 'gnomo': { // El Inventor: crea una máquina gnoma al azar y la juega gratis en el acto (no toca tu mano ni tu jugada)
       const nid = GNOME_MACHINES[Math.floor(g._rnd() * GNOME_MACHINES.length)];
-      p.used.push(p.hand[worst]); p.hand[worst] = nid; p.halfId = nid; fx.push('invent:' + nid + ':' + worst); break; }
+      fx.push('invent:' + nid);
+      const save = { inExtra: g.inExtra, extraTurn: g.extraTurn, rapidPending: g.rapidPending, rapidUsed: g.rapidUsed, cycled: g.cycled };
+      p.hand.push(nid); p.halfId = nid; const pend = g.pending; g.pending = null; g.inExtra = false;
+      const ev = play(g, p.hand.length - 1);
+      if (!ev) { p.hand.pop(); p.halfId = null; }
+      if (p.hand.length > HAND && p.hand.includes(nid) && !ev) p.hand.splice(p.hand.lastIndexOf(nid), 1);
+      Object.assign(g, save); g.pending = pend || g.pending; p.halfId = null;
+      if (ev) { fx.push('autoplay'); ev.auto = 'invent'; }
+      return { race: p.race, fx, before, after: [stats(g.players[0]), stats(g.players[1])], played: ev || null };
+    }
     case 'orco': statRemove(g, o, [0, 0, 0, 0, 0, 0, 13, 0], false, fx); break;
   }
   if (p.castle <= 0) p.castle = 0;
@@ -339,7 +346,7 @@ export const aiSabotagePick = (rnd = Math.random) => Math.floor(rnd() * HAND);
 
 // Vista de la partida para un asiento: oculta la mano rival salvo que un Espía o Sabotaje propio la revele.
 export function viewFor(g, seat) {
-  const pub = (p) => ({ race: p.race || null, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, favor: p.favor || 0, trap: p.trap || null, effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, kingPeriod: p.race && KINGS[p.race] ? KINGS[p.race].period : 0 });
+  const pub = (p) => ({ race: p.race || null, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, favor: p.favor || 0, trap: p.trap || null, effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, kingPeriod: p.race && KINGS[p.race] ? KINGS[p.race].period : 0 });
   const me = g.players[seat], op = g.players[1 - seat];
   const reveal = g.pending && g.pending.seat === seat;
   return { seat, turn: g.turn, winner: g.winner, pending: g.pending, turnNo: g.turnNo, cycled: g.cycled, cyclesLeft: g.turn === seat ? cyclesLeft(g) : 0, inExtra: !!g.inExtra, extraLeft: g.inExtra ? g.extraTurn + 1 : 0, rapid: !!g.rapidMode, races: [g.players[0].race, g.players[1].race], me: { ...pub(me), hand: me.hand.slice() }, op: { ...pub(op), hand: reveal ? op.hand.slice() : null } };

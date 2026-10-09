@@ -1,9 +1,9 @@
 {
- "version": "0.41.1",
+ "version": "0.42.0",
  "minShell": 1,
- "notes": "• Pila de descarte arreglada: se ve como una pila de cartas\n• Tocá la pila de descarte para ver en grande la última carta que jugaste y las anteriores",
- "date": "2026-10-09T14:12:16.503Z",
- "size": 51963176,
+ "notes": "• Las cartas se mueven como cartas de verdad: salen de la mano, vuelan al centro y se van a la pila de descarte\n• La carta que jugás sale de la mano en el acto (antes quedaba hasta el turno siguiente)\n• La mano del rival se ve boca abajo arriba a la derecha; sus cartas salen de ahí y se dan vuelta en el aire\n• Las cartas nuevas entran desde el mazo dándose vuelta, y la mano se reacomoda sola\n• El Inventor (rey gnomo): ahora crea la máquina y la juega gratis en el acto, sin tocar tu mano. Actúa cada 5 turnos",
+ "date": "2026-10-09T14:38:30.314Z",
+ "size": 51968496,
  "files": {
   "app/ao/g/100.png": "ae794f6dbefa72539b38f40258015e38e3f6d64d",
   "app/ao/g/1002.png": "f8659e506d782c7d7bb66a0849f954f65278c85a",
@@ -178,7 +178,7 @@
   "app/art/orco_techo.png": "0b7513d807b8ac30f07874a1b970ef78af472b72",
   "app/art/orco_torre.png": "13202f2c12ec03f3312653077220d728126d0da2",
   "app/art/torre_magos.png": "a65982f40ebf8f632ac4ac1871605c686e266ac5",
-  "app/assets/index-BL6KT-a9.js": "b4c042ff5830fd123c281b0d3094390f291147e9",
+  "app/assets/index-B34lMJf0.js": "e145da09c6e78bdf5cfe48d79c5d1653b9e93c19",
   "app/cards/1.webp": "6e870cbc0359a119403846e620f4d926fc5966c8",
   "app/cards/10.webp": "4e453213f2df5bbbe5ca37e12472ec1039bf018e",
   "app/cards/100.webp": "53f6d660f2ed39e8f151dd66289b5ce574218d61",
@@ -299,7 +299,7 @@
   "app/cards/98.webp": "18fc2d7aedd389f231835c478e0d160bdfca8211",
   "app/cards/99.webp": "e1db3c6de2552e2258359f8cecc3b66191f6c0f2",
   "app/icon.png": "e864ef49fe94dfdfff10b19e78e35f2378a92a1c",
-  "app/index.html": "cdce472fdc8dc730f79742a72675d6f8f2be9d21",
+  "app/index.html": "1355729900a27041aad81d62d5147e11352e8fca",
   "app/menu-bg-day.jpg": "cac0cdd482723f44974860184783f588e36e7dae",
   "app/menu-bg.jpg": "3029782055195444fbeb33ec6e88a8514d8ce2e9",
   "app/ui/med_armas.png": "eaa44c66363534395709400c4a4e935da47afabd",
@@ -314,14 +314,14 @@
   "app/ui/med_ladrillos.png": "dd022a88931ee22e719c9f059970369b952048cf",
   "app/ui/med_mago.png": "461d23986c60a5c3ec0186391bfe468af9450551",
   "app/ui/med_soldado.png": "326f80fc0583719ba2d8f553a59b82c106a081b7",
-  "app/version.json": "ad5307595265eda90771b042eef6530757e229bb",
+  "app/version.json": "bded8dd437bce206c1b4b0f579531985c96d4e6e",
   "app-server/package.json": "29d143c64c007820d4ae5ebc368f35258483d620",
   "app-server/server/AsedioRoom.mjs": "e6d40c83071aef8eb61745efb976600cf2dd4863",
   "app-server/server/db.mjs": "9c91fb2d8155463f5c35550bbc4861ee4796a3f6",
   "app-server/server/index.mjs": "1190e63fa4c887971bcd1e0e62ea6a3087bea92d",
   "app-server/shared/cards.js": "952fe2aeaca55b88d158b8172ad49f1ebfd71b6f",
-  "app-server/shared/engine.js": "eeb62a0be9b7f4c66f0f555b15c2b707a219951e",
-  "app-server/shared/races.js": "03edb5e3fef5cfa9ca3af6ca2206035cf7506456"
+  "app-server/shared/engine.js": "c61888da967735198dc029f99c6bcc5102c62ba6",
+  "app-server/shared/races.js": "116b9a2cc40235426bc1470bf9294705251a8956"
  },
  "sizes": {
   "app/ao/g/100.png": 233093,
@@ -497,7 +497,7 @@
   "app/art/orco_techo.png": 144814,
   "app/art/orco_torre.png": 149899,
   "app/art/torre_magos.png": 87295,
-  "app/assets/index-BL6KT-a9.js": 392524,
+  "app/assets/index-B34lMJf0.js": 396523,
   "app/cards/1.webp": 78626,
   "app/cards/10.webp": 82186,
   "app/cards/100.webp": 95106,
@@ -618,7 +618,7 @@
   "app/cards/98.webp": 63454,
   "app/cards/99.webp": 66604,
   "app/icon.png": 5677,
-  "app/index.html": 63022,
+  "app/index.html": 63969,
   "app/menu-bg-day.jpg": 79803,
   "app/menu-bg.jpg": 55587,
   "app/ui/med_armas.png": 14039,
@@ -639,7 +639,7 @@
   "app-server/server/db.mjs": 8019,
   "app-server/server/index.mjs": 2682,
   "app-server/shared/cards.js": 27016,
-  "app-server/shared/engine.js": 35248,
-  "app-server/shared/races.js": 16031
+  "app-server/shared/engine.js": 35631,
+  "app-server/shared/races.js": 16022
  }
 }

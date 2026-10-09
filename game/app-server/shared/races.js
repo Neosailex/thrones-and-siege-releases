@@ -89,7 +89,7 @@ export const KINGS = {
   enano:  { name: 'Rey Thorgrim', period: 4, text: 'Muro +12 y castillo +2' },
   elfo:   { name: 'Rey Aelwyn', period: 5, text: 'Cristales +3 y levantás 1 carta extra que no se repone al jugarla (los elfos pueden juntar hasta 8)' },
   drow:   { name: 'Reina Vaelith', period: 5, text: 'Rival: −6 de cada recurso' },
-  gnomo:  { name: 'Rey Fizzwick', period: 4, text: 'El Inventor: cambia tu peor carta por una máquina gnoma al azar, gratis ese turno' },
+  gnomo:  { name: 'Rey Fizzwick', period: 5, text: 'El Inventor: crea una máquina gnoma al azar y la juega gratis en el acto' },
   orco:   { name: 'Rey Gorrak', period: 5, text: 'Daño 13' },
 };
 // Cartas neutrales que apuntan al rey (122-129)
