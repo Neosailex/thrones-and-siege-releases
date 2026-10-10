@@ -1,8 +1,8 @@
 {
- "version": "0.44.3",
+ "version": "0.44.4",
  "minShell": 1,
- "notes": "• Sonido del menú más suave: bandera flameando real y antorchas más bajas",
- "date": "2026-10-09T23:58:06.108Z",
+ "notes": "• El launcher detecta las actualizaciones apenas salen",
+ "date": "2026-10-10T00:00:14.634Z",
  "size": 78033670,
  "files": {
   "app/ao/g/100.png": "ae794f6dbefa72539b38f40258015e38e3f6d64d",
@@ -590,7 +590,7 @@
   "app/ui2/textura_piedra.webp": "d83160a20fd1532fac07729797b9a775981a0381",
   "app/ui2/ventana_marco.webp": "3426f5664a07510917dc6b9d3f06625117b9add8",
   "app/ui2/ventana_marco_chico.webp": "868e5d3d71e18614d881b5604ba36d90e4c04ff4",
-  "app/version.json": "551f93e3b12c9534861fe282ad89a69daf28d0f5",
+  "app/version.json": "89fb6f455705145264dec489a926bbe54a9801d7",
   "app-server/package.json": "29d143c64c007820d4ae5ebc368f35258483d620",
   "app-server/server/AsedioRoom.mjs": "e6d40c83071aef8eb61745efb976600cf2dd4863",
   "app-server/server/db.mjs": "9c91fb2d8155463f5c35550bbc4861ee4796a3f6",

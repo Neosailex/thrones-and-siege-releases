@@ -31,8 +31,22 @@ function createUpdater({ bundledDir, userDir, fetchImpl, nodeModulesDir, base = 
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
     try { const r = await fetchImpl(url, { signal: ctl.signal, cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); } finally { clearTimeout(t); }
   }
+  // raw.githubusercontent cachea unos minutos: pedimos el commit actual a la API y bajamos todo fijado a ese commit
+  let pinned = base;
+  async function pin() {
+    pinned = base;
+    if (!base.startsWith('https://raw.githubusercontent.com/')) return;
+    const repo = base.replace('https://raw.githubusercontent.com/', '').split('/').slice(0, 2).join('/');
+    const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 6000);
+    try {
+      const r = await fetchImpl(`https://api.github.com/repos/${repo}/commits/main`, { signal: ctl.signal, cache: 'no-store', headers: { Accept: 'application/vnd.github.sha' } });
+      const sha = r.ok ? (await r.text()).trim() : '';
+      if (/^[0-9a-f]{40}$/.test(sha)) pinned = `https://raw.githubusercontent.com/${repo}/${sha}`;
+    } catch {} finally { clearTimeout(t); }
+  }
   async function check() {
-    const latest = await getJson(`${base}/latest.json?t=${Date.now()}`);
+    await pin();
+    const latest = await getJson(`${pinned}/latest.json?t=${Date.now()}`);
     const cur = currentVersion();
     return { current: cur, latest: latest.version, notes: latest.notes || '', size: latest.size || 0, needsShell: (latest.minShell || 1) > SHELL_VERSION, available: cmpVer(latest.version, cur) > 0, page: PAGE, manifest: latest };
   }
@@ -59,7 +73,7 @@ function createUpdater({ bundledDir, userDir, fetchImpl, nodeModulesDir, base = 
     async function worker() {
       while (queue.length) {
         const [rel, h] = queue.shift();
-        const buf = await download(`${base}/game/${enc(rel)}?v=${manifest.version}`);
+        const buf = await download(`${pinned}/game/${enc(rel)}?v=${manifest.version}`);
         if (sha1(buf) !== h) throw new Error('Archivo dañado: ' + rel);
         const dst = path.join(stage, ...rel.split('/')); await fsp.mkdir(path.dirname(dst), { recursive: true }); await fsp.writeFile(dst, buf);
         done += manifest.sizes?.[rel] || 1; n++; onProgress({ phase: 'download', done, total, files: todo.length, got: n, reused });
