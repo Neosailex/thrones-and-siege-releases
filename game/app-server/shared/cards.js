@@ -16,7 +16,7 @@ export const NAMES = {
  39:['Túnel','6 al castillo rival, +6 al tuyo'],40:['Cantera','Todos producen ladrillos el próximo turno'],41:['Gran muralla','Muro +20'],
  42:['Reforma','Pasás 4 de muro al castillo: castillo +8'],43:['Traición','−1 constructor tuyo, −2 al rival'],44:['Hechizo prohibido','−1 mago tuyo, −2 al rival'],
  45:['Deserción','−1 soldado tuyo, −2 al rival'],46:['Dragón','Daño 38'],47:['Asalto','30 directo al castillo'],48:['Gólem','Daño 30'],
- 49:['Peste','Rival: −1 de cada unidad, −1 de cada recurso, muro −1 y castillo −1'],
+ 49:['Peste','Rival: −1 de cada unidad, −6 de cada recurso, muro −6 y castillo −6'],
  50:['Torre de asedio','Daño 12 y muro +4'],51:['Mercenarios','Soldados +1, ladrillos +4'],52:['Trinchera','Muro +6, cristales +2'],53:['Saqueo','Rival: −6 ladrillos y −6 cristales; vos +3 de cada'],54:['Transmutación','Ladrillos +7, armas +7'],55:['Maná salvaje','Castillo +6, muro +8'],56:['Tempestad','Daño 11 y rival −4 armas'],57:['Cantera profunda','Constructores +1, cristales +4'],58:['Contrafuerte','Muro +16, castillo +3'],59:['Mercado','Armas +5, cristales +5'],60:['Cruzada','Daño 12 y 4 directo al castillo'],61:['Gran obra','Castillo +17']
 };
 // cartas de raza: se suman a CARDS/NAMES y sus efectos especiales a FX
@@ -31,7 +31,7 @@ export const GNOME_MACHINES = [103, 105, 107, 110, 143, 144]; // lo que puede in
 {
   const BAL = {
     8: { o: { 6: 12 }, t: 'Daño 12' }, 7: { c: { 3: 15 } }, 9: { c: { 3: 12 } }, 33: { c: { 1: 20 } }, 35: { c: { 1: 20 } },
-    49: { c: { 1: 10, 3: 10, 5: 10 } }, 47: { c: { 1: 12, 3: 16 } }, 55: { s: { 6: 10, 7: 10 }, t: 'Castillo +10, muro +10' },
+    49: { c: { 1: 0, 3: 0, 5: 16 }, o: { 1: 6, 3: 6, 5: 6, 6: 6, 7: 6 } }, 47: { c: { 1: 12, 3: 16 } }, 55: { s: { 6: 10, 7: 10 }, t: 'Castillo +10, muro +10' },
     43: { o: { 0: 1, 1: 5 }, t: '−1 constructor tuyo; el rival pierde 1 constructor y 5 ladrillos' },
     44: { o: { 4: 1, 5: 5 }, t: '−1 mago tuyo; el rival pierde 1 mago y 5 cristales' },
     45: { o: { 2: 1, 3: 5 }, t: '−1 soldado tuyo; el rival pierde 1 soldado y 5 armas' },
