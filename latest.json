@@ -1,9 +1,9 @@
 {
- "version": "0.46.2",
+ "version": "0.47.0",
  "minShell": 1,
- "notes": "• Peste mejorada: 16 cristales, el rival pierde 1 de cada unidad y 6 de cada recurso, muro y castillo\n• Los fuegos artificiales ya no suenan después de la partida\n• Castillos un poco más a los bordes: ahora se ve la academia de magos del fondo en los dos lados",
- "date": "2026-10-10T02:55:39.047Z",
- "size": 79339635,
+ "notes": "• Razas emparejadas: enanos más fuertes (muro +3, rey con castillo +3), humanos un poco más bajos, elfos con rey de +4 cristales\n• Mazos oficiales ajustados para que todos los estilos estén parejos\n• Rápidas: máximo 2 por turno; con la segunda termina tu turno\n• Espía: cuesta 8 cristales, ya no es Rápida, y además de ver la mano rival quema la próxima carta de su mazo",
+ "date": "2026-10-10T14:12:58.392Z",
+ "size": 79340560,
  "files": {
   "app/ao/g/100.png": "ae794f6dbefa72539b38f40258015e38e3f6d64d",
   "app/ao/g/1002.png": "f8659e506d782c7d7bb66a0849f954f65278c85a",
@@ -357,8 +357,8 @@
   "app/assets/cinzel-latin-ext-700-normal-CORa-yIv.woff": "1863704a16a893df0cefd7c36aaaec040039d7f5",
   "app/assets/cinzel-latin-ext-900-normal-BlZZvP7K.woff": "d9e879f2dda436ff203d67fea2551db268c4d98b",
   "app/assets/cinzel-latin-ext-900-normal-CWXxiu5r.woff2": "82d1d12d57ddb405521425e1c9be6655b031ebf9",
-  "app/assets/index-DH1JZqYV.js": "9e7bb0ad3360f79e5a3231cab605b34ec0bd2556",
   "app/assets/index-S_r4wu35.css": "0291224f620757681b30eeaea007fb5d76f26ef5",
+  "app/assets/index-nn-TuA0Q.js": "caf572fd2574fa43214af8079558a69197f294d4",
   "app/cards/1.webp": "6e870cbc0359a119403846e620f4d926fc5966c8",
   "app/cards/10.webp": "4e453213f2df5bbbe5ca37e12472ec1039bf018e",
   "app/cards/100.webp": "53f6d660f2ed39e8f151dd66289b5ce574218d61",
@@ -488,7 +488,7 @@
   "app/icons/icon-192.png": "4d946a6bf410145e3a624d85e22cc0df76356ed7",
   "app/icons/icon-32.png": "b3d6a73a48b86de55b13aa360cc0de75274fb3ae",
   "app/icons/icon-512.png": "4469b2107344fad9f913b4c8e6bc06177020eb5e",
-  "app/index.html": "e66521e397b924aa67f0f56804ce2643ab688884",
+  "app/index.html": "125a414b18049adf034578ec790ee8e22b4e7f1f",
   "app/launcher/index.html": "bf092da89e569fae1012eb526e87359c29638443",
   "app/menu-bg-day.jpg": "cac0cdd482723f44974860184783f588e36e7dae",
   "app/menu-bg.jpg": "3029782055195444fbeb33ec6e88a8514d8ce2e9",
@@ -595,14 +595,14 @@
   "app/ui2/textura_piedra.webp": "d83160a20fd1532fac07729797b9a775981a0381",
   "app/ui2/ventana_marco.webp": "3426f5664a07510917dc6b9d3f06625117b9add8",
   "app/ui2/ventana_marco_chico.webp": "868e5d3d71e18614d881b5604ba36d90e4c04ff4",
-  "app/version.json": "b2c0f06a8840bb4e66d5db76372c87645986d7c1",
+  "app/version.json": "4ef9321f9c9d4e17a46a46c7802592d45d16e6dc",
   "app-server/package.json": "29d143c64c007820d4ae5ebc368f35258483d620",
   "app-server/server/AsedioRoom.mjs": "e6d40c83071aef8eb61745efb976600cf2dd4863",
   "app-server/server/db.mjs": "9c91fb2d8155463f5c35550bbc4861ee4796a3f6",
   "app-server/server/index.mjs": "b918ecae320620be320d39b5fcdbdc3faf2481c7",
-  "app-server/shared/cards.js": "d0654a53b630c248c39f0edb659e9a6c4d768639",
-  "app-server/shared/engine.js": "b1c7f08c9a36e9992e957c42aa74d15e79dcad20",
-  "app-server/shared/races.js": "8ee6a053685a9fe6f3e31346883cd571bbd9b476"
+  "app-server/shared/cards.js": "269f08f4ec2fe94a8481a5505ab6546733b79485",
+  "app-server/shared/engine.js": "b24307abc4ef91a7406cd73eaac74c92719a6ea9",
+  "app-server/shared/races.js": "823107bdece81247c0ee5e172512e56bb8e5f68f"
  },
  "sizes": {
   "app/ao/g/100.png": 233093,
@@ -957,8 +957,8 @@
   "app/assets/cinzel-latin-ext-700-normal-CORa-yIv.woff": 9812,
   "app/assets/cinzel-latin-ext-900-normal-BlZZvP7K.woff": 9536,
   "app/assets/cinzel-latin-ext-900-normal-CWXxiu5r.woff2": 8056,
-  "app/assets/index-DH1JZqYV.js": 432311,
   "app/assets/index-S_r4wu35.css": 57656,
+  "app/assets/index-nn-TuA0Q.js": 432822,
   "app/cards/1.webp": 78626,
   "app/cards/10.webp": 82186,
   "app/cards/100.webp": 95106,
@@ -1200,8 +1200,8 @@
   "app-server/server/AsedioRoom.mjs": 7143,
   "app-server/server/db.mjs": 8019,
   "app-server/server/index.mjs": 2746,
-  "app-server/shared/cards.js": 27193,
-  "app-server/shared/engine.js": 37401,
+  "app-server/shared/cards.js": 27310,
+  "app-server/shared/engine.js": 37698,
   "app-server/shared/races.js": 16183
  }
 }

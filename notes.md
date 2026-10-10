@@ -1,3 +1,4 @@
-• Peste mejorada: 16 cristales, el rival pierde 1 de cada unidad y 6 de cada recurso, muro y castillo
-• Los fuegos artificiales ya no suenan después de la partida
-• Castillos un poco más a los bordes: ahora se ve la academia de magos del fondo en los dos lados
+• Razas emparejadas: enanos más fuertes (muro +3, rey con castillo +3), humanos un poco más bajos, elfos con rey de +4 cristales
+• Mazos oficiales ajustados para que todos los estilos estén parejos
+• Rápidas: máximo 2 por turno; con la segunda termina tu turno
+• Espía: cuesta 8 cristales, ya no es Rápida, y además de ver la mano rival quema la próxima carta de su mazo

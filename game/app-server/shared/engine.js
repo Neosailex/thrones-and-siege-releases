@@ -100,7 +100,7 @@ export function cardVectors(g, p, o, id) {
   // Horda: tus armas + 3 por soldado + 1 (antes de pagar la carta); después le suman pasivas y Tambores como a cualquier ataque
   if (special?.k === 'horde') op[6] = (p.weapon || 0) + 3 * (p.recruit || 0) + 1;
   // pasivas de raza sobre los vectores
-  if (p.race === 'enano' && s[6] > 0) s[6] += 2;
+  if (p.race === 'enano' && s[6] > 0) s[6] += 3;
   if (p.race === 'orco' && s[6] > 0) s[6] = Math.max(0, s[6] - 1);
   if (p.race === 'orco' && op[6] + op[7] >= 6) { if (op[6] > 0) op[6] += 1; else op[7] += 1; }
   if (p.race === 'drow') for (const k of [1, 3, 5]) if (op[k] > 0) op[k] = op[k] * 2;
@@ -141,9 +141,12 @@ export function play(g, i) {
     if (fired) { fx.push('trap:' + t); o.trap = null; }
   }
   if (sp === 'spy' || sp === 'sabotage') {
-    if (id >= 50) payCost(p, c); // las de raza sí pagan; las originales no (como en el original)
+    if (id >= 50 || id === 5) payCost(p, c); // las de raza y el Espía pagan; el Sabotaje original no
     g.pending = { type: sp, seat };
-    if (RAPID.has(id) && (g.rapidUsed || 0) < 2) { g.rapidUsed = (g.rapidUsed || 0) + 1; g.rapidPending = true; fx.push('rapid'); }
+    if (id === 5) { // Espía: además de ver la mano, quema la próxima carta del mazo rival (sale del juego)
+      const o = g.players[1 - seat]; const burned = draw(g, o); if (burned != null) { g.pending.burned = burned; fx.push('burn:' + burned); }
+    }
+    if (RAPID.has(id) && (g.rapidUsed || 0) < 1) { g.rapidUsed = (g.rapidUsed || 0) + 1; g.rapidPending = true; fx.push('rapid'); }
     return { type: 'play', seat, card: id, fx, before, after: [stats(g.players[0]), stats(g.players[1])] };
   }
   if (c[8]) p.favor = Math.max(0, (p.favor || 0) - c[8]);
@@ -186,7 +189,7 @@ export function play(g, i) {
     }
   }
   if (p.castle <= 0) p.castle = 0;
-  if (RAPID.has(id) && (g.rapidUsed || 0) < 2) { g.rapidUsed = (g.rapidUsed || 0) + 1; g.rapidPending = true; fx.push('rapid'); }
+  if (RAPID.has(id) && (g.rapidUsed || 0) < 1) { g.rapidUsed = (g.rapidUsed || 0) + 1; g.rapidPending = true; fx.push('rapid'); }
   devClamp(g);
   return { type: 'play', seat, card: id, fx, before, after: [stats(g.players[0]), stats(g.players[1])] };
 }
@@ -196,8 +199,8 @@ function kingAct(g, p) {
   const o = other(g, p), fx = [], before = [stats(g.players[0]), stats(g.players[1])];
   switch (p.race) {
     case 'humano': p.brick += 5; p.weapon += 5; p.crystal += 5; break;
-    case 'enano': p.wall += 12; p.castle += 2; break;
-    case 'elfo': p.crystal += 3; if (p.hand.length < handCap(p)) { p.hand.push(draw(g, p)); fx.push('draw'); } break;
+    case 'enano': p.wall += 12; p.castle += 3; break;
+    case 'elfo': p.crystal += 4; if (p.hand.length < handCap(p)) { p.hand.push(draw(g, p)); fx.push('draw'); } break;
     case 'drow': for (const k of ['brick', 'weapon', 'crystal']) o[k] = Math.max(0, o[k] - 6); break;
     case 'gnomo': { // El Inventor: crea una máquina gnoma al azar y la juega gratis en el acto (no toca tu mano ni tu jugada)
       const nid = GNOME_MACHINES[Math.floor(g._rnd() * GNOME_MACHINES.length)];
@@ -412,7 +415,7 @@ function simulate(g, act, rnd) { // eslint-disable-line
   if (act.type === 'play') {
     const ev = play(c, act.index); if (!ev) return null;
     if (c.pending?.type === 'sabotage') { sabotage(c, Math.floor(rnd() * c.players[1 - c.pending.seat].hand.length)); bonus += 4; }
-    if (c.pending?.type === 'spy') { spyDone(c); bonus += 1; }
+    if (c.pending?.type === 'spy') { spyDone(c); bonus += 3; } // ver la mano + quemar una carta
   } else if (!discard(c, act.indexes)) return null;
   endTurn(c);
   return { g: c, bonus };
