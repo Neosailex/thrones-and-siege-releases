@@ -1,1 +1,1 @@
-• Sonido del menú más relajado: bandera lenta y suave
+• Ajuste del sonido del menú: menos viento, más bandera y antorchas
