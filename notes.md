@@ -1,4 +1,1 @@
-• Mezcla de sonido nueva: ambiente presente pero suave, efectos parejos, la música ya no sube y baja con cada golpe
-• Fundido suave al pasar del launcher al juego
-• El sonido de construir ahora suena
-• Ícono sin fondo en Windows
+• Si levantás una carta y te arrepentís, soltala sobre la mano y vuelve (también con Esc o clic derecho)
