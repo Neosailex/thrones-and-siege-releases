@@ -39,11 +39,17 @@
   @keyframes glow { 50% { filter: brightness(1.08) drop-shadow(0 0 16px rgba(255,200,90,.75)) drop-shadow(0 5px 6px #000b); } }
   .small { font-size: 14px; color: #b9a886; text-align: center; min-height: 18px; }
   a { color: var(--gold); }
+  /* respaldo: barra de título propia cuando la ventana no tiene marco */
+  .tb { position: fixed; top: 0; left: 0; right: 0; height: 34px; display: none; align-items: center; padding: 0 6px 0 14px; z-index: 5; -webkit-app-region: drag; font: 700 12px var(--f-title); letter-spacing: .14em; color: #bfa77a; text-transform: uppercase; }
+  .tb.on { display: flex; } .tb i { flex: 1; }
+  .tb button { -webkit-app-region: no-drag; width: 40px; height: 28px; border: 0; background: none; color: #d9be86; font-size: 15px; cursor: pointer; border-radius: 4px; }
+  .tb button:hover { background: rgba(226,180,90,.18); } .tb button.x:hover { background: #8a1d12; color: #fff; }
   @media (prefers-reduced-motion: reduce) { .bg, button.play:not(:disabled) { animation: none; } }
 </style>
 </head>
 <body>
 <div class="bg"></div><div class="shade"></div>
+<div class="tb" id="tb"><span>Thrones &amp; Siege</span><i></i><button id="wMin" title="Minimizar">&#8211;</button><button id="wClose" class="x" title="Cerrar">&#10005;</button></div>
 <main>
   <h1>Thrones <span class="amp">&amp;</span> Siege</h1>
   <div class="ver" id="ver"></div>
@@ -58,6 +64,7 @@
 <script>
   const $ = (id) => document.getElementById(id);
   const L = window.launcher;
+  if (L && L.win) { $('tb').classList.add('on'); $('wMin').onclick = () => L.win('min'); $('wClose').onclick = () => (L.quit ? L.quit() : L.win('close')); }
   const mb = (n) => (n / 1048576).toFixed(1).replace('.', ',') + ' MB';
   function ready(text, small = '') { $('status').textContent = text; $('small').innerHTML = small; $('play').disabled = false; $('play').focus(); }
   $('play').onclick = () => { $('play').disabled = true; $('status').textContent = 'Abriendo…'; L.play(); };

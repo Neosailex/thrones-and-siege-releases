@@ -14,6 +14,8 @@ const readJson = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); }
 const sha1 = (buf) => crypto.createHash('sha1').update(buf).digest('hex');
 async function sha1File(f) { try { return sha1(await fsp.readFile(f)); } catch { return null; } }
 const enc = (p) => p.split('/').map(encodeURIComponent).join('/');
+// en Windows un archivo abierto (antivirus, video del launcher) puede trabar el renombre unos instantes
+async function retry(fn, n = 6) { for (let k = 0; ; k++) { try { return await fn(); } catch (e) { if (k >= n - 1 || !/EBUSY|EPERM|EACCES/.test(e.code || '')) throw e; await new Promise((ok) => setTimeout(ok, 400 * (k + 1))); } } }
 
 function createUpdater({ bundledDir, userDir, fetchImpl, nodeModulesDir, base = BASE }) {
   const GAME = path.join(userDir, 'game');
@@ -86,12 +88,12 @@ function createUpdater({ bundledDir, userDir, fetchImpl, nodeModulesDir, base = 
     if (nodeModulesDir && fs.existsSync(nodeModulesDir)) { try { await fsp.symlink(nodeModulesDir, path.join(stage, 'node_modules'), 'junction'); } catch {} }
     onProgress({ phase: 'install' });
     await fsp.rm(old, { recursive: true, force: true });
-    if (fs.existsSync(GAME)) await fsp.rename(GAME, old);
-    await fsp.rename(stage, GAME);
+    if (fs.existsSync(GAME)) await retry(() => fsp.rename(GAME, old));
+    await retry(() => fsp.rename(stage, GAME));
     await fsp.rm(old, { recursive: true, force: true }).catch(() => {});
     onProgress({ phase: 'done', version: manifest.version });
     return { version: manifest.version, downloaded: todo.length, reused };
   }
-  return { check, update, currentDir, currentVersion, bundledVersion, SHELL_VERSION };
+  return { check, update, currentDir, currentVersion, bundledVersion, SHELL_VERSION, PAGE };
 }
 module.exports = { createUpdater, cmpVer };
