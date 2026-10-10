@@ -44,8 +44,6 @@ function statRemove(g, p, a, keep, fx, foe = g.turn !== g.players.indexOf(p)) {
   if (!p.noDamage) {
     const m = o.x2 && hits ? 2 : 1; if (m === 2) { if (!keep) o.x2 = false; fx.push('double'); }
     let dw = a[6] * m; const dc = a[7] * m;
-    // enanos: el muro recibe 20% menos; lo que lo atraviesa le pega entero al castillo
-    if (p.race === 'enano' && dw > 0 && foe) { const need = Math.ceil(Math.max(0, p.wall) / 0.8); dw = dw <= need ? Math.ceil(dw * 0.8) : Math.max(0, p.wall) + (dw - need); }
     p.wall -= dw; p.castle -= dc;
   } else {
     if (o.x2 && hits && !keep) o.x2 = false;
@@ -59,18 +57,18 @@ function statRemove(g, p, a, keep, fx, foe = g.turn !== g.players.indexOf(p)) {
 function payCost(p, c) { for (let i = 0; i < 8; i++) p[KEYS[i]] -= c[i] || 0; validate(p); }
 const other = (g, p) => (p === g.players[0] ? g.players[1] : g.players[0]);
 
-// Costo efectivo según la raza (elfos: cartas de cristales 2 menos, mínimo 1; gnomos: cartas de 6+ armas 2 menos) y Luto
+// Costo efectivo según la raza (elfos: cartas de cristales 2 menos, mínimo 1; gnomos: cartas de 6+ armas 1 menos) y Luto
 export function costOf(p, id) {
   const c = CARDS[id][0].slice();
   if (p.race === 'elfo' && c[5] > 0) c[5] = Math.max(1, c[5] - 2);
-  if (p.race === 'gnomo' && c[3] >= 6) c[3] -= 2;
+  if (p.race === 'gnomo' && c[3] >= 6) c[3] -= 1;
   if (lutoOn(p)) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] += 2;
   if (p.halfId === id) for (const i of [1, 3, 5, 8]) c[i] = 0; // invento del rey gnomo: gratis ese turno
   return c;
 }
 // Luto: mientras el rey esté desmayado (incluido el turno en que se recupera) las cartas cuestan 2 más
 export const lutoOn = (p) => !!p.luto && (p.kingStun > 0 || !!p.stunTurn);
-export const thiefCap = (p) => (p.race === 'drow' ? 12 : 8);
+export const thiefCap = (p) => 8; // (los drow ya no roban extra con el Ladrón)
 export function playable(p, id) {
   const s = stats(p), c = costOf(p, id);
   if (c[8] && (p.favor || 0) < c[8]) return false;
@@ -106,6 +104,8 @@ export function cardVectors(g, p, o, id) {
   if (p.race === 'drow') for (const k of [1, 3, 5]) if (op[k] > 0) op[k] = op[k] * 2;
   // tambores de guerra: ataques +3
   if (p.effects?.some((e) => e.e === 'drums') && (op[6] > 0 || op[7] > 0)) { if (op[6] > 0) op[6] += 4; else op[7] += 4; }
+  // gnomos, máquinas de asedio: contra un muro de 25 o más, sus ataques de 10+ (contando Tambores) mandan además 4 directo al castillo
+  if (p.race === 'gnomo' && op[6] >= 10 && o && o.wall >= 25) op[7] += 4;
   // asedio prolongado sobre mí: no puedo subir el muro
   let siege = false; if (p.effects?.some((e) => e.e === 'siegelock') && s[6] > 0) { s[6] = 0; siege = true; }
   return { s, op, siege };
@@ -198,10 +198,10 @@ export function play(g, i) {
 function kingAct(g, p) {
   const o = other(g, p), fx = [], before = [stats(g.players[0]), stats(g.players[1])];
   switch (p.race) {
-    case 'humano': p.brick += 5; p.weapon += 5; p.crystal += 5; break;
-    case 'enano': p.wall += 12; p.castle += 3; break;
-    case 'elfo': p.crystal += 4; if (p.hand.length < handCap(p)) { p.hand.push(draw(g, p)); fx.push('draw'); } break;
-    case 'drow': for (const k of ['brick', 'weapon', 'crystal']) o[k] = Math.max(0, o[k] - 6); break;
+    case 'humano': p.brick += 4; p.weapon += 4; p.crystal += 4; break;
+    case 'enano': if (p.wall >= 40) p.castle += 8; else { p.wall += 12; p.castle += 3; } break;
+    case 'elfo': p.crystal += 6; if (p.hand.length < handCap(p)) { p.hand.push(draw(g, p)); fx.push('draw'); } break;
+    case 'drow': for (const k of ['brick', 'weapon', 'crystal']) o[k] = Math.max(0, o[k] - 6); o.favor = Math.max(0, (o.favor || 0) - 3); break;
     case 'gnomo': { // El Inventor: crea una máquina gnoma al azar y la juega gratis en el acto (no toca tu mano ni tu jugada)
       const nid = GNOME_MACHINES[Math.floor(g._rnd() * GNOME_MACHINES.length)];
       fx.push('invent:' + nid);
@@ -214,7 +214,7 @@ function kingAct(g, p) {
       if (ev) { fx.push('autoplay'); ev.auto = 'invent'; const u = p.used.lastIndexOf(nid); if (u >= 0) p.used.splice(u, 1); } // se crea y se juega: no queda en tu mazo
       return { race: p.race, fx, before, after: [stats(g.players[0]), stats(g.players[1])], played: ev || null };
     }
-    case 'orco': statRemove(g, o, [0, 0, 0, 0, 0, 0, 13, 0], false, fx); break;
+    case 'orco': statRemove(g, o, [0, 0, 0, 0, 0, 0, 12, 0], false, fx); break;
   }
   if (p.castle <= 0) p.castle = 0;
   return { race: p.race, fx, before, after: [stats(g.players[0]), stats(g.players[1])] };
@@ -318,7 +318,7 @@ export function endTurn(g) {
   if (p.spyNext) { p.spyNext = false; g.pending = { type: 'spy', seat: g.turn }; }
   const blocked = p.statsType === 4;
   devClamp(g);
-  if (!blocked && p.race === 'humano') { const k = ['brick', 'weapon', 'crystal'].sort((x, y) => p[x] - p[y])[0]; if (p[k] < 6) p[k] += 1; }
+  if (!blocked && p.race === 'humano') { const k = ['brick', 'weapon', 'crystal'].sort((x, y) => p[x] - p[y])[0]; if (p[k] < 6) p[k] += 1; if (p.wall < 10) p.wall += 1; }
   p.statsType = 0; devClamp(g);
   const o2 = other(g, p); if (o2.castle <= 0 || p.castle >= 100 || o2.castle >= 100 || p.castle <= 0) { if (!g.dev?.noWin) { if (o2.castle <= 0 || p.castle >= 100) g.winner = g.turn; else g.winner = 1 - g.turn; } }
   return { type: 'turn', seat: g.turn, before, after: stats(p), blocked, king, effects: effectsLog, steps: [S0, S1, S2, both()] };

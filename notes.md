@@ -1,4 +1,5 @@
-• Razas emparejadas: enanos más fuertes (muro +3, rey con castillo +3), humanos un poco más bajos, elfos con rey de +4 cristales
-• Mazos oficiales ajustados para que todos los estilos estén parejos
-• Rápidas: máximo 2 por turno; con la segunda termina tu turno
-• Espía: cuesta 8 cristales, ya no es Rápida, y además de ver la mano rival quema la próxima carta de su mazo
+• Cruces entre razas más parejos: ninguno aplastante
+• Enanos: las cartas de muro dan +3; el rey da castillo +8 si el muro ya tiene 40
+• Gnomos: máquinas de asedio contra muros altos; drow: el Ladrón ya no roba extra y la reina quita favor
+• Elfos: Savia vital +5, rey +6 cristales · Humanos: muro +1 por turno si tienen menos de 10
+• Recursos del rival espejados arriba
