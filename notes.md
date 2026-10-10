@@ -1,1 +1,1 @@
-• Sonido del menú: bandera más natural y antorchas un poco más presentes
+• Ícono nuevo del juego: escudo coronado
