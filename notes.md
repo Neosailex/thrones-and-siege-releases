@@ -1,1 +1,1 @@
-• El launcher detecta las actualizaciones apenas salen
+• Sonido del menú más relajado: bandera lenta y suave
