@@ -1,1 +1,1 @@
-• Cada raza tiene su propio estandarte en el castillo, y ahora flamean
+• 5 cartas nuevas con ilustración: Jabalíes, Horda, Flecha envenenada, Asesino real y Sabotaje a la corte
