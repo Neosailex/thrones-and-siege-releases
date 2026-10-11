@@ -1,1 +1,1 @@
-Tutorial más legible: pergamino más claro detrás del texto y letra más oscura
+Tutorial: el foco guía cada acción (descartar y jugar), botones ya no quedan oscuros
