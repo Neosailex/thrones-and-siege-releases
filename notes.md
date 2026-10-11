@@ -1,1 +1,1 @@
-• 5 cartas nuevas con ilustración: Jabalíes, Horda, Flecha envenenada, Asesino real y Sabotaje a la corte
+Tutorial más legible: pergamino más claro detrás del texto y letra más oscura
