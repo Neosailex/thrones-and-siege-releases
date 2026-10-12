@@ -1,7 +1,7 @@
 import { Room } from '@colyseus/core';
 import { schema, t } from '@colyseus/schema';
 import * as E from '../shared/engine.js';
-import { validateDeck, PRESETS, RACES, STYLE_DECKS } from '../shared/cards.js';
+import { validateDeck, PRESETS, RACES, STYLE_DECKS, padDeck, CARDS } from '../shared/cards.js';
 import * as DB from './db.mjs';
 
 // Estado público mínimo (las manos son secretas: cada jugador recibe su propia vista por mensaje).
@@ -18,7 +18,8 @@ export class AsedioRoom extends Room {
     this.state.phase = 'waiting';
     this.seats = []; // [{ sessionId, pid, name, rating, connected, lastEmote }]
     this.plays = [{}, {}];
-    this.onMessage('play', (c, m) => this.act(c, () => E.play(this.g, Number(m?.index))));
+    this.onMessage('play', (c, m) => this.act(c, () => E.play(this.g, m?.index === 'sleeve' ? 'sleeve' : Number(m?.index)))); // index 'sleeve' = jugar la carta de la manga
+    this.onMessage('sleeve', (c, m) => { if (!this.g || this.g.winner != null) return; const seat = this.seatOf(c); if (seat < 0) return; const ev = E.setSleeve(this.g, seat, Number(m?.id)); if (ev) this.sync([ev], null, true); }); // elegir la manga (solo antes de la primera acción)
     this.onMessage('pass', (c) => this.act(c, () => E.passExtra(this.g)));
     this.onMessage('discard', (c, m) => this.act(c, () => E.discard(this.g, Array.isArray(m?.indexes) ? m.indexes.map(Number) : [])));
     this.onMessage('sabotage', (c, m) => this.act(c, () => E.sabotage(this.g, Number(m?.index)), true));
@@ -41,8 +42,9 @@ export class AsedioRoom extends Room {
     if (!p) throw new Error('Identidad inválida');
     if (this.seats.some((s) => s.pid === p.id)) throw new Error('Ya estás en esta sala');
     const race = RACES[o.race] ? o.race : null;
-    const deck = Array.isArray(o.deck) && !validateDeck(o.deck, race) ? o.deck.map(Number) : (race ? STYLE_DECKS[race].equilibrado.deck : PRESETS.equilibrado.deck); // mazo validado en el servidor
-    this.seats.push({ sessionId: client.sessionId, pid: p.id, name, rating: p.rating, connected: true, deck, race });
+    const deck = padDeck(Array.isArray(o.deck) && !validateDeck(o.deck, race) ? o.deck.map(Number) : (race ? STYLE_DECKS[race].equilibrado.deck : PRESETS.equilibrado.deck)); // mazo validado en el servidor
+    const sleeve = Number.isInteger(o.sleeve) && CARDS[o.sleeve] && deck[o.sleeve - 1] > 0 ? o.sleeve : null; // carta de la manga elegida en el cliente (tiene que estar en el mazo)
+    this.seats.push({ sessionId: client.sessionId, pid: p.id, name, rating: p.rating, connected: true, deck, race, sleeve });
     if (this.seats.length === 2) this.start();
   }
 
@@ -53,7 +55,7 @@ export class AsedioRoom extends Room {
   start() {
     this.lock();
     this.state.phase = 'playing';
-    this.g = E.newGame({ starter: Math.random() < 0.5 ? 0 : 1, decks: this.seats.map((x) => x.deck), races: this.seats.map((x) => x.race) });
+    this.g = E.newGame({ starter: Math.random() < 0.5 ? 0 : 1, decks: this.seats.map((x) => x.deck), races: this.seats.map((x) => x.race), sleeves: this.seats.map((x) => x.sleeve) });
     for (const [seat] of this.seats.entries()) this.clientOf(seat)?.send('start', this.info(seat));
     this.sync([]);
   }
@@ -95,6 +97,7 @@ export class AsedioRoom extends Room {
     if (g.pending?.type === 'sabotage') evs.push(E.sabotage(g, E.aiSabotageSmart(g)));
     else if (g.pending?.type === 'spy') evs.push(E.spyDone(g));
     else {
+      const P = g.players[seat]; if (P.sleeve == null && !P.acted) { const sv = E.setSleeve(g, seat, E.aiSleevePick(this.seats[seat].deck)); if (sv) evs.push(sv); } // no eligió manga: la elige la CPU
       const cy = E.aiMaybeCycle(g); if (cy) evs.push(cy);
       const a = E.aiChooseLevel(g, 'normal');
       const ev = a.type === 'play' ? E.play(g, a.index) : E.discard(g, a.indexes); if (!ev) return;

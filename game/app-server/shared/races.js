@@ -1,11 +1,11 @@
 // Razas: cada una tiene una habilidad pasiva (siempre activa) y 10 cartas exclusivas: 8 comunes, 1 rara (muy fuerte, 1 copia) y 1 legendaria (cambia la partida, 1 copia).
 export const RACES = {
-  humano: { name: 'Humanos', passive: 'Cada turno producen +1 del recurso que menos tienen (si tienen menos de 6) y muro +1 si tienen menos de 10', cards: [62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 130, 131, 132, 168, 169], favor: 'Oro' },
-  enano:  { name: 'Enanos', passive: 'Las cartas de muro dan +3', cards: [72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 133, 134, 135, 170, 171], favor: 'Runas' },
-  elfo:   { name: 'Elfos', passive: 'Pueden cambiar 2 cartas por turno en vez de 1, y las cartas de cristales cuestan 2 cristales menos (mínimo 1)', cards: [82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 136, 137, 138, 172, 173], favor: 'Savia' },
-  drow:   { name: 'Elfos oscuros', passive: 'Las cartas que le quitan recursos al rival quitan el doble', cards: [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 139, 140, 141, 174, 175], favor: 'Sombra' },
-  gnomo:  { name: 'Gnomos', passive: 'Las cartas de 6 armas o más cuestan 1 menos, y contra un muro de 25 o más sus ataques de 10 o más hacen además 4 directo al castillo', cards: [102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 142, 143, 144, 176, 177], favor: 'Engranajes' },
-  orco:   { name: 'Orcos', passive: 'Cada ataque de 6 o más de daño hace +1, pero las cartas de muro dan 1 menos', cards: [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 145, 146, 147, 178, 179], favor: 'Sangre' },
+  humano: { name: 'Humanos', passive: 'Cada turno producen +1 del recurso que menos tienen (si tienen menos de 6) y muro +1 si tienen menos de 10', cards: [62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 130, 131, 132, 168, 169, 180], favor: 'Oro' },
+  enano:  { name: 'Enanos', passive: 'Las cartas de muro dan +3', cards: [72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 133, 134, 135, 170, 171, 181], favor: 'Runas' },
+  elfo:   { name: 'Elfos', passive: 'Pueden cambiar 2 cartas por turno en vez de 1, y las cartas de cristales cuestan 2 cristales menos (mínimo 1)', cards: [82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 136, 137, 138, 172, 173, 182], favor: 'Savia' },
+  drow:   { name: 'Elfos oscuros', passive: 'Las cartas que le quitan recursos al rival quitan el doble', cards: [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 139, 140, 141, 174, 175, 183], favor: 'Sombra' },
+  gnomo:  { name: 'Gnomos', passive: 'Sus máquinas (Ballesta de repetición, Autómata, Catapulta gnoma, Gran máquina, Bombarda y Autómata mayor) cuestan 2 menos, y contra un muro de 25 o más sus ataques de 10 o más hacen además 4 directo al castillo', cards: [102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 142, 143, 144, 176, 177, 184], favor: 'Engranajes' },
+  orco:   { name: 'Orcos', passive: 'Cada ataque de 6 o más de daño hace +1, pero las cartas de muro dan 1 menos', cards: [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 145, 146, 147, 178, 179, 185], favor: 'Sangre' },
 };
 export const raceOf = (id) => Object.keys(RACES).find((k) => RACES[k].cards.includes(id)) || null;
 export const RARE_RACE = new Set([70, 80, 90, 100, 110, 120]);
@@ -86,7 +86,7 @@ export const RACE_CARDS = {
 // Reyes: cada raza tiene un rey en el balcón del castillo. Carga 1 por turno propio y al completar el período actúa.
 export const KINGS = {
   humano: { name: 'Rey Aldric', period: 5, text: '+4 ladrillos, +4 armas y +4 cristales' },
-  enano:  { name: 'Rey Thorgrim', period: 4, text: 'Muro +12 y castillo +3; si tu muro ya tiene 40 o más, castillo +8 en su lugar' },
+  enano:  { name: 'Rey Thorgrim', period: 4, text: 'Muro +12 y castillo +3; si tu muro ya tiene 30 o más, castillo +8 en su lugar' },
   elfo:   { name: 'Rey Aelwyn', period: 5, text: 'Cristales +6 y levantás 1 carta extra que no se repone al jugarla (los elfos pueden juntar hasta 8)' },
   drow:   { name: 'Reina Vaelith', period: 5, text: 'Rival: −6 de cada recurso y −3 de favor' },
   gnomo:  { name: 'Rey Fizzwick', period: 5, text: 'El Inventor: crea una máquina gnoma al azar y la juega gratis en el acto' },
@@ -160,6 +160,22 @@ export const TACTIC_CARDS = {
   178: ['Frenesí', 'Daño 12; 18 si tu muro está por debajo de 10', c(0, 9), Z, Z, { k: 'cond' }],
   179: ['Tambores de guerra', '3 turnos: tus ataques hacen +4', cf(3, 5), Z, Z, { k: 'effect', e: 'drums', turns: 3 }],
 };
+// Míticas (180-185): "Ataque del rey", 1 por raza, máximo 1 copia. El rey baja a pelear: 30 de daño (primero al muro) y el rival pierde
+// 1 unidad, la que más tenga (empate: constructor > soldado > mago). (Juan 12/10: matar las 3 hundía al enano a 42 %.) Solo con el rey despierto y con 2 o más de carga; después queda desmayado 2 turnos.
+// Costo: 10 del recurso de la raza + 10 de otro + 5 de favor. Pensadas para guardarse en la manga (desde ahí cuestan 1/3 más).
+const cm = (b, w, cr) => [0, b, 0, w, 0, cr, 0, 0, 5];
+const KA = { k: 'kingAttack', stun: 2, minCharge: 2 };
+const KA_TX = 'Ataque del rey: daño 30 y el rival pierde 1 unidad (la que más tenga). Solo con tu rey despierto y con 2+ de carga; después queda desmayado 2 turnos';
+const KO = [0, 0, 0, 0, 0, 0, 30, 0]; // la unidad que pierde el rival se decide al jugarla (engine: kingAttack)
+export const MYTHIC_CARDS = {
+  180: ['Carga de Aldric', KA_TX, cm(10, 10, 0), Z, KO, KA],
+  181: ['Martillo de Thorgrim', KA_TX, cm(12, 0, 0), Z, KO, KA], // solo ladrillos: con 15+5 el enano la usaba 22 %, así 46 %
+  182: ['Furia de Aelwyn', KA_TX, cm(0, 10, 10), Z, KO, KA],
+  183: ['Sombra de Vaelith', KA_TX, cm(10, 0, 10), Z, KO, KA],
+  184: ['Ingenio de Fizzwick', KA_TX, cm(0, 12, 12), Z, KO, KA], // 12+12: con 10+10 el gnomo ganaba 55 %
+  185: ['Embestida de Gorrak', KA_TX, cm(5, 15, 0), Z, KO, KA],
+};
+export const MYTHIC = new Set([180, 181, 182, 183, 184, 185]);
 // grupos usados por reglas (trampas) y por las animaciones
 export const ARROW_IDS = new Set([2, 6, 8, 83, 84, 90, 137]);
-export const MELEE_IDS = new Set([1, 4, 7, 39, 47, 112, 114, 115, 117, 99, 93, 76, 53, 121, 178]);
+export const MELEE_IDS = new Set([1, 4, 7, 39, 47, 112, 114, 115, 117, 99, 93, 76, 53, 121, 178, 180, 181, 182, 183, 184, 185]); // las míticas son cargas del rey

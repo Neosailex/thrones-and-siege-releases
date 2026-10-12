@@ -1,1 +1,1 @@
-Arreglo de partida colgada con la Red de espías; la tira de cartas recientes ya no tapa los recursos
+Manga y Ataque del rey (rareza Mítica); Campaña (beta, reino humano); música del menú al abrir; arreglos de arrastre de cartas
