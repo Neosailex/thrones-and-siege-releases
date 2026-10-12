@@ -1,1 +1,1 @@
-Manga y Ataque del rey (rareza Mítica); Campaña (beta, reino humano); música del menú al abrir; arreglos de arrastre de cartas
+Mano en celular con 6 a 8 cartas (elfo) y la manga: entran todas y más grandes
