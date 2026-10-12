@@ -267,7 +267,7 @@ export function sabotage(g, k) {
   const ev = { type: 'sabotage', seat: g.pending.seat, card, index: k };
   g.pending = null; return ev;
 }
-export function spyDone(g) { if (g.pending?.type !== 'spy') return null; g.pending = null; return { type: 'spyDone' }; }
+export function spyDone(g) { if (g.pending?.type !== 'spy') return null; const free = !!g.pending.free; g.pending = null; return { type: 'spyDone', free }; }
 
 // Cierra el turno: chequea victoria (como el original, primero el jugador 1) y aplica producción del siguiente.
 export function endTurn(g) {
@@ -315,7 +315,7 @@ export function endTurn(g) {
     if (p.stunTurn) { /* desmayado: no carga */ }
     else { if (p.kingCharge >= KINGS[p.race].period) { p.kingCharge = 0; king = kingAct(g, p); if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); king.after = k2.after; king.fx = king.fx.concat(k2.fx, ['double']); } } else { p.kingCharge++; if (p.kingCharge >= KINGS[p.race].period) { p.kingCharge = 0; king = kingAct(g, p); if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); king.after = k2.after; king.fx = king.fx.concat(k2.fx, ['double']); } } } }
   }
-  if (p.spyNext) { p.spyNext = false; g.pending = { type: 'spy', seat: g.turn }; }
+  if (p.spyNext) { p.spyNext = false; g.pending = { type: 'spy', seat: g.turn, free: true }; } // Red de espías: mirar no gasta el turno
   const blocked = p.statsType === 4;
   devClamp(g);
   if (!blocked && p.race === 'humano') { const k = ['brick', 'weapon', 'crystal'].sort((x, y) => p[x] - p[y])[0]; if (p[k] < 6) p[k] += 1; if (p.wall < 10) p.wall += 1; }

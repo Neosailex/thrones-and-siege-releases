@@ -66,11 +66,11 @@
  "layers": {
   "cuerpo": {
    "off": [
-    0,
+    334,
     229
    ],
    "size": [
-    359,
+    127,
     649
    ]
   },
@@ -134,5 +134,13 @@
   }
  },
  "far": null,
- "farDelta": false
+ "farDelta": false,
+ "cape": {
+  "w": [
+   52,
+   74,
+   92
+  ],
+  "toFeet": true
+ }
 }

@@ -1,1 +1,1 @@
-Edificios chicos de la aldea ya no quedan tapados por la cerca
+Arreglo de partida colgada con la Red de espías; la tira de cartas recientes ya no tapa los recursos

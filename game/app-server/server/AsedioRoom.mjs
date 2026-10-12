@@ -70,7 +70,7 @@ export class AsedioRoom extends Room {
   advance(events) {
     const g = this.g;
     for (const e of events) if (e?.type === 'play') this.plays[e.seat][e.card] = (this.plays[e.seat][e.card] || 0) + 1;
-    if (!g.pending) events.push(E.endTurn(g));
+    if (!g.pending && !events.some((e) => e?.type === 'spyDone' && e.free)) events.push(E.endTurn(g)); // Red de espías: mirar no gasta el turno
     this.sync(events);
     if (g.winner != null) this.finish(g.winner, 'normal');
   }
