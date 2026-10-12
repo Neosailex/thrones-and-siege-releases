@@ -1,1 +1,1 @@
-Música propia (Suno) en menú y partida; se quita el tema de Argentum Online
+Partida con 3 temas de batalla que rotan (~6 min sin repetir)
