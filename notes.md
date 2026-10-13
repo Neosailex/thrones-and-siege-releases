@@ -1,1 +1,1 @@
-Mano en celular con 6 a 8 cartas (elfo) y la manga: entran todas y más grandes
+Reyes y tropas animados en las partidas (motor de animación nuevo)
