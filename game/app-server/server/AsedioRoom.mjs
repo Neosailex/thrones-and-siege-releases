@@ -7,7 +7,7 @@ import * as DB from './db.mjs';
 // Estado público mínimo (las manos son secretas: cada jugador recibe su propia vista por mensaje).
 export const LobbyState = schema({ phase: t.string() }, 'LobbyState');
 
-const TURN_MS = 45000, PENDING_MS = 20000, RECONNECT_S = 40, EMOTES = 6;
+const TURN_MS = 45000, PENDING_MS = 20000, SLEEVE_MS = 20000, RECONNECT_S = 40, EMOTES = 6; // SLEEVE_MS: tiempo para elegir el As al empezar
 const clean = (s) => String(s ?? '').replace(/[<>]/g, '').trim().slice(0, 16) || 'Anónimo';
 
 export class AsedioRoom extends Room {
@@ -19,7 +19,12 @@ export class AsedioRoom extends Room {
     this.seats = []; // [{ sessionId, pid, name, rating, connected, lastEmote }]
     this.plays = [{}, {}];
     this.onMessage('play', (c, m) => this.act(c, () => E.play(this.g, m?.index === 'sleeve' ? 'sleeve' : Number(m?.index)))); // index 'sleeve' = jugar la carta de la manga
-    this.onMessage('sleeve', (c, m) => { if (!this.g || this.g.winner != null) return; const seat = this.seatOf(c); if (seat < 0) return; const ev = E.setSleeve(this.g, seat, Number(m?.id)); if (ev) this.sync([ev], null, true); }); // elegir la manga (solo antes de la primera acción)
+    // Fase 'sleeve' (al empezar): los dos eligen su As a la vez; cuando eligió el segundo, el motor reparte (ev.deal) y arranca el primer turno
+    this.onMessage('sleeve', (c, m) => {
+      const g = this.g; if (!g || g.winner != null || g.phase !== 'sleeve') return; const seat = this.seatOf(c); if (seat < 0) return;
+      const ev = E.chooseSleeve(g, seat, m?.id == null ? null : Number(m.id)); if (!ev) return;
+      this.sync([ev], null, !ev.deal); // con el reparto arranca el reloj del turno; si no, sigue el de la elección
+    });
     this.onMessage('pass', (c) => this.act(c, () => E.passExtra(this.g)));
     this.onMessage('discard', (c, m) => this.act(c, () => E.discard(this.g, Array.isArray(m?.indexes) ? m.indexes.map(Number) : [])));
     this.onMessage('sabotage', (c, m) => this.act(c, () => E.sabotage(this.g, Number(m?.index)), true));
@@ -55,9 +60,10 @@ export class AsedioRoom extends Room {
   start() {
     this.lock();
     this.state.phase = 'playing';
-    this.g = E.newGame({ starter: Math.random() < 0.5 ? 0 : 1, decks: this.seats.map((x) => x.deck), races: this.seats.map((x) => x.race), sleeves: this.seats.map((x) => x.sleeve) });
+    this.g = E.newGame({ starter: Math.random() < 0.5 ? 0 : 1, decks: this.seats.map((x) => x.deck), races: this.seats.map((x) => x.race), setup: true }); // arranca en la fase de elegir el As
     for (const [seat] of this.seats.entries()) this.clientOf(seat)?.send('start', this.info(seat));
-    this.sync([]);
+    const pre = []; for (const [seat, x] of this.seats.entries()) if (x.sleeve != null) { const ev = E.chooseSleeve(this.g, seat, x.sleeve); if (ev) pre.push(ev); } // "Guardar mítica siempre": el As ya viene elegido desde el cliente
+    this.sync(pre);
   }
 
   act(client, fn, pendingAction = false) {
@@ -79,7 +85,7 @@ export class AsedioRoom extends Room {
 
   sync(events, only = null, keepTimer = false) {
     const g = this.g;
-    if (only == null && !keepTimer) this.deadline = g.winner != null ? 0 : Date.now() + (g.pending ? PENDING_MS : TURN_MS);
+    if (only == null && !keepTimer) this.deadline = g.winner != null ? 0 : Date.now() + (g.phase === 'sleeve' ? SLEEVE_MS : g.pending ? PENDING_MS : TURN_MS);
     for (const [seat] of this.seats.entries()) {
       const c = this.clientOf(seat); if (!c || (only != null && seat !== only)) continue;
       const evs = events.map((e) => (e.type === 'discard' && e.seat !== seat ? { ...e, cards: e.cards.map(() => 0) } : e));
@@ -93,11 +99,15 @@ export class AsedioRoom extends Room {
   // Si el jugador no juega a tiempo (o está desconectado), juega la IA Normal por él.
   timeout() {
     const g = this.g; if (!g || g.winner != null) return;
+    if (g.phase === 'sleeve') { // no eligieron el As a tiempo: la CPU les guarda la mítica (o su mejor ataque)
+      const evs = []; for (let s = 0; s < 2; s++) if (!g.players[s].sleeveDone) { const ev = E.aiChooseSleeve(g, s); if (ev) evs.push(ev); }
+      this.broadcast('info', { text: 'Se acabó el tiempo para elegir el As: la CPU eligió por quien faltaba.' });
+      return this.sync(evs);
+    }
     const seat = g.pending?.seat ?? g.turn, evs = [];
     if (g.pending?.type === 'sabotage') evs.push(E.sabotage(g, E.aiSabotageSmart(g)));
     else if (g.pending?.type === 'spy') evs.push(E.spyDone(g));
     else {
-      const P = g.players[seat]; if (P.sleeve == null && !P.acted) { const sv = E.setSleeve(g, seat, E.aiSleevePick(this.seats[seat].deck)); if (sv) evs.push(sv); } // no eligió manga: la elige la CPU
       const cy = E.aiMaybeCycle(g); if (cy) evs.push(cy);
       const a = E.aiChooseLevel(g, 'normal');
       const ev = a.type === 'play' ? E.play(g, a.index) : E.discard(g, a.indexes); if (!ev) return;

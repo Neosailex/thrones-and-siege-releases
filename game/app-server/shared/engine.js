@@ -21,8 +21,10 @@ export const kingPeriod = (p) => p.kingPeriod ?? (p.race && KINGS[p.race] ? KING
 // PvP: newGame({ decks, races, starter, rnd }). Campaña: además `seats` (config por asiento) y `campaign` (modo).
 //  seats[i] = { deck, hand, res: { castle, wall, brick, weapon, crystal, builder, recruit, mage }, race, king (false = sin rey), hooks, rules, capCastle, capWall }
 //  campaign = { noWin100: true (no se gana llegando a 100) }
-//  sleeves = [id0, id1]: carta de la manga de cada asiento (sale del mazo antes de repartir). También se puede elegir después con setSleeve (antes de la primera acción).
-export function newGame({ starter = 0, rnd = Math.random, decks = [DEFAULT_DECK, DEFAULT_DECK], res = DEFAULT_RES, races = [null, null], dev = false, seats = null, campaign = null, sleeves = null } = {}) {
+//  sleeves = [id0, id1]: carta de la manga de cada asiento, elegida antes de repartir (CPU, simulaciones).
+//  setup = true: la partida arranca en la fase 'sleeve' (manos vacías); cada jugador elige su As con chooseSleeve y, cuando eligieron
+//          los dos, el motor reparte (evento 'deal'). Es el flujo de la partida real (cliente y online).
+export function newGame({ starter = 0, rnd = Math.random, decks = [DEFAULT_DECK, DEFAULT_DECK], res = DEFAULT_RES, races = [null, null], dev = false, seats = null, campaign = null, sleeves = null, setup = false } = {}) {
   const sc = (i) => seats?.[i] || {};
   const mkp = (i) => makePlayer(sc(i).deck || decks[i], { ...res, ...(sc(i).res || {}) }, rnd, sc(i).hand ?? HAND);
   const g = { players: [mkp(0), mkp(1)], turn: starter, pending: null, winner: null, turnNo: 1, cycled: false, extraTurn: false, dev: dev ? { infinite: true, noWin: true } : null };
@@ -33,17 +35,46 @@ export function newGame({ starter = 0, rnd = Math.random, decks = [DEFAULT_DECK,
     g.hooks = [sc(0).hooks || null, sc(1).hooks || null]; if (!g.hooks[0] && !g.hooks[1]) g.hooks = null;
     g.players.forEach((p, i) => { const c = sc(i); if (c.king === false) p.noKing = true; if (c.capCastle != null) p.capCastle = c.capCastle; if (c.capWall != null) p.capWall = c.capWall; if (c.kingPeriod) p.kingPeriod = c.kingPeriod; p.rs = {}; });
   }
-  for (const p of g.players) {
-    const H = handSize(p);
-    for (let i = 0; i < H; i++) p.hand.push(draw(g, p, rnd));
-    // mano inicial garantizada: si hay menos de 2 cartas jugables, se reparte de nuevo (hasta 3 veces)
-    for (let k = 0; k < 3 && p.hand.filter((id) => playable(p, id)).length < 2; k++) { p.deck.push(...p.hand); p.hand = []; shuffle(p.deck, rnd); for (let i = 0; i < H; i++) p.hand.push(draw(g, p, rnd)); }
-  }
-  g._rnd = rnd; devClamp(g);
-  if (sleeves) for (let i = 0; i < 2; i++) if (sleeves[i] != null) setSleeve(g, i, sleeves[i]);
-  fire(g, 'onBattleStart', {});
+  g._rnd = rnd;
+  if (setup) { g.phase = 'sleeve'; g.players.forEach((p) => { p.sleeveDone = false; }); devClamp(g); return g; } // manos vacías hasta que los dos elijan su As
+  if (sleeves) for (let i = 0; i < 2; i++) if (sleeves[i] != null) takeSleeve(g.players[i], sleeves[i]);
+  dealHands(g);
   return g;
 }
+// Reparte las manos (de a una carta, alternando desde el que arranca) y arranca la pelea. Devuelve el evento para animar:
+// { type: 'deal', order: [asiento, …] (una entrada por carta), redeal: [n0, n1] (cuántas veces se juntó y repartió de nuevo cada mano) }
+function dealHands(g) {
+  const rnd = g._rnd, order = [], redeal = [0, 0], H = g.players.map(handSize);
+  for (let i = 0; i < Math.max(H[0], H[1]); i++) for (const seat of [g.turn, 1 - g.turn]) if (i < H[seat]) { g.players[seat].hand.push(draw(g, g.players[seat], rnd)); order.push(seat); }
+  g.players.forEach((p, seat) => {
+    // mano inicial garantizada: si hay menos de 2 cartas jugables, se reparte de nuevo (hasta 3 veces)
+    for (let k = 0; k < 3 && p.hand.filter((id) => playable(p, id)).length < 2; k++) { p.deck.push(...p.hand); p.hand = []; shuffle(p.deck, rnd); for (let i = 0; i < H[seat]; i++) p.hand.push(draw(g, p, rnd)); redeal[seat]++; }
+  });
+  g.phase = 'play'; devClamp(g);
+  fire(g, 'onBattleStart', {});
+  return { type: 'deal', order, redeal };
+}
+// saca una copia de `id` del mazo y la pone en la manga (antes de repartir)
+function takeSleeve(p, id) { const k = p.deck.indexOf(id); if (k < 0) return false; p.deck.splice(k, 1); p.sleeve = id; return true; }
+// Fase 'sleeve': el jugador elige su As (id de una carta de su mazo; null = sin manga). Se puede cambiar hasta que eligen los dos.
+// Devuelve { type: 'sleeve', seat } y, si con esta elección ya eligieron los dos, además `deal` (el reparto, ver dealHands).
+export function chooseSleeve(g, seat, id) {
+  if (g.phase !== 'sleeve') return null; const p = g.players[seat]; if (!p) return null;
+  if (id != null && (!CARDS[id] || stuck(id) || (!p.deck.includes(id) && p.sleeve !== id))) return null;
+  if (p.sleeve != null) { p.deck.push(p.sleeve); p.sleeve = null; }
+  if (id != null) takeSleeve(p, id);
+  p.sleeveDone = true;
+  const ev = { type: 'sleeve', seat };
+  if (g.players.every((q) => q.sleeveDone)) { shuffle(g.players[0].deck, g._rnd); shuffle(g.players[1].deck, g._rnd); ev.deal = dealHands(g); }
+  return ev;
+}
+// Fase 'sleeve': las cartas del mazo para elegir el As, una por tipo, con la mítica primero: [{ id, n }]
+export function sleeveChoices(p) {
+  const n = {}; for (const id of p.deck) if (!stuck(id)) n[id] = (n[id] || 0) + 1; if (p.sleeve != null) n[p.sleeve] = (n[p.sleeve] || 0) + 1;
+  return Object.keys(n).map(Number).sort((a, b) => (MYTHIC.has(b) - MYTHIC.has(a)) || a - b).map((id) => ({ id, n: n[id] }));
+}
+// IA / timeout: elige el As para un asiento en la fase 'sleeve' (la mítica si la tiene; si no, su ataque más grande)
+export function aiChooseSleeve(g, seat) { const p = g.players[seat], c = []; for (const id of p.deck) c[id - 1] = (c[id - 1] || 0) + 1; for (let i = 0; i < c.length; i++) c[i] = c[i] || 0; return chooseSleeve(g, seat, aiSleevePick(c)); }
 // Hooks de campaña (equipo y reglas de jefe). g.hooks = [hooksAsiento0, hooksAsiento1]; cada uno es { onBattleStart, onTurnStart, onCardPlayed, onDamage, onKingAct }
 // con firma (g, miAsiento, info). En PvP g.hooks es null y no pasa nada. Pueden empujar textos en info.fx para que la UI los muestre.
 function fire(g, name, info) {
@@ -59,8 +90,9 @@ function draw(g, p, rnd = g._rnd) {
 // Al empezar, cada jugador aparta 1 carta de su mazo en la manga (secreta; el rival solo ve que hay una). Se juega desde ahí en cualquier
 // turno propio pagando 1/3 más (redondeo hacia arriba). Pensada para la mítica (Ataque del rey), pero va cualquier carta.
 export const SLEEVE_MULT = 4 / 3;
-// Elegir (o cambiar) la carta de la manga: solo antes de la primera acción del jugador. Saca una copia del mazo (o de la mano, si todas están ahí).
+// (Sin fase de elección, para DEV/campaña) Elegir o cambiar la carta de la manga ya repartida: solo antes de la primera acción del jugador. Saca una copia del mazo (o de la mano, si todas están ahí).
 export function setSleeve(g, seat, id) {
+  if (g.phase === 'sleeve') return chooseSleeve(g, seat, id);
   const p = g.players[seat]; if (!p || p.acted || g.winner != null || !CARDS[id] || stuck(id)) return null;
   if (p.sleeve != null) { p.deck.push(p.sleeve); p.sleeve = null; shuffle(p.deck, g._rnd); }
   let k = p.deck.indexOf(id); if (k >= 0) p.deck.splice(k, 1);
@@ -179,7 +211,7 @@ export function cardVectors(g, p, o, id) {
 }
 // i = posición en la mano, o 'sleeve' para jugar la carta de la manga (cuesta 1/3 más y no se repone).
 export function play(g, i) {
-  if (g.winner != null || g.pending) return null;
+  if (g.winner != null || g.pending || g.phase === 'sleeve') return null;
   const seat = g.turn, p = g.players[seat], o = other(g, p), fromSleeve = i === 'sleeve', id = fromSleeve ? p.sleeve : p.hand[i];
   if (id == null || !playable(p, id, fromSleeve)) return null;
   if (g.hourglass && FX[id]?.k === 'extraTurn') return null; // el Reloj no se encadena (sí se puede después de una Rápida)
@@ -318,13 +350,13 @@ export const handCap = (p) => handSize(p) + (p.race === 'elfo' ? 3 : 1);
 export const cycleMax = (p) => (p.race === 'elfo' ? 2 : 1);
 export const cyclesLeft = (g) => Math.max(0, cycleMax(g.players[g.turn]) - (g.cycles || 0));
 export function cycle(g, i) {
-  if (g.winner != null || g.pending || !cyclesLeft(g)) return null;
+  if (g.winner != null || g.pending || g.phase === 'sleeve' || !cyclesLeft(g)) return null;
   const p = g.players[g.turn]; if (i < 0 || i >= p.hand.length || stuck(p.hand[i])) return null;
   const card = p.hand[i]; p.used.push(card); p.hand[i] = draw(g, p); g.cycles = (g.cycles || 0) + 1; g.cycled = true; p.acted = true;
   return { type: 'cycle', seat: g.turn, card, left: cyclesLeft(g) };
 }
 export function aiMaybeCycle(g) {
-  if (g.pending || g.winner != null) return null; const p = g.players[g.turn]; let ev = null, n = 0;
+  if (g.pending || g.winner != null || g.phase === 'sleeve') return null; const p = g.players[g.turn]; let ev = null, n = 0;
   while (cyclesLeft(g)) {
     let worst = -1, wc = -1;
     p.hand.forEach((id, i) => { if (!playable(p, id) && !stuck(id)) { const cc = CARDS[id][0].reduce((x, y) => x + y, 0) + (CARDS[id][0][8] || 0) * 2; if (cc > wc) { wc = cc; worst = i; } } });
@@ -339,7 +371,7 @@ export function passExtra(g) {
   g.extraTurn = 0; return { type: 'pass', seat: g.turn };
 }
 export function discard(g, idxs) {
-  if (g.winner != null || g.pending) return null;
+  if (g.winner != null || g.pending || g.phase === 'sleeve') return null;
   const list = [...new Set(idxs)].filter((i) => i >= 0 && i < g.players[g.turn].hand.length && !stuck(g.players[g.turn].hand[i])).slice(0, 3);
   if (!list.length) return null;
   const p = g.players[g.turn], cards = [];
@@ -359,6 +391,7 @@ export function spyDone(g) { if (g.pending?.type !== 'spy') return null; const f
 
 // Cierra el turno: chequea victoria (como el original, primero el jugador 1) y aplica producción del siguiente.
 export function endTurn(g) {
+  if (g.phase === 'sleeve') return null; // todavía eligiendo el As
   const no100 = !!g.campaign?.noWin100; // campaña: no se gana llegando a 100
   if (!g.dev?.noWin) for (const [i, p] of g.players.entries()) {
     if (p.castle >= 100 && !no100) { g.winner = i; return { type: 'win', winner: i, reason: 'castle100' }; }
@@ -455,10 +488,10 @@ export const aiSabotagePick = (rnd = Math.random) => Math.floor(rnd() * HAND);
 
 // Vista de la partida para un asiento: oculta la mano rival salvo que un Espía o Sabotaje propio la revele.
 export function viewFor(g, seat) {
-  const pub = (p) => ({ race: p.race || null, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, favor: p.favor || 0, trap: p.trap || null, effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, stunTurn: !!p.stunTurn, kingPeriod: hasKing(p) ? kingPeriod(p) : 0, handSize: handSize(p), noKing: !!p.noKing, rage: p.rage || 0, sleeve: p.sleeve != null, acted: !!p.acted });
+  const pub = (p) => ({ race: p.race || null, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, favor: p.favor || 0, trap: p.trap || null, effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, stunTurn: !!p.stunTurn, kingPeriod: hasKing(p) ? kingPeriod(p) : 0, handSize: handSize(p), noKing: !!p.noKing, rage: p.rage || 0, sleeve: p.sleeve != null, sleeveDone: p.sleeveDone !== false, acted: !!p.acted });
   const me = g.players[seat], op = g.players[1 - seat];
   const reveal = g.pending && g.pending.seat === seat;
-  return { seat, turn: g.turn, winner: g.winner, pending: g.pending, turnNo: g.turnNo, campaign: g.campaign || null, intent: g.intent && g.intent.seat !== seat ? g.intent : null, cycled: g.cycled, cyclesLeft: g.turn === seat ? cyclesLeft(g) : 0, inExtra: !!g.inExtra, extraLeft: g.inExtra ? g.extraTurn + 1 : 0, rapid: !!g.rapidMode, races: [g.players[0].race, g.players[1].race], me: { ...pub(me), hand: me.hand.slice(), sleeveCard: me.sleeve, sleevePlayable: g.turn === seat && playableSleeve(me), sleeveCost: me.sleeve != null ? costOf(me, me.sleeve, true) : null }, op: { ...pub(op), hand: reveal ? op.hand.slice() : null } };
+  return { seat, phase: g.phase || 'play', turn: g.turn, winner: g.winner, pending: g.pending, turnNo: g.turnNo, campaign: g.campaign || null, intent: g.intent && g.intent.seat !== seat ? g.intent : null, cycled: g.cycled, cyclesLeft: g.turn === seat ? cyclesLeft(g) : 0, inExtra: !!g.inExtra, extraLeft: g.inExtra ? g.extraTurn + 1 : 0, rapid: !!g.rapidMode, races: [g.players[0].race, g.players[1].race], me: { ...pub(me), hand: me.hand.slice(), sleeveChoices: g.phase === 'sleeve' ? sleeveChoices(me) : null, sleeveCard: me.sleeve, sleevePlayable: g.turn === seat && playableSleeve(me), sleeveCost: me.sleeve != null ? costOf(me, me.sleeve, true) : null }, op: { ...pub(op), hand: reveal ? op.hand.slice() : null } };
 }
 
 /* ======================= IA POR NIVELES ======================= */
@@ -602,6 +635,7 @@ function aiHard(g, rnd) {
   list.sort((a, b) => b.v - a.v); return list[0].first;
 }
 export function aiChooseLevel(g, level = 'normal', rnd = Math.random) {
+  if (g.phase === 'sleeve') return { type: 'sleeve', id: (() => { const p = g.players[g.turn], c = []; for (const id of p.deck) c[id - 1] = (c[id - 1] || 0) + 1; for (let i = 0; i < c.length; i++) c[i] = c[i] || 0; return aiSleevePick(c); })() };
   // campaña: si hay una intención anunciada para este turno y la carta sigue en la mano y se puede pagar, la cumple
   if (g.intent && g.intent.seat === g.turn) { const it = g.intent; g.intent = null; if (it.turnNo === g.turnNo && it.type === 'play') { const p = g.players[g.turn], i = p.hand.indexOf(it.card); if (i >= 0 && playable(p, it.card)) return { type: 'play', index: i, intent: true }; } }
   { const p = g.players[g.turn]; if (p.forceAttack) { let bi = -1, bd = 0; p.hand.forEach((id, i) => { if (!playable(p, id)) return; const { op } = cardVectors(g, p, other(g, p), id); const d = op[6] + op[7]; if (d > bd) { bd = d; bi = i; } }); if (bi >= 0) return { type: 'play', index: bi, forced: true }; } } // regla de jefe: este turno va con su mejor ataque
