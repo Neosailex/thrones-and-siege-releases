@@ -160,13 +160,12 @@ export const TACTIC_CARDS = {
   178: ['Frenesí', 'Daño 12; 18 si tu muro está por debajo de 10', c(0, 9), Z, Z, { k: 'cond' }],
   179: ['Tambores de guerra', '3 turnos: tus ataques hacen +4', cf(3, 5), Z, Z, { k: 'effect', e: 'drums', turns: 3 }],
 };
-// Míticas (180-185): "Ataque del rey", 1 por raza, máximo 1 copia. El rey baja a pelear: 30 de daño (primero al muro) y el rival pierde
-// 1 unidad, la que más tenga (empate: constructor > soldado > mago). (Juan 12/10: matar las 3 hundía al enano a 42 %.) Solo con el rey despierto y con 2 o más de carga; después queda desmayado 2 turnos.
-// Costo: 10 del recurso de la raza + 10 de otro + 5 de favor. Pensadas para guardarse en la manga (desde ahí cuestan 1/3 más).
+// Míticas (180-185): "Ataque del rey", 1 por raza, máximo 1 copia. El rey baja a pelear: 30 de daño (primero al muro); si el golpe llega al
+// castillo (rompe el muro), el rival pierde además 1 de cada unidad; si el muro aguanta, solo el daño (Juan 14/10). Con 30 rompe el muro ~59 %.
 const cm = (b, w, cr) => [0, b, 0, w, 0, cr, 0, 0, 5];
 const KA = { k: 'kingAttack', stun: 2, minCharge: 2 };
-const KA_TX = 'Ataque del rey: daño 30 y el rival pierde 1 unidad (la que más tenga). Solo con tu rey despierto y con 2+ de carga; después queda desmayado 2 turnos';
-const KO = [0, 0, 0, 0, 0, 0, 30, 0]; // la unidad que pierde el rival se decide al jugarla (engine: kingAttack)
+const KA_TX = 'Ataque del rey: daño 30; si rompe el muro, el rival pierde además 1 de cada unidad. Solo con tu rey despierto y con 2+ de carga; después queda desmayado 2 turnos';
+const KO = [0, 0, 0, 0, 0, 0, 30, 0]; // las unidades se pierden solo si rompe el muro (engine: kingAttack)
 export const MYTHIC_CARDS = {
   180: ['Carga de Aldric', KA_TX, cm(10, 10, 0), Z, KO, KA],
   181: ['Martillo de Thorgrim', KA_TX, cm(12, 0, 0), Z, KO, KA], // solo ladrillos: con 15+5 el enano la usaba 22 %, así 46 %

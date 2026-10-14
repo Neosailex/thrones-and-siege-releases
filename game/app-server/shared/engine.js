@@ -131,7 +131,12 @@ function validate(p) {
 }
 function statAdd(p, a) { KEYS.forEach((k, i) => { p[k] += a[i]; }); validate(p); }
 // foe: el daño viene del rival (cartas, efectos, rey o trampas suyas); por defecto, si no es el turno de p
+// Unidad herida (regla general, Juan 14/10): si te sacan una unidad que no tenés para dar (estás en 1), no bajás de 1 pero queda herida:
+// en tu próximo turno esa unidad no produce y después vuelve sola. p.wounded es una máscara: 1 constructores, 2 soldados, 4 magos.
+export const WOUND = { builder: 1, recruit: 2, mage: 4 };
+export const woundedList = (p) => Object.keys(WOUND).filter((k) => (p.wounded || 0) & WOUND[k]);
 function statRemove(g, p, a, keep, fx, foe = g.turn !== g.players.indexOf(p)) {
+  for (const [i, k] of [[0, 'builder'], [2, 'recruit'], [4, 'mage']]) if (a[i] > 0) { if (p[k] - a[i] < 1) { p.wounded = (p.wounded || 0) | WOUND[k]; fx.push('wound:' + k); } else fx.push('kill:' + k); }
   for (let i = 0; i < 6; i++) p[KEYS[i]] -= a[i];
   const o = other(g, p), hits = a[6] > 0 || a[7] > 0, w0 = p.wall, c0 = p.castle;
   if (!p.noDamage) {
@@ -163,8 +168,6 @@ export function costOf(p, id, sleeve = false) {
   if (sleeve) for (const i of [1, 3, 5, 8]) if (c[i] > 0) c[i] = Math.ceil(c[i] * SLEEVE_MULT); // desde la manga: 1/3 más
   return c;
 }
-// Unidad que pierde el rival con el Ataque del rey: la que más tenga (empate: constructor > soldado > mago); null si tiene 1 de cada
-export function kingAttackVictim(o) { const L = [['builder', 0], ['recruit', 2], ['mage', 4]]; let best = null; for (const [k, i] of L) if ((o[k] || 0) > 1 && (!best || o[k] > o[best.k])) best = { k, i }; return best; }
 // ¿Puede el rey bajar a atacar? (mítica): rey propio, despierto y con la carga mínima
 export const kingAttackOk = (p, id) => { const f = FX[id]; if (f?.k !== 'kingAttack') return true; return hasKing(p) && !(p.kingStun > 0) && !p.stunTurn && (p.kingCharge || 0) >= (f.minCharge || 0); };
 // Luto: mientras el rey esté desmayado (incluido el turno en que se recupera) las cartas cuestan 2 más
@@ -275,10 +278,12 @@ export function play(g, i) {
   if (special?.k === 'kingAttack') { // el rey baja a pelear: si el rival tiene Guardia real, la carga se anula (igual queda desmayado)
     fx.push('kingAttack');
     if (o.kingGuard) { o.kingGuard = false; op = op.map(() => 0); kaGuarded = true; fx.push('kingGuarded'); }
-    else { const u = kingAttackVictim(o); if (u) { op = op.slice(); op[u.i] += 1; fx.push('kill:' + u.k); } } // y mata 1 unidad: la que más tenga
   }
+  const castleBefore = o.castle;
   statAdd(p, s);
   statRemove(g, o, op, false, fx);
+  // Ataque del rey: si el golpe llegó al castillo (rompió el muro), el rival pierde además 1 de cada unidad; si el muro aguantó, solo el daño
+  if (special?.k === 'kingAttack' && !kaGuarded && o.castle < castleBefore) { fx.push('kingBreak'); statRemove(g, o, [1, 0, 1, 0, 1, 0, 0, 0], false, fx); }
   if (sp === 'double') p.x2 = true; // el próximo ataque, no este
   // efectos especiales de las cartas de raza
   if (special) {
@@ -413,14 +418,16 @@ export function endTurn(g) {
   g.inExtra = false; g.rapidMode = false; g.rapidUsed = 0; g.hourglass = false; g.players[g.turn].halfId = null;
   { const q = g.players[g.turn]; if (q.hand.some(isState)) { q.hand = q.hand.filter((id) => !isState(id)); while (q.hand.length < handSize(q)) q.hand.push(draw(g, q)); } } // campaña: los estados se van al terminar tu turno
   g.turn = 1 - g.turn; g.turnNo++; g.cycled = false; g.cycles = 0;
-  const p = g.players[g.turn], before = stats(p), all = p.builder + p.recruit + p.mage, both = () => [stats(g.players[0]), stats(g.players[1])], S0 = both();
+  const p = g.players[g.turn], before = stats(p), both = () => [stats(g.players[0]), stats(g.players[1])], S0 = both();
+  const wd = p.wounded || 0, ub = wd & 1 ? 0 : p.builder, ur = wd & 2 ? 0 : p.recruit, um = wd & 4 ? 0 : p.mage, all = ub + ur + um, healed = woundedList(p); // unidades heridas: este turno no producen
   switch (p.statsType) {
-    case 0: p.brick += p.builder; p.weapon += p.recruit; p.crystal += p.mage; break;
+    case 0: p.brick += ub; p.weapon += ur; p.crystal += um; break;
     case 1: p.brick += all; break;
     case 2: p.weapon += all; break;
     case 3: p.crystal += all; break;
-    case 5: p.brick += p.builder; p.weapon += p.recruit; p.crystal += p.mage * 2; break;
+    case 5: p.brick += ub; p.weapon += ur; p.crystal += um * 2; break;
   }
+  p.wounded = 0; // ya no produjeron este turno: el que viene vuelven
   if (g.campaign?.baseProd && p.statsType !== 4) { const bp = g.campaign.baseProd; p.brick += bp; p.weapon += bp; p.crystal += bp; } // campaña: producción base además de las unidades (con 1 unidad la economía no alcanza)
   if (p.race) p.favor = Math.min(FAVOR_MAX, (p.favor || 0) + 1);
   p.lastDamage = p.dmgRound; p.dmgRound = 0; const S1 = both();
@@ -456,7 +463,7 @@ export function endTurn(g) {
   devClamp(g);
   if (!blocked && p.race === 'humano') { const k = ['brick', 'weapon', 'crystal'].sort((x, y) => p[x] - p[y])[0]; if (p[k] < 6) p[k] += 1; if (p.wall < 10) p.wall += 1; }
   p.statsType = 0; devClamp(g);
-  const ev = { type: 'turn', seat: g.turn, before, after: stats(p), blocked, king, effects: effectsLog, steps: [S0, S1, S2, both()], fx: [] };
+  const ev = { type: 'turn', seat: g.turn, before, after: stats(p), blocked, king, effects: effectsLog, steps: [S0, S1, S2, both()], fx: [], ...(healed.length ? { woundedIdle: healed } : {}) };
   if (g.hooks) { for (const id of p.hand) if (FX[id]?.tick) statAdd(p, FX[id].tick); fire(g, 'onTurnStart', { seat: g.turn, ev, fx: ev.fx }); ev.after = stats(p); ev.steps[3] = both(); } // campaña: maldiciones que pican y reglas/equipo
   const o2 = other(g, p); if (o2.castle <= 0 || (p.castle >= 100 && !no100) || (o2.castle >= 100 && !no100) || p.castle <= 0) { if (!g.dev?.noWin) { if (o2.castle <= 0 || (p.castle >= 100 && !no100)) g.winner = g.turn; else g.winner = 1 - g.turn; } }
   return ev;
@@ -499,7 +506,7 @@ export const aiSabotagePick = (rnd = Math.random) => Math.floor(rnd() * HAND);
 
 // Vista de la partida para un asiento: oculta la mano rival salvo que un Espía o Sabotaje propio la revele.
 export function viewFor(g, seat) {
-  const pub = (p) => ({ race: p.race || null, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, favor: p.favor || 0, trap: p.trap || null, effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, stunTurn: !!p.stunTurn, kingPeriod: hasKing(p) ? kingPeriod(p) : 0, handSize: handSize(p), noKing: !!p.noKing, rage: p.rage || 0, sleeve: p.sleeve != null, sleeveDone: p.sleeveDone !== false, acted: !!p.acted });
+  const pub = (p) => ({ race: p.race || null, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, favor: p.favor || 0, trap: p.trap || null, effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, stunTurn: !!p.stunTurn, kingPeriod: hasKing(p) ? kingPeriod(p) : 0, handSize: handSize(p), noKing: !!p.noKing, rage: p.rage || 0, sleeve: p.sleeve != null, sleeveDone: p.sleeveDone !== false, acted: !!p.acted, wounded: woundedList(p) });
   const me = g.players[seat], op = g.players[1 - seat];
   const reveal = g.pending && g.pending.seat === seat;
   return { seat, phase: g.phase || 'play', turn: g.turn, winner: g.winner, pending: g.pending, turnNo: g.turnNo, campaign: g.campaign || null, intent: g.intent && g.intent.seat !== seat ? g.intent : null, cycled: g.cycled, cyclesLeft: g.turn === seat ? cyclesLeft(g) : 0, inExtra: !!g.inExtra, extraLeft: g.inExtra ? g.extraTurn + 1 : 0, rapid: !!g.rapidMode, races: [g.players[0].race, g.players[1].race], me: { ...pub(me), hand: me.hand.slice(), sleeveChoices: g.phase === 'sleeve' ? sleeveChoices(me) : null, sleeveCard: me.sleeve, sleevePlayable: g.turn === seat && playableSleeve(me), sleeveCost: me.sleeve != null ? costOf(me, me.sleeve, true) : null }, op: { ...pub(op), hand: reveal ? op.hand.slice() : null } };
@@ -533,7 +540,8 @@ export function evaluate(g, seat, Wt = W) {
     if (p.noDamage) v += W.shield;
     if (p.x2) v += W.x2;
     if (p.statsType >= 1 && p.statsType <= 3) v += 3;
-    if (p.sleeve != null) v += MYTHIC.has(p.sleeve) ? 10 : 3; // la carta guardada en la manga vale algo
+    if (p.sleeve != null) v += MYTHIC.has(p.sleeve) ? 10 : 3;
+    if (p.wounded) v -= woundedList(p).length * 3; // unidad herida: un turno sin producir // la carta guardada en la manga vale algo
     if (hasKing(p)) {
       const per = kingPeriod(p), ch = p.kingCharge || 0, near = ch / per; // cuanto más cerca de actuar, más vale el rey (y más duele que lo desmayen)
       v += ch * (2 + near * 4) - (p.kingStun || 0) * (3 + near * 9) + (p.kingGuard ? 2 + near * 4 : 0) + (p.kingDouble ? 6 : 0);
