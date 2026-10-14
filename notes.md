@@ -1,1 +1,1 @@
-Saqueo roba de los tres recursos (cuesta 13 armas); la CPU ahora usa Luto
+La CPU ya no juega en tu turno ni repite jugada (arregla traba con la Red de espías). Menos errores al cargar tropas.
