@@ -1,1 +1,1 @@
-Cartas animadas (Rayo, Tormenta, Tempestad, Cruzada, Dragón, Gólem), arqueros elfos con arco, Ataque del rey animado y 'Elegí tu As' dentro de la partida
+Ataque del rey de Thorgrim animado con sonido, personajes en HD y reyes a escala, mano inicial de 5 sin re-repartos

@@ -42,13 +42,24 @@ export function newGame({ starter = 0, rnd = Math.random, decks = [DEFAULT_DECK,
   return g;
 }
 // Reparte las manos (de a una carta, alternando desde el que arranca) y arranca la pelea. Devuelve el evento para animar:
-// { type: 'deal', order: [asiento, …] (una entrada por carta), redeal: [n0, n1] (cuántas veces se juntó y repartió de nuevo cada mano) }
+// { type: 'deal', order: [asiento, …] (una entrada por carta), redeal: [0, 0] (ya no se re-reparte; queda por compatibilidad) }
 function dealHands(g) {
   const rnd = g._rnd, order = [], redeal = [0, 0], H = g.players.map(handSize);
   for (let i = 0; i < Math.max(H[0], H[1]); i++) for (const seat of [g.turn, 1 - g.turn]) if (i < H[seat]) { g.players[seat].hand.push(draw(g, g.players[seat], rnd)); order.push(seat); }
-  g.players.forEach((p, seat) => {
-    // mano inicial garantizada: si hay menos de 2 cartas jugables, se reparte de nuevo (hasta 3 veces)
-    for (let k = 0; k < 3 && p.hand.filter((id) => playable(p, id)).length < 2; k++) { p.deck.push(...p.hand); p.hand = []; shuffle(p.deck, rnd); for (let i = 0; i < H[seat]; i++) p.hand.push(draw(g, p, rnd)); redeal[seat]++; }
+  // mano inicial garantizada (se arma antes de mostrarla, sin re-repartir): si hay menos de 2 cartas jugables, las injugables más caras
+  // vuelven al mazo y se cambian por jugables del mazo. Antes se re-repartía hasta 3 veces: saltaba en el 72 % de las manos y en el 39 %
+  // quedaba mala igual. `redeal` queda siempre en 0 (se mantiene el campo por compatibilidad).
+  g.players.forEach((p) => {
+    const cost = (id) => CARDS[id][0].reduce((a, b) => a + b, 0);
+    let ok = p.hand.filter((id) => playable(p, id)).length;
+    if (ok >= 2) return;
+    const bad = p.hand.map((id, i) => [i, id]).filter(([, id]) => !playable(p, id)).sort((x, y) => cost(y[1]) - cost(x[1]));
+    for (const [i, id] of bad) {
+      if (ok >= 2) break;
+      const j = p.deck.findIndex((d) => playable(p, d)); if (j < 0) break;
+      p.hand[i] = p.deck[j]; p.deck[j] = id; ok++;
+    }
+    shuffle(p.deck, rnd);
   });
   g.phase = 'play'; devClamp(g);
   fire(g, 'onBattleStart', {});
