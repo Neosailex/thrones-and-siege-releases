@@ -34,7 +34,9 @@ export const RAPID = new Set([1, 95, 13, 28, 40, 32, 34, 126, 129]); // "Rápida
 export const GNOME_MACHINES = [103, 105, 107, 110, 143, 144]; // lo que puede inventar el rey Fizzwick
 {
   const BAL = {
-    8: { o: { 6: 12 }, t: 'Daño 12' }, 7: { c: { 3: 15 } }, 9: { c: { 3: 12 } }, 33: { c: { 1: 20 } }, 35: { c: { 1: 20 } },
+    8: { o: { 6: 12 }, t: 'Daño 12' },
+    // Saqueo (Juan 14/10): roba de los tres recursos (antes solo ladrillos y cristales). Cuesta 13 armas (antes 11): con 11 los mazos que la llevan subían 49,2 → 51,2 %; con 13, 49,9 %
+    53: { c: { 3: 13 }, s: { 3: 3 }, o: { 3: 6 }, t: 'Rival: −6 de cada recurso; vos +3 de cada recurso' }, 7: { c: { 3: 15 } }, 9: { c: { 3: 12 } }, 33: { c: { 1: 20 } }, 35: { c: { 1: 20 } },
     5: { c: { 3: 0, 5: 8 } }, 49: { c: { 1: 0, 3: 0, 5: 16 }, o: { 1: 6, 3: 6, 5: 6, 6: 6, 7: 6 } }, 47: { c: { 1: 12, 3: 16 } }, 55: { s: { 6: 10, 7: 10 }, t: 'Castillo +10, muro +10' },
     43: { o: { 0: 1, 1: 5 }, t: '−1 constructor tuyo; el rival pierde 1 constructor y 5 ladrillos' },
     44: { o: { 4: 1, 5: 5 }, t: '−1 mago tuyo; el rival pierde 1 mago y 5 cristales' },

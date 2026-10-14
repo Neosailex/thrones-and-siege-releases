@@ -530,6 +530,8 @@ const clampV = (v, cap, slope) => (v <= cap ? v : cap + (v - cap) * slope);
 // Valor de la posición desde el punto de vista de `seat`.
 export const W = { castle: 0.8, castleHi: 7.9, castleLo: 3.9, wall: 1.63, wallCap: 29, unit: 35, unitCap: 15.8, res: 0.8, resCap: 22.6, shield: 13, x2: 20, threat: 1.52, threatK: 0.46, oppW: 2.33 }; // ajustados por búsqueda automática
 export const W2 = { castle: 0.92, castleHi: 21.8, castleLo: 3.4, wall: 2.4, wallCap: 29, unit: 46.5, unitCap: 20.2, res: 0.8, resCap: 25.8, shield: 9.2, x2: 20.6, threat: 1.38, threatK: 0.7, oppW: 1.64 }; // pesos del nivel Difícil
+// Pesos de la IA sobre el rey rival (14/10, para que use Luto y los desmayos cuando el rey está por actuar). Antes: { stunNear: 9, stunTurn: false, luto: false }.
+export const AIW = { stunNear: 30, stunTurn: true, luto: true };
 export function evaluate(g, seat, Wt = W) {
   const W = Wt;
   if (g.winner != null) return g.winner === seat ? 1e5 : -1e5;
@@ -549,12 +551,13 @@ export function evaluate(g, seat, Wt = W) {
     if (p.wounded) v -= woundedList(p).length * 3; // unidad herida: un turno sin producir // la carta guardada en la manga vale algo
     if (hasKing(p)) {
       const per = kingPeriod(p), ch = p.kingCharge || 0, near = ch / per; // cuanto más cerca de actuar, más vale el rey (y más duele que lo desmayen)
-      v += ch * (2 + near * 4) - (p.kingStun || 0) * (3 + near * 9) + (p.kingGuard ? 2 + near * 4 : 0) + (p.kingDouble ? 6 : 0);
+      v += ch * (2 + near * 4) - ((p.kingStun || 0) + (AIW.stunTurn && p.stunTurn ? 1 : 0)) * (3 + near * AIW.stunNear) + (p.kingGuard ? 2 + near * 4 : 0) + (p.kingDouble ? 6 : 0); // stunTurn: el turno de desmayo que ya corre también cuenta (si no, un desmayo de 1 turno no valía nada); desmayarlo justo antes de actuar vale mucho más
+      if (AIW.luto && lutoOn(p)) v -= 4 + Math.min(8, (p.brick + p.weapon + p.crystal) / 8); // Luto: sus cartas cuestan 2 más; duele más cuanto más tiene para gastar (cartas caras)
     }
     // trampas: valen más cuando el rival tiene con qué caer en ellas
     const TV = { moat: 3 + Math.min(8, o.weapon / 3), counterspell: 3 + Math.min(8, o.crystal / 3), ambush: 3 + Math.min(6, o.weapon / 4), spynet: 4, militia: 4, irongate: 4, mirage: 3 + Math.min(6, o.weapon / 4), landmine: 3 + Math.min(8, o.weapon / 3) };
     if (g.campaign) v -= p.hand.reduce((a, id) => a + (isCurse(id) ? 8 : isState(id) ? 4 : 0), 0); // campaña: las maldiciones en mano pesan (así la IA las mete y el jugador las saca)
-    v += (p.favor || 0) * 1.2 + (p.trap ? (TV[p.trap] || 6) : 0) + (p.effects || []).reduce((a, e) => a + e.turns * 3, 0) + (p.luto && o.kingStun ? 2 : 0);
+    v += (p.favor || 0) * 1.2 + (p.trap ? (TV[p.trap] || 6) : 0) + (p.effects || []).reduce((a, e) => a + e.turns * 3, 0) ;
     const pot = p.weapon * 0.8 + p.crystal * 0.9, def = o.wall + o.castle;
     if (pot > def * W.threatK) v += (pot - def * W.threatK) * W.threat;
     return v;

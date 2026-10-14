@@ -1,1 +1,1 @@
-Luto y desmayos: el rey desmayado se ve como desmayado ese turno
+Saqueo roba de los tres recursos (cuesta 13 armas); la CPU ahora usa Luto
