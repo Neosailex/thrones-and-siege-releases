@@ -1,1 +1,1 @@
-Tropas que caen de espaldas al morir (sin volar lejos); ajustes de Aldric
+Ataque del rey: el daño y la explosión se ven en el momento del golpe
