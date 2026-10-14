@@ -1,5 +1,5 @@
 // Motor del Asedio. Sin dependencias de DOM ni de red: lo usan el servidor y el cliente.
-import { CARDS, SPECIAL, FX, DEFAULT_DECK, DEFAULT_RES, HAND, KINGS, FAVOR_MAX, ARROW_IDS, MELEE_IDS, RAPID, GNOME_MACHINES, NAMES, MYTHIC, padDeck } from './cards.js';
+import { CARDS, SPECIAL, FX, DEFAULT_DECK, DEFAULT_RES, HAND, KINGS, FAVOR_MAX, ARROW_IDS, MELEE_IDS, RAPID, GNOME_MACHINES, NAMES, MYTHIC, padDeck, raceOf } from './cards.js';
 
 const KEYS = ['builder', 'brick', 'recruit', 'weapon', 'mage', 'crystal', 'wall', 'castle'];
 export const stats = (p) => KEYS.map((k) => p[k]);
@@ -358,7 +358,12 @@ function kingAct(g, p) {
 // Modo desarrollador: recursos fijos en 99, la partida no termina, mano editable, razas y pasivas cambiables
 export function devClamp(g) { if (g.dev?.infinite) for (const p of g.players) { p.brick = p.weapon = p.crystal = 99; p.favor = FAVOR_MAX; p.devKA = true; } }
 export function devSetCard(g, seat, i, id) { if (!g.dev || !CARDS[id] || i < 0 || i >= g.players[seat].hand.length) return null; g.players[seat].hand[i] = id; return { type: 'devCard', seat, index: i, card: id }; }
-export function devSetRace(g, seat, race, passives = true) { if (!g.dev) return null; const p = g.players[seat]; p.devRace = race || null; p.race = passives ? p.devRace : null; return { type: 'devRace', seat, race }; }
+export function devSetRace(g, seat, race, passives = true) {
+  if (!g.dev) return null; const p = g.players[seat]; p.devRace = race || null; p.race = passives ? p.devRace : null;
+  // la mítica de la manga sigue a la raza (Ataque del rey de ese rey)
+  if (race && p.sleeve != null && MYTHIC.has(p.sleeve)) { const m = [...MYTHIC].find((id) => raceOf(id) === race); if (m) p.sleeve = m; }
+  return { type: 'devRace', seat, race };
+}
 export function devPassives(g, on) { if (!g.dev) return; for (const p of g.players) p.race = on ? (p.devRace ?? p.race) : null; g.dev.passives = on; }
 // Tope de mano: la base es HAND (5); se puede pasar con cartas extra hasta 6, los elfos hasta 8
 export const handCap = (p) => handSize(p) + (p.race === 'elfo' ? 3 : 1);
