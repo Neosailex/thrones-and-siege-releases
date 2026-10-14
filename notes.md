@@ -1,1 +1,1 @@
-Ataque del rey de Thorgrim animado con sonido, personajes en HD y reyes a escala, mano inicial de 5 sin re-repartos
+Campo y castillos en HD; opción Gráficos en Ajustes (Alta/Media/Baja); grito de Thorgrim justo en el golpe
