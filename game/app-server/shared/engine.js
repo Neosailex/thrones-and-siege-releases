@@ -169,7 +169,7 @@ export function costOf(p, id, sleeve = false) {
   return c;
 }
 // ¿Puede el rey bajar a atacar? (mítica): rey propio, despierto y con la carga mínima
-export const kingAttackOk = (p, id) => { const f = FX[id]; if (f?.k !== 'kingAttack') return true; return hasKing(p) && !(p.kingStun > 0) && !p.stunTurn && (p.kingCharge || 0) >= (f.minCharge || 0); };
+export const kingAttackOk = (p, id) => { const f = FX[id]; if (f?.k !== 'kingAttack') return true; if (p.devKA) return true; /* modo DEV: sin requisito de carga ni de rey despierto */ return hasKing(p) && !(p.kingStun > 0) && !p.stunTurn && (p.kingCharge || 0) >= (f.minCharge || 0); };
 // Luto: mientras el rey esté desmayado (incluido el turno en que se recupera) las cartas cuestan 2 más
 export const playableSleeve = (p) => p.sleeve != null && playable(p, p.sleeve, true);
 export const lutoOn = (p) => !!p.luto && (p.kingStun > 0 || !!p.stunTurn);
@@ -234,7 +234,7 @@ export function play(g, i) {
   const fx = [], special = FX[id] || null;
   p.used.push(id); p.acted = true;
   const sp = SPECIAL[id];
-  if (fromSleeve) { p.sleeve = null; fx.push('sleeve'); }
+  if (fromSleeve) { if (!g.dev) p.sleeve = null; fx.push('sleeve'); } // modo DEV: la carta de la manga no se gasta (para probarla muchas veces)
   else if (p.hand.length > handSize(p)) p.hand.splice(i, 1); else p.hand[i] = draw(g, p); // la carta extra del rey elfo no se repone
   let { s, op, siege } = cardVectors(g, p, o, id); if (siege) fx.push('siegeLocked');
   // moneda: se tira antes, así el extra de daño es parte del mismo ataque (escudo, Furia, trampas, pasivas)
@@ -311,7 +311,7 @@ export function play(g, i) {
       if (coin.self) statAdd(p, coin.self); if (coin.selfCost) payCost(p, coin.selfCost); if (coin.selfDmg) statAdd(p, coin.selfDmg.map((v) => -v)); // "tu muro −10": pérdida propia (no la frena tu escudo ni la dobla la Furia rival)
     }
     if (k === 'giveCurse') { giveCard(g, special.target === 'self' ? p : o, special.id); fx.push('curse:' + special.id); }
-    if (k === 'kingAttack') { p.kingStun = Math.max(p.kingStun || 0, special.stun || 2); fx.push('kingStun'); } // bajó a pelear: desmayado 2 turnos (mantiene la carga) // campaña: mete una maldición/estado en la mano del rival
+    if (k === 'kingAttack' && !g.dev) { p.kingStun = Math.max(p.kingStun || 0, special.stun || 2); fx.push('kingStun'); } // en DEV el rey no queda desmayado: se puede repetir el ataque // bajó a pelear: desmayado 2 turnos (mantiene la carga) // campaña: mete una maldición/estado en la mano del rival
   }
   if (p.rage && (op[6] > 0 || op[7] > 0)) p.rage = 0; // la furia acumulada se gasta en el ataque
   if (p.castle <= 0) p.castle = 0;
@@ -356,7 +356,7 @@ function kingAct(g, p) {
   return kev;
 }
 // Modo desarrollador: recursos fijos en 99, la partida no termina, mano editable, razas y pasivas cambiables
-export function devClamp(g) { if (g.dev?.infinite) for (const p of g.players) { p.brick = p.weapon = p.crystal = 99; p.favor = FAVOR_MAX; } }
+export function devClamp(g) { if (g.dev?.infinite) for (const p of g.players) { p.brick = p.weapon = p.crystal = 99; p.favor = FAVOR_MAX; p.devKA = true; } }
 export function devSetCard(g, seat, i, id) { if (!g.dev || !CARDS[id] || i < 0 || i >= g.players[seat].hand.length) return null; g.players[seat].hand[i] = id; return { type: 'devCard', seat, index: i, card: id }; }
 export function devSetRace(g, seat, race, passives = true) { if (!g.dev) return null; const p = g.players[seat]; p.devRace = race || null; p.race = passives ? p.devRace : null; return { type: 'devRace', seat, race }; }
 export function devPassives(g, on) { if (!g.dev) return; for (const p of g.players) p.race = on ? (p.devRace ?? p.race) : null; g.dev.passives = on; }

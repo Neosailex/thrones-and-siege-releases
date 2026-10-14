@@ -1,1 +1,1 @@
-Ataque del rey: el daño y la explosión se ven en el momento del golpe
+Modo DEV: la carta de la manga no se gasta
