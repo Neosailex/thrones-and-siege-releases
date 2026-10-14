@@ -1,1 +1,1 @@
-Modo DEV: la carta de la manga no se gasta
+Efectos que estaban solo en los laboratorios, ahora en el juego
