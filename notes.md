@@ -1,1 +1,1 @@
-La CPU ya no juega en tu turno ni repite jugada (arregla traba con la Red de espías). Menos errores al cargar tropas.
+Si el rival te sabotea una carta se ve cuál se quema. La carta que leés en el turno rival queda abierta al volver tu turno.
