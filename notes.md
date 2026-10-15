@@ -1,1 +1,1 @@
-Aldric: vuelve su figura de siempre en el tajo y el desmayo, golpe más agachado.
+Los magos ya no atacan al muro rival cada vez que empieza su turno.
