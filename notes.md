@@ -1,1 +1,1 @@
-Los magos ya no atacan al muro rival cada vez que empieza su turno.
+Aldric: bendición, desmayo y Carga nuevos (animación pintada con huesos); la hoja de luz pega en el castillo rival.
