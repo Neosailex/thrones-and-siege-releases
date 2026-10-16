@@ -1,1 +1,1 @@
-Cuando una trampa anula tu carta o el escudo frena el daño, ahora se ve claro en pantalla (antes parecía que el ataque pegaba y no bajaba nada).
+Fizzwick: Ataque del rey nuevo (jetpack, llave-bombarda, piña de magia) con voz y sonidos propios, y guardia nueva.
