@@ -1,1 +1,1 @@
-Aldric: bendición, desmayo y Carga nuevos (animación pintada con huesos); la hoja de luz pega en el castillo rival.
+Cuando una trampa anula tu carta o el escudo frena el daño, ahora se ve claro en pantalla (antes parecía que el ataque pegaba y no bajaba nada).
