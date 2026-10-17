@@ -1,1 +1,1 @@
-Fizzwick: Ataque del rey nuevo (jetpack, llave-bombarda, piña de magia) con voz y sonidos propios, y guardia nueva.
+Cartas: sonidos nuevos (S05). Las cartas de cristal ya no hacen que el rey haga su cinemática ni que los magos ataquen el castillo rival.
