@@ -1,1 +1,1 @@
-DEV: la mítica se juega siempre. Desmayos nuevos de todos los reyes, buff y horda de Gorrak, báculo y pose nueva de Aelwyn.
+Ataque del rey: sacamos la explosión vieja de AO al pegar; ahora se oye bien el sonido propio de cada rey (Vaelith incluida).
