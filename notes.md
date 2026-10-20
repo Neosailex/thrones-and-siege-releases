@@ -1,1 +1,1 @@
-Ataque del rey: sacamos la explosión vieja de AO al pegar; ahora se oye bien el sonido propio de cada rey (Vaelith incluida).
+Ataque del rey: el sonido igual al lab (se oye la explosión de Vaelith, sin sonidos viejos encima y con la música baja).
