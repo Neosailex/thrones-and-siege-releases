@@ -1,1 +1,1 @@
-Al salir de una partida se corta todo (animaciones, ataques del rey y sonidos): no queda nada de la anterior al entrar a otra o a DEV.
+Retrato del rey con su cabeza pintada (sin AO). Gorrak: buff nuevo con la horda; Fizzwick: sonidos del buff; Aelwyn: lluvia de flechas más larga; el rey animado sin cámara lenta para ir pegado a su voz.

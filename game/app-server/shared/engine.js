@@ -130,24 +130,57 @@ function validate(p) {
   if (p.capWall != null && p.wall > p.capWall) p.wall = p.capWall;
 }
 function statAdd(p, a) { KEYS.forEach((k, i) => { p[k] += a[i]; }); validate(p); }
+/* ---------- Golpes (S04, 20/10): detalle de cada cambio de muro y castillo, en orden, para animar la destrucción y la reconstrucción ----------
+   Cada evento 'play' y 'turn' trae `golpes: [{ asiento, objetivo: 'muro'|'castillo', cantidad, tipo, origen }]`.
+   cantidad: con signo (−8 = daño, +6 = construcción/cura). La suma por asiento y objetivo da exacto el después − el antes del evento.
+   tipo: 'normal' (la carta jugada: daño al muro o construcción), 'directo' (daño de la carta que va directo al castillo),
+         'desborde' (lo que sobra cuando el daño tira el muro y sigue al castillo), 'pasiva' (gnomos +4 directo, humanos muro +1),
+         'trampa', 'efecto' (efectos de 3 turnos y reglas de campaña), 'rey' (acción del rey, Ataque del rey, inventos de Fizzwick),
+         'costo' (muro que se paga como costo, p. ej. Reforma).
+   origen: id de la carta, o el nombre del efecto/trampa ('rain', 'livingwall', 'mines', 'moat'…) o la raza del rey.
+   Las simulaciones de la IA no lo registran (_noGl). */
+function glBegin(g) { if (g._gl || g._noGl) return false; g._gl = []; g._gs = g.players.map((p) => [p.wall, p.castle]); g._glCtx = { tipo: 'normal', origen: null }; return true; }
+function glCtx(g, tipo, origen) { const prev = g._glCtx; if (g._gl) { glMark(g); g._glCtx = { tipo, origen }; } return prev; }
+function glRestore(g, prev) { if (g._gl) { glMark(g); g._glCtx = prev; } }
+// registra lo que cambió desde la última marca con el contexto actual
+function glMark(g, tipo = g._glCtx?.tipo, origen = g._glCtx?.origen) {
+  if (!g._gl) return;
+  g.players.forEach((p, i) => { const [w, c] = g._gs[i];
+    if (p.wall !== w) g._gl.push({ asiento: i, objetivo: 'muro', cantidad: p.wall - w, tipo, origen });
+    if (p.castle !== c) g._gl.push({ asiento: i, objetivo: 'castillo', cantidad: p.castle - c, tipo, origen });
+    g._gs[i] = [p.wall, p.castle]; });
+}
+function glEnd(g, mine) { if (!mine) return null; glMark(g); const l = g._gl; g._gl = null; g._gs = null; g._glCtx = null; return l; }
 // foe: el daño viene del rival (cartas, efectos, rey o trampas suyas); por defecto, si no es el turno de p
 // Unidad herida (regla general, Juan 14/10): si te sacan una unidad que no tenés para dar (estás en 1), no bajás de 1 pero queda herida:
 // en tu próximo turno esa unidad no produce y después vuelve sola. p.wounded es una máscara: 1 constructores, 2 soldados, 4 magos.
 export const WOUND = { builder: 1, recruit: 2, mage: 4 };
 export const woundedList = (p) => Object.keys(WOUND).filter((k) => (p.wounded || 0) & WOUND[k]);
-function statRemove(g, p, a, keep, fx, foe = g.turn !== g.players.indexOf(p)) {
+function statRemove(g, p, a, keep, fx, foe = g.turn !== g.players.indexOf(p), pas7 = 0) {
+  glMark(g); // lo que venía antes, con su contexto
+  let glDw = 0, glDc = 0;
   for (const [i, k] of [[0, 'builder'], [2, 'recruit'], [4, 'mage']]) if (a[i] > 0) { if (p[k] - a[i] < 1) { p.wounded = (p.wounded || 0) | WOUND[k]; fx.push('wound:' + k); } else fx.push('kill:' + k); }
   for (let i = 0; i < 6; i++) p[KEYS[i]] -= a[i];
   const o = other(g, p), hits = a[6] > 0 || a[7] > 0, w0 = p.wall, c0 = p.castle;
   if (!p.noDamage) {
     const m = o.x2 && hits ? 2 : 1; if (m === 2) { if (!keep) o.x2 = false; fx.push('double'); }
     let dw = a[6] * m; const dc = a[7] * m;
-    p.wall -= dw; p.castle -= dc;
+    p.wall -= dw; p.castle -= dc; glDw = dw; glDc = dc; pas7 *= m;
   } else {
     if (o.x2 && hits && !keep) o.x2 = false;
     if (hits && !keep) { p.noDamage = false; fx.push('shield'); }
   }
   validate(p);
+  if (g._gl) { // golpes: muro, después el castillo repartido en directo / pasiva / desborde
+    const i = g.players.indexOf(p), [gw, gc] = g._gs[i], tipo = g._glCtx?.tipo || 'normal', origen = g._glCtx?.origen ?? null;
+    const wl = gw - p.wall, cl = gc - p.castle, over = Math.max(0, glDw - Math.max(0, gw)), pas = Math.min(glDc, Math.max(0, pas7)), base = glDc - pas;
+    if (wl) g._gl.push({ asiento: i, objetivo: 'muro', cantidad: -wl, tipo, origen });
+    let left = cl; const d1 = Math.max(0, Math.min(left, base)); left -= d1; const d2 = Math.max(0, Math.min(left, pas)); left -= d2; const d3 = left; // d3: lo que pasó del muro (más cualquier resto)
+    if (d1) g._gl.push({ asiento: i, objetivo: 'castillo', cantidad: -d1, tipo: tipo === 'normal' ? 'directo' : tipo, origen });
+    if (d2) g._gl.push({ asiento: i, objetivo: 'castillo', cantidad: -d2, tipo: 'pasiva', origen });
+    if (d3) g._gl.push({ asiento: i, objetivo: 'castillo', cantidad: -d3, tipo: over > 0 ? 'desborde' : tipo, origen });
+    g._gs[i] = [p.wall, p.castle];
+  }
   // Venganza: todo el daño recibido durante el turno rival (cartas, efectos, rey, monedas, Horda)
   if (hits && g.turn !== g.players.indexOf(p)) p.dmgRound = (p.dmgRound || 0) + Math.max(0, w0 - p.wall) + Math.max(0, c0 - p.castle);
   if (hits && g.hooks) fire(g, 'onDamage', { seat: g.players.indexOf(p), from: foe ? 1 - g.players.indexOf(p) : g.players.indexOf(p), wall: Math.max(0, w0 - p.wall), castle: Math.max(0, c0 - p.castle), fx });
@@ -211,7 +244,7 @@ export function cardVectors(g, p, o, id) {
   // tambores de guerra: ataques +3
   if (p.effects?.some((e) => e.e === 'drums') && (op[6] > 0 || op[7] > 0)) { if (op[6] > 0) op[6] += 4; else op[7] += 4; }
   // gnomos, máquinas de asedio: contra un muro de 25 o más, sus ataques de 10+ (contando Tambores) mandan además 4 directo al castillo
-  if (p.race === 'gnomo' && op[6] >= 10 && o && o.wall >= 25 && special?.k !== 'kingAttack') op[7] += 4; // (el rey no es máquina de asedio)
+  let pas7 = 0; if (p.race === 'gnomo' && op[6] >= 10 && o && o.wall >= 25 && special?.k !== 'kingAttack') { op[7] += 4; pas7 = 4; } // (el rey no es máquina de asedio)
   // campaña: furia acumulada (regla de jefe), ataque extra con castillo bajo, maldición Miedo (−1 al daño), estado Brecha (muro a la mitad)
   if (op[6] > 0 || op[7] > 0) {
     if (p.rage) { if (op[6] > 0) op[6] += p.rage; else op[7] += p.rage; }
@@ -221,10 +254,16 @@ export function cardVectors(g, p, o, id) {
   if (s[6] > 0 && p.hand?.includes(193)) s[6] = Math.floor(s[6] / 2);
   // asedio prolongado sobre mí: no puedo subir el muro
   let siege = false; if (p.effects?.some((e) => e.e === 'siegelock') && s[6] > 0) { s[6] = 0; siege = true; }
-  return { s, op, siege };
+  return { s, op, siege, pas7 };
 }
 // i = posición en la mano, o 'sleeve' para jugar la carta de la manga (cuesta 1/3 más y no se repone).
 export function play(g, i) {
+  const mine = glBegin(g), prev = g._glCtx;
+  let ev = null; try { ev = playInner(g, i); } finally { if (!mine && g._gl) { glMark(g); g._glCtx = prev; } }
+  const gl = glEnd(g, mine); if (ev && mine) ev.golpes = gl;
+  return ev;
+}
+function playInner(g, i) {
   if (g.winner != null || g.pending || g.phase === 'sleeve') return null;
   const seat = g.turn, p = g.players[seat], o = other(g, p), fromSleeve = i === 'sleeve', id = fromSleeve ? p.sleeve : p.hand[i];
   if (id == null || !playable(p, id, fromSleeve)) return null;
@@ -236,7 +275,8 @@ export function play(g, i) {
   const sp = SPECIAL[id];
   if (fromSleeve) { if (!g.dev) p.sleeve = null; fx.push('sleeve'); } // modo DEV: la carta de la manga no se gasta (para probarla muchas veces)
   else if (p.hand.length > handSize(p)) p.hand.splice(i, 1); else p.hand[i] = draw(g, p); // la carta extra del rey elfo no se repone
-  let { s, op, siege } = cardVectors(g, p, o, id); if (siege) fx.push('siegeLocked');
+  let { s, op, siege, pas7 } = cardVectors(g, p, o, id); if (siege) fx.push('siegeLocked');
+  const tipo0 = g._kingInvent || special?.k === 'kingAttack' ? 'rey' : 'normal'; glMark(g); if (g._gl) g._glCtx = { tipo: tipo0, origen: id };
   // moneda: se tira antes, así el extra de daño es parte del mismo ataque (escudo, Furia, trampas, pasivas)
   let coin = null;
   if (special?.k === 'coin') { const win = g._rnd() < (special.p ?? 0.5); coin = (win ? special.heads : special.tails) || null; fx.push(win ? 'coinHeads' : 'coinTails'); if (coin?.opp) for (let k = 0; k < 8; k++) op[k] += coin.opp[k]; }
@@ -245,14 +285,14 @@ export function play(g, i) {
   if (o.trap) {
     const t = o.trap, isSpell = c[5] > 0 && special?.k !== 'kingAttack' && (op.some((v) => v > 0) || ['stunKing', 'drainKing'].includes(special?.k)), isWeapon = c[3] > 0, isMelee = MELEE_IDS.has(id), isArrow = ARROW_IDS.has(id), hits = op[6] > 0 || op[7] > 0;
     let fired = false;
-    if (t === 'moat' && isMelee && hits) { op[6] = Math.floor(op[6] / 2); op[7] = Math.floor(op[7] / 2); fired = true; }
+    if (t === 'moat' && isMelee && hits) { op[6] = Math.floor(op[6] / 2); op[7] = Math.floor(op[7] / 2); pas7 = Math.floor(pas7 / 2); fired = true; }
     if (t === 'counterspell' && isSpell) { cancelled = true; o.crystal += 5; fired = true; }
-    if (t === 'ambush' && isWeapon) { statRemove(g, p, [0, 0, 0, 0, 0, 0, 6, 0], false, fx, true); fired = true; }
+    if (t === 'ambush' && isWeapon) { const pc = glCtx(g, 'trampa', t); statRemove(g, p, [0, 0, 0, 0, 0, 0, 6, 0], false, fx, true); glRestore(g, pc); fired = true; }
     if (t === 'spynet' && (c[1] + c[3] + c[5]) >= 10) { o.crystal += 8; o.spyNext = true; fired = true; }
     if (t === 'militia' && hits) { o.recruit += 1; fired = true; }
-    if (t === 'irongate' && op[7] > 0) { op[7] = 0; fired = true; }
-    if (t === 'mirage' && isArrow && hits) { statRemove(g, p, [0, 0, 0, 0, 0, 0, op[6], op[7]], false, fx, true); op[6] = 0; op[7] = 0; fired = true; }
-    if (t === 'landmine' && isMelee) { statRemove(g, p, [0, 0, 0, 0, 0, 0, 10, 0], false, fx, true); fired = true; }
+    if (t === 'irongate' && op[7] > 0) { op[7] = 0; pas7 = 0; fired = true; }
+    if (t === 'mirage' && isArrow && hits) { const pc = glCtx(g, 'trampa', t); statRemove(g, p, [0, 0, 0, 0, 0, 0, op[6], op[7]], false, fx, true); glRestore(g, pc); op[6] = 0; op[7] = 0; pas7 = 0; fired = true; }
+    if (t === 'landmine' && isMelee) { const pc = glCtx(g, 'trampa', t); statRemove(g, p, [0, 0, 0, 0, 0, 0, 10, 0], false, fx, true); glRestore(g, pc); fired = true; }
     if (fired) { fx.push('trap:' + t); o.trap = null; }
   }
   if (sp === 'spy' || sp === 'sabotage') {
@@ -265,7 +305,7 @@ export function play(g, i) {
     return { type: 'play', seat, card: id, fx, before, after: [stats(g.players[0]), stats(g.players[1])] };
   }
   if (c[8]) p.favor = Math.max(0, (p.favor || 0) - c[8]);
-  payCost(p, c);
+  glMark(g); payCost(p, c); glMark(g, 'costo', id);
   if (cancelled) { fx.push('cancelled'); devClamp(g); return { type: 'play', seat, card: id, fx, before, after: [stats(g.players[0]), stats(g.players[1])] }; }
   // efectos de las cartas originales (después del Contrahechizo: si la anula, no pasa nada)
   if (sp === 'thief') { const cap = thiefCap(p); for (const k of ['brick', 'weapon', 'crystal']) { const t = Math.min(cap, o[k]); p[k] += t; o[k] -= t; } }
@@ -281,7 +321,7 @@ export function play(g, i) {
   }
   const castleBefore = o.castle;
   statAdd(p, s);
-  statRemove(g, o, op, false, fx);
+  statRemove(g, o, op, false, fx, undefined, pas7);
   // Ataque del rey: si el golpe llegó al castillo (rompió el muro), el rival pierde además 1 de cada unidad; si el muro aguantó, solo el daño
   if (special?.k === 'kingAttack' && !kaGuarded && o.castle < castleBefore) { fx.push('kingBreak'); statRemove(g, o, [1, 0, 1, 0, 1, 0, 0, 0], false, fx); }
   if (sp === 'double') p.x2 = true; // el próximo ataque, no este
@@ -318,7 +358,8 @@ export function play(g, i) {
   if (RAPID.has(id) && (g.rapidUsed || 0) < 1) { g.rapidUsed = (g.rapidUsed || 0) + 1; g.rapidPending = true; fx.push('rapid'); }
   devClamp(g);
   const ev = { type: 'play', seat, card: id, fx, before, after: [stats(g.players[0]), stats(g.players[1])], sleeve: fromSleeve };
-  if (g.hooks) fire(g, 'onCardPlayed', { seat, id, ev, fx, attack: op[6] > 0 || op[7] > 0, dmg: op[6] + op[7] });
+  glMark(g);
+  if (g.hooks) { fire(g, 'onCardPlayed', { seat, id, ev, fx, attack: op[6] > 0 || op[7] > 0, dmg: op[6] + op[7] }); glMark(g, 'efecto', 'regla'); ev.after = [stats(g.players[0]), stats(g.players[1])]; }
   return ev;
 }
 // Campaña: meter una carta (maldición/estado) en la mano de un jugador; si la mano está llena, igual entra (la mano se agranda)
@@ -328,6 +369,10 @@ export function removeCard(g, seat, i) { const p = g.players[seat]; if (i < 0 ||
 
 // Poder del rey según la raza
 function kingAct(g, p) {
+  const pc = glCtx(g, 'rey', p.race);
+  try { return kingActInner(g, p); } finally { glRestore(g, pc); }
+}
+function kingActInner(g, p) {
   const o = other(g, p), fx = [], before = [stats(g.players[0]), stats(g.players[1])];
   switch (p.race) {
     case 'humano': p.brick += 4; p.weapon += 4; p.crystal += 4; break;
@@ -339,7 +384,7 @@ function kingAct(g, p) {
       fx.push('invent:' + nid);
       const save = { inExtra: g.inExtra, extraTurn: g.extraTurn, rapidPending: g.rapidPending, rapidUsed: g.rapidUsed, cycled: g.cycled };
       p.hand.push(nid); p.halfId = nid; const pend = g.pending; g.pending = null; g.inExtra = false;
-      const ev = play(g, p.hand.length - 1);
+      const ki = g._kingInvent; g._kingInvent = true; const ev = play(g, p.hand.length - 1); g._kingInvent = ki; // el invento cuenta como golpe del rey
       if (!ev) { p.hand.pop(); p.halfId = null; }
       if (p.hand.length > handSize(p) && p.hand.includes(nid) && !ev) p.hand.splice(p.hand.lastIndexOf(nid), 1);
       Object.assign(g, save); g.pending = pend || g.pending; p.halfId = null;
@@ -412,6 +457,12 @@ export function spyDone(g) { if (g.pending?.type !== 'spy') return null; const f
 
 // Cierra el turno: chequea victoria (como el original, primero el jugador 1) y aplica producción del siguiente.
 export function endTurn(g) {
+  const mine = glBegin(g);
+  let ev = null; try { ev = endTurnInner(g); } finally { if (!mine && g._gl) glMark(g); }
+  const gl = glEnd(g, mine); if (ev && mine) ev.golpes = gl;
+  return ev;
+}
+function endTurnInner(g) {
   if (g.phase === 'sleeve') return null; // todavía eligiendo el As
   const no100 = !!g.campaign?.noWin100; // campaña: no se gana llegando a 100
   if (!g.dev?.noWin) for (const [i, p] of g.players.entries()) {
@@ -439,7 +490,7 @@ export function endTurn(g) {
   // efectos duraderos: actúan al inicio del turno de su dueño (o del afectado, si están sobre él)
   const effectsLog = [], o3 = other(g, p);
   for (const e of p.effects) {
-    e.turns--;
+    e.turns--; const pce = glCtx(g, 'efecto', e.e);
     switch (e.e) {
       case 'rain': statRemove(g, o3, [0, 0, 0, 0, 0, 0, 5, 0], false, []); effectsLog.push('rain'); break;
       case 'quarry': p.brick += 4; effectsLog.push('quarry'); break;
@@ -452,6 +503,7 @@ export function endTurn(g) {
       case 'siegelock': effectsLog.push('siegelock'); break;
       case 'drums': effectsLog.push('drums'); break;
     }
+    glRestore(g, pce);
   }
   p.effects = p.effects.filter((e) => e.turns > 0); const S2 = both();
   // el rey: si está desmayado se recupera un turno; si no, carga; al completar el período, actúa
@@ -466,10 +518,10 @@ export function endTurn(g) {
   if (p.spyNext) { p.spyNext = false; g.pending = { type: 'spy', seat: g.turn, free: true }; } // Red de espías: mirar no gasta el turno
   const blocked = p.statsType === 4;
   devClamp(g);
-  if (!blocked && p.race === 'humano') { const k = ['brick', 'weapon', 'crystal'].sort((x, y) => p[x] - p[y])[0]; if (p[k] < 6) p[k] += 1; if (p.wall < 10) p.wall += 1; }
+  glMark(g); if (!blocked && p.race === 'humano') { const k = ['brick', 'weapon', 'crystal'].sort((x, y) => p[x] - p[y])[0]; if (p[k] < 6) p[k] += 1; if (p.wall < 10) p.wall += 1; glMark(g, 'pasiva', 'humano'); }
   p.statsType = 0; devClamp(g);
   const ev = { type: 'turn', seat: g.turn, before, after: stats(p), blocked, king, effects: effectsLog, steps: [S0, S1, S2, both()], fx: [], ...(healed.length ? { woundedIdle: healed } : {}) };
-  if (g.hooks) { for (const id of p.hand) if (FX[id]?.tick) statAdd(p, FX[id].tick); fire(g, 'onTurnStart', { seat: g.turn, ev, fx: ev.fx }); ev.after = stats(p); ev.steps[3] = both(); } // campaña: maldiciones que pican y reglas/equipo
+  if (g.hooks) { glMark(g); for (const id of p.hand) if (FX[id]?.tick) statAdd(p, FX[id].tick); fire(g, 'onTurnStart', { seat: g.turn, ev, fx: ev.fx }); glMark(g, 'efecto', 'regla'); ev.after = stats(p); ev.steps[3] = both(); } // campaña: maldiciones que pican y reglas/equipo
   const o2 = other(g, p); if (o2.castle <= 0 || (p.castle >= 100 && !no100) || (o2.castle >= 100 && !no100) || p.castle <= 0) { if (!g.dev?.noWin) { if (o2.castle <= 0 || (p.castle >= 100 && !no100)) g.winner = g.turn; else g.winner = 1 - g.turn; } }
   return ev;
 }
@@ -523,7 +575,7 @@ export function viewFor(g, seat) {
 
 function cloneGame(g) {
   const cp = (p) => ({ ...p, deck: p.deck.slice(), used: p.used.slice(), hand: p.hand.slice(), effects: (p.effects || []).map((e) => ({ ...e })), ...(p.rs ? { rs: { ...p.rs } } : {}) });
-  return { ...g, players: [cp(g.players[0]), cp(g.players[1])], pending: g.pending ? { ...g.pending } : null };
+  return { ...g, players: [cp(g.players[0]), cp(g.players[1])], pending: g.pending ? { ...g.pending } : null, _noGl: true, _gl: null };
 }
 const clampV = (v, cap, slope) => (v <= cap ? v : cap + (v - cap) * slope);
 

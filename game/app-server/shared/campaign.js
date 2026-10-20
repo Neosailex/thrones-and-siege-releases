@@ -131,5 +131,5 @@ export function aiIntent(g, level = 'normal', rnd = Math.random) {
 }
 function cloneForIntent(g) {
   const cp = (p) => ({ ...p, deck: p.deck.slice(), used: p.used.slice(), hand: p.hand.slice(), effects: (p.effects || []).map((e) => ({ ...e })), rs: p.rs ? { ...p.rs } : undefined });
-  return { ...g, players: [cp(g.players[0]), cp(g.players[1])], pending: null, intent: null };
+  return { ...g, players: [cp(g.players[0]), cp(g.players[1])], pending: null, intent: null, _noGl: true, _gl: null };
 }
