@@ -1,4 +1,5 @@
 // Motor del Asedio. Sin dependencias de DOM ni de red: lo usan el servidor y el cliente.
+import { hitOf } from './hits.js';
 import { CARDS, SPECIAL, FX, DEFAULT_DECK, DEFAULT_RES, HAND, KINGS, FAVOR_MAX, ARROW_IDS, MELEE_IDS, RAPID, GNOME_MACHINES, NAMES, MYTHIC, padDeck, raceOf } from './cards.js';
 
 const KEYS = ['builder', 'brick', 'recruit', 'weapon', 'mage', 'crystal', 'wall', 'castle'];
@@ -138,6 +139,8 @@ function statAdd(p, a) { KEYS.forEach((k, i) => { p[k] += a[i]; }); validate(p);
          'trampa', 'efecto' (efectos de 3 turnos y reglas de campaña), 'rey' (acción del rey, Ataque del rey, inventos de Fizzwick),
          'costo' (muro que se paga como costo, p. ej. Reforma).
    origen: id de la carta, o el nombre del efecto/trampa ('rain', 'livingwall', 'mines', 'moat'…) o la raza del rey.
+   Los golpes de DAÑO (los que salen de statRemove) traen además arma, altura y color (shared/hits.js); construcciones, costos y
+   pérdidas propias (Berserker, moneda) no los traen.
    Las simulaciones de la IA no lo registran (_noGl). */
 function glBegin(g) { if (g._gl || g._noGl) return false; g._gl = []; g._gs = g.players.map((p) => [p.wall, p.castle]); g._glCtx = { tipo: 'normal', origen: null }; return true; }
 function glCtx(g, tipo, origen) { const prev = g._glCtx; if (g._gl) { glMark(g); g._glCtx = { tipo, origen }; } return prev; }
@@ -173,12 +176,13 @@ function statRemove(g, p, a, keep, fx, foe = g.turn !== g.players.indexOf(p), pa
   validate(p);
   if (g._gl) { // golpes: muro, después el castillo repartido en directo / pasiva / desborde
     const i = g.players.indexOf(p), [gw, gc] = g._gs[i], tipo = g._glCtx?.tipo || 'normal', origen = g._glCtx?.origen ?? null;
+    const hit = hitOf(origen, other(g, p).race) || { arma: null, altura: null, color: null }; // tipo de golpe (hits.js): arma, altura y color de la magia
     const wl = gw - p.wall, cl = gc - p.castle, over = Math.max(0, glDw - Math.max(0, gw)), pas = Math.min(glDc, Math.max(0, pas7)), base = glDc - pas;
-    if (wl) g._gl.push({ asiento: i, objetivo: 'muro', cantidad: -wl, tipo, origen });
+    if (wl) g._gl.push({ asiento: i, objetivo: 'muro', cantidad: -wl, tipo, origen, ...hit });
     let left = cl; const d1 = Math.max(0, Math.min(left, base)); left -= d1; const d2 = Math.max(0, Math.min(left, pas)); left -= d2; const d3 = left; // d3: lo que pasó del muro (más cualquier resto)
-    if (d1) g._gl.push({ asiento: i, objetivo: 'castillo', cantidad: -d1, tipo: tipo === 'normal' ? 'directo' : tipo, origen });
-    if (d2) g._gl.push({ asiento: i, objetivo: 'castillo', cantidad: -d2, tipo: 'pasiva', origen });
-    if (d3) g._gl.push({ asiento: i, objetivo: 'castillo', cantidad: -d3, tipo: over > 0 ? 'desborde' : tipo, origen });
+    if (d1) g._gl.push({ asiento: i, objetivo: 'castillo', cantidad: -d1, tipo: tipo === 'normal' ? 'directo' : tipo, origen, ...hit });
+    if (d2) g._gl.push({ asiento: i, objetivo: 'castillo', cantidad: -d2, tipo: 'pasiva', origen, ...hit });
+    if (d3) g._gl.push({ asiento: i, objetivo: 'castillo', cantidad: -d3, tipo: over > 0 ? 'desborde' : tipo, origen, ...hit });
     g._gs[i] = [p.wall, p.castle];
   }
   // Venganza: todo el daño recibido durante el turno rival (cartas, efectos, rey, monedas, Horda)
@@ -241,6 +245,8 @@ export function cardVectors(g, p, o, id) {
   if (p.race === 'orco' && s[6] > 0) s[6] = Math.max(0, s[6] - 1);
   if (p.race === 'orco' && op[6] + op[7] >= 6) { if (op[6] > 0) op[6] += 1; else op[7] += 1; }
   if (p.race === 'drow') for (const k of [1, 3, 5]) if (op[k] > 0) op[k] = op[k] * 2;
+  // elfos, maestros arqueros (Juan 22/10): sus flechas hacen +2
+  if (p.race === 'elfo' && ARROW_IDS.has(id) && (op[6] > 0 || op[7] > 0)) { if (op[6] > 0) op[6] += 2; else op[7] += 2; }
   // tambores de guerra: ataques +3
   if (p.effects?.some((e) => e.e === 'drums') && (op[6] > 0 || op[7] > 0)) { if (op[6] > 0) op[6] += 4; else op[7] += 4; }
   // gnomos, máquinas de asedio: contra un muro de 25 o más, sus ataques de 10+ (contando Tambores) mandan además 4 directo al castillo
@@ -378,7 +384,8 @@ function kingActInner(g, p) {
     case 'humano': p.brick += 4; p.weapon += 4; p.crystal += 4; break;
     case 'enano': if (p.wall >= 30) p.castle += 8; else { p.wall += 12; p.castle += 3; } break; // 30 (antes 40): con el Ataque del rey en juego el enano caía a 45 %
     case 'elfo': p.crystal += 6; if (p.hand.length < handCap(p)) { p.hand.push(draw(g, p)); fx.push('draw'); } break;
-    case 'drow': for (const k of ['brick', 'weapon', 'crystal']) o[k] = Math.max(0, o[k] - 6); o.favor = Math.max(0, (o.favor || 0) - 3); break;
+    // drow: cristales −10 (Juan 22/10, para emparejar contra el elfo); ladrillos y armas −6
+    case 'drow': for (const k of ['brick', 'weapon', 'crystal']) o[k] = Math.max(0, o[k] - (k === 'crystal' ? 10 : 6)); o.favor = Math.max(0, (o.favor || 0) - 3); break;
     case 'gnomo': { // El Inventor: crea una máquina gnoma al azar y la juega gratis en el acto (no toca tu mano ni tu jugada)
       const nid = GNOME_MACHINES[Math.floor(g._rnd() * GNOME_MACHINES.length)];
       fx.push('invent:' + nid);

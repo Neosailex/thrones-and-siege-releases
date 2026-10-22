@@ -2,7 +2,7 @@
 export const RACES = {
   humano: { name: 'Humanos', passive: 'Cada turno producen +1 del recurso que menos tienen (si tienen menos de 6) y muro +1 si tienen menos de 10', cards: [62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 130, 131, 132, 168, 169, 180], favor: 'Oro' },
   enano:  { name: 'Enanos', passive: 'Las cartas de muro dan +3', cards: [72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 133, 134, 135, 170, 171, 181], favor: 'Runas' },
-  elfo:   { name: 'Elfos', passive: 'Pueden cambiar 2 cartas por turno en vez de 1, y las cartas de cristales cuestan 2 cristales menos (mínimo 1)', cards: [82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 136, 137, 138, 172, 173, 182], favor: 'Savia' },
+  elfo:   { name: 'Elfos', passive: 'Pueden cambiar 2 cartas por turno en vez de 1, las cartas de cristales cuestan 2 cristales menos (mínimo 1) y sus flechas hacen +2 de daño', cards: [82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 136, 137, 138, 172, 173, 182], favor: 'Savia' },
   drow:   { name: 'Elfos oscuros', passive: 'Las cartas que le quitan recursos al rival quitan el doble', cards: [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 139, 140, 141, 174, 175, 183], favor: 'Sombra' },
   gnomo:  { name: 'Gnomos', passive: 'Sus máquinas (Ballesta de repetición, Autómata, Catapulta gnoma, Gran máquina, Bombarda y Autómata mayor) cuestan 2 menos, y contra un muro de 25 o más sus ataques de 10 o más hacen además 4 directo al castillo', cards: [102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 142, 143, 144, 176, 177, 184], favor: 'Engranajes' },
   orco:   { name: 'Orcos', passive: 'Cada ataque de 6 o más de daño hace +1, pero las cartas de muro dan 1 menos', cards: [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 145, 146, 147, 178, 179, 185], favor: 'Sangre' },
@@ -88,7 +88,7 @@ export const KINGS = {
   humano: { name: 'Rey Aldric', period: 5, text: '+4 ladrillos, +4 armas y +4 cristales' },
   enano:  { name: 'Rey Thorgrim', period: 4, text: 'Muro +12 y castillo +3; si tu muro ya tiene 30 o más, castillo +8 en su lugar' },
   elfo:   { name: 'Rey Aelwyn', period: 5, text: 'Cristales +6 y levantás 1 carta extra que no se repone al jugarla (los elfos pueden juntar hasta 8)' },
-  drow:   { name: 'Reina Vaelith', period: 5, text: 'Rival: −6 de cada recurso y −3 de favor' },
+  drow:   { name: 'Reina Vaelith', period: 5, text: 'Rival: −6 ladrillos, −6 armas, −10 cristales y −3 de favor' },
   gnomo:  { name: 'Rey Fizzwick', period: 5, text: 'El Inventor: crea una máquina gnoma al azar y la juega gratis en el acto' },
   orco:   { name: 'Rey Gorrak', period: 5, text: 'Daño 12' },
 };

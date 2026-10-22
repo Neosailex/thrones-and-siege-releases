@@ -1,1 +1,1 @@
-Retrato del rey con su cabeza pintada (sin AO). Gorrak: buff nuevo con la horda; Fizzwick: sonidos del buff; Aelwyn: lluvia de flechas más larga; el rey animado sin cámara lenta para ir pegado a su voz.
+Muro y castillo destructibles: cada golpe deja su marca (piedra, asalto, magia, fuego, flechas, rayo) y los pedazos vuelan con física; sonido propio por tipo de golpe. Balance: elfos maestros arqueros, Vaelith −10 cristales, Traición/Hechizo prohibido/Deserción a 10, mazos oficiales rearmados. Salas privadas con código para jugar con amigos.

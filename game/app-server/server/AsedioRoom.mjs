@@ -1,4 +1,4 @@
-import { Room } from '@colyseus/core';
+import { Room, matchMaker } from '@colyseus/core';
 import { schema, t } from '@colyseus/schema';
 import * as E from '../shared/engine.js';
 import { validateDeck, PRESETS, RACES, STYLE_DECKS, padDeck, CARDS } from '../shared/cards.js';
@@ -8,12 +8,21 @@ import * as DB from './db.mjs';
 export const LobbyState = schema({ phase: t.string() }, 'LobbyState');
 
 const TURN_MS = 45000, PENDING_MS = 20000, SLEEVE_MS = 20000, RECONNECT_S = 40, EMOTES = 6; // SLEEVE_MS: tiempo para elegir el As al empezar
+const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', CODE_LEN = 5, PRIV_WAIT_MS = 15 * 60000; // sala privada: código sin letras que se confunden (I/1, O/0); se cierra si nadie entra en 15 min
+const newCode = () => Array.from({ length: CODE_LEN }, () => CODE_ABC[Math.floor(Math.random() * CODE_ABC.length)]).join('');
 const clean = (s) => String(s ?? '').replace(/[<>]/g, '').trim().slice(0, 16) || 'Anónimo';
 
 export class AsedioRoom extends Room {
   maxClients = 2;
 
-  onCreate() {
+  // Sala privada ('amigos'): el id de la sala ES el código que se comparte (el amigo entra con joinById). No suma al ranking.
+  async onCreate(o = {}) {
+    this.priv = !!o.priv;
+    if (this.priv) {
+      let code = newCode(); for (let i = 0; i < 20 && (await matchMaker.query({ roomId: code })).length; i++) code = newCode();
+      this.roomId = code;
+      this.clock.setTimeout(() => { if (this.seats.length < 2) this.disconnect(); }, PRIV_WAIT_MS);
+    }
     this.state = new LobbyState();
     this.state.phase = 'waiting';
     this.seats = []; // [{ sessionId, pid, name, rating, connected, lastEmote }]
@@ -124,7 +133,7 @@ export class AsedioRoom extends Room {
     this.timer?.clear();
     this.state.phase = 'over';
     let ratings = null;
-    try { ratings = DB.recordMatch({ ids: this.seats.map((s) => s.pid), winner, reason, turns: this.g?.turnNo ?? 0, plays: this.plays }); } catch (e) { console.error('No se pudo guardar la partida', e); }
+    if (!this.priv) try { ratings = DB.recordMatch({ ids: this.seats.map((s) => s.pid), winner, reason, turns: this.g?.turnNo ?? 0, plays: this.plays }); } catch (e) { console.error('No se pudo guardar la partida', e); }
     this.broadcast('over', { winner, reason, ratings });
     this.clock.setTimeout(() => this.disconnect(), 30000);
   }

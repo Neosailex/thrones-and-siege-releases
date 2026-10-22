@@ -29,6 +29,8 @@ const httpServer = http.createServer(app);
 const gameServer = new Server({ transport: new WebSocketTransport({ server: httpServer }) });
 // joinOrCreate + maxClients 2 = emparejamiento automático: el primero espera, el segundo completa la sala.
 gameServer.define('asedio', AsedioRoom);
+// Sala privada con amigos: create('amigos') devuelve un código de 5 letras (room.roomId); el otro entra con joinById(código).
+gameServer.define('amigos', AsedioRoom, { priv: true });
 await gameServer.listen(PORT);
 console.log(`Asedio online en http://localhost:${PORT}`);
 // backup diario del ranking (se guardan los últimos 7)
