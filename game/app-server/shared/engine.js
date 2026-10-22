@@ -520,7 +520,7 @@ function endTurnInner(g) {
   if (hasKing(p)) {
     const per = kingPeriod(p);
     if (p.stunTurn) { /* desmayado: no carga */ }
-    else { if (p.kingCharge >= per) { p.kingCharge = 0; king = kingAct(g, p); if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); king.after = k2.after; king.fx = king.fx.concat(k2.fx, ['double']); } } else { p.kingCharge++; if (p.kingCharge >= per) { p.kingCharge = 0; king = kingAct(g, p); if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); king.after = k2.after; king.fx = king.fx.concat(k2.fx, ['double']); } } } }
+    else { if (p.kingCharge >= per) { p.kingCharge = 0; king = kingAct(g, p); if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); king.after = k2.after; king.fx = king.fx.concat(k2.fx, ['double']); if (k2.played) king.played2 = k2.played; } } else { p.kingCharge++; if (p.kingCharge >= per) { p.kingCharge = 0; king = kingAct(g, p); if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); king.after = k2.after; king.fx = king.fx.concat(k2.fx, ['double']); if (k2.played) king.played2 = k2.played; } } } }
   }
   if (p.spyNext) { p.spyNext = false; g.pending = { type: 'spy', seat: g.turn, free: true }; } // Red de espías: mirar no gasta el turno
   const blocked = p.statsType === 4;
