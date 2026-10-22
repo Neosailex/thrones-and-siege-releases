@@ -1,1 +1,1 @@
-Muro y castillo destructibles: cada golpe deja su marca (piedra, asalto, magia, fuego, flechas, rayo) y los pedazos vuelan con física; sonido propio por tipo de golpe. Balance: elfos maestros arqueros, Vaelith −10 cristales, Traición/Hechizo prohibido/Deserción a 10, mazos oficiales rearmados. Salas privadas con código para jugar con amigos.
+Traición, Hechizo prohibido y Deserción muestran su costo nuevo (10).
