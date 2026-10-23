@@ -1,1 +1,1 @@
-Destrucción más liviana. El rey con el balcón roto se queda en el piso hasta despertarse; arreglos al volver al balcón; Doble corona del gnomo muestra la segunda máquina.
+Sin gráficos de Argentum Online: efectos hechos con código y respaldos propios (también sin 3D). Sonidos propios de muerte y curar. Castillo destruido: pedazos que caen como meteoritos en la colina y rompen el molino. El rey cae con su escudo si el castillo queda más bajo que el balcón; Thorgrim, Gorrak y Fizzwick rompen el castillo donde pegan.

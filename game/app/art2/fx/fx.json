@@ -1,0 +1,48 @@
+{
+ "fx_humo_bocanadas": [
+  "fx_humo_bocanadas_0.webp",
+  "fx_humo_bocanadas_1.webp",
+  "fx_humo_bocanadas_2.webp",
+  "fx_humo_bocanadas_3.webp",
+  "fx_humo_bocanadas_4.webp",
+  "fx_humo_bocanadas_5.webp"
+ ],
+ "fx_humo_columna": [
+  "fx_humo_columna_0.webp"
+ ],
+ "fx_humo_hilos": [
+  "fx_humo_hilos_0.webp",
+  "fx_humo_hilos_1.webp",
+  "fx_humo_hilos_2.webp",
+  "fx_humo_hilos_3.webp",
+  "fx_humo_hilos_4.webp"
+ ],
+ "fx_fuego_lenguas": [
+  "fx_fuego_lenguas_0.webp",
+  "fx_fuego_lenguas_1.webp",
+  "fx_fuego_lenguas_2.webp",
+  "fx_fuego_lenguas_3.webp",
+  "fx_fuego_lenguas_4.webp",
+  "fx_fuego_lenguas_5.webp"
+ ],
+ "fx_fuego_cola": [
+  "fx_fuego_cola_0.webp",
+  "fx_fuego_cola_1.webp",
+  "fx_fuego_cola_2.webp"
+ ],
+ "fx_brasas": [
+  "fx_brasas_0.webp",
+  "fx_brasas_1.webp",
+  "fx_brasas_2.webp",
+  "fx_brasas_3.webp",
+  "fx_brasas_4.webp",
+  "fx_brasas_5.webp"
+ ],
+ "fx_crater": [
+  "fx_crater_a.webp",
+  "fx_crater_b.webp"
+ ],
+ "vivo_molino_ruina": [
+  "vivo_molino_ruina.webp"
+ ]
+}
