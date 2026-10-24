@@ -22,7 +22,7 @@ jobs:
       matrix:
         include:
           - { so: windows-latest, args: '--win nsis --x64', out: '*.exe' }
-          - { so: macos-latest, args: '--mac dmg --x64 --arm64', out: '*.dmg' }
+          - { so: macos-latest, args: '--mac dmg --x64|--mac dmg --arm64', out: '*.dmg' }
           - { so: ubuntu-latest, args: '--linux AppImage --x64', out: '*.AppImage' }
     runs-on: ${{ matrix.so }}
     steps:
@@ -42,7 +42,7 @@ jobs:
             b.mac={category:"public.app-category.card-games",icon:"build/icon.png",identity:process.env.MAC_SIGN?undefined:"-",
               hardenedRuntime:!!process.env.MAC_SIGN,gatekeeperAssess:false,notarize:!!process.env.MAC_SIGN,
               artifactName:"Thrones-and-Siege-${version}-Mac-${arch}.${ext}",...(b.mac||{})};
-            b.dmg={title:"Thrones & Siege",...(b.dmg||{})};
+            b.dmg={title:"Thrones and Siege",...(b.dmg||{})};
             b.linux={category:"Game",icon:"build/icon.png",executableName:"thrones-and-siege",synopsis:"Juego de cartas y castillos",
               artifactName:"Thrones-and-Siege-${version}-Linux.${ext}",...(b.linux||{})};
             fs.writeFileSync("package.json",JSON.stringify(p,null,2));'
@@ -56,7 +56,9 @@ jobs:
         run: |
           if [ "$RUNNER_OS" = macOS ] && [ -n "$CSC_LINK" ]; then echo "Mac: firmando y notarizando"; else export CSC_IDENTITY_AUTO_DISCOVERY=false; unset CSC_LINK CSC_KEY_PASSWORD; fi
           set -o pipefail
-          npx electron-builder ${{ matrix.args }} --publish never 2>&1 | tee eb.log || { tail -25 eb.log | sed 's/^/::error::/'; exit 1; }
+          # de a uno (en Mac, Intel y Apple Silicon por separado: armarlos juntos choca al montar el .dmg)
+          IFS='|' read -ra PASOS <<< "${{ matrix.args }}"
+          for A in "${PASOS[@]}"; do npx electron-builder $A --publish never 2>&1 | tee eb.log || { tail -25 eb.log | sed 's/^/::error::/'; exit 1; }; done
         env:
           CSC_LINK: ${{ runner.os == 'macOS' && secrets.MAC_CERT_P12 || '' }}
           CSC_KEY_PASSWORD: ${{ runner.os == 'macOS' && secrets.MAC_CERT_PASS || '' }}
