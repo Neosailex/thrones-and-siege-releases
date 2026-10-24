@@ -3,6 +3,8 @@ import { schema, t } from '@colyseus/schema';
 import * as E from '../shared/engine.js';
 import { validateDeck, PRESETS, RACES, STYLE_DECKS, padDeck, CARDS } from '../shared/cards.js';
 import * as DB from './db.mjs';
+import { ENG } from './version.mjs';
+import { cleanName, ipOf, checkJoin, takeSeat, freeSeat } from './abuso.mjs';
 
 // Estado público mínimo (las manos son secretas: cada jugador recibe su propia vista por mensaje).
 export const LobbyState = schema({ phase: t.string() }, 'LobbyState');
@@ -10,10 +12,17 @@ export const LobbyState = schema({ phase: t.string() }, 'LobbyState');
 const TURN_MS = 45000, PENDING_MS = 20000, SLEEVE_MS = 20000, RECONNECT_S = 40, EMOTES = 6; // SLEEVE_MS: tiempo para elegir el As al empezar
 const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', CODE_LEN = 5, PRIV_WAIT_MS = 15 * 60000; // sala privada: código sin letras que se confunden (I/1, O/0); se cierra si nadie entra en 15 min
 const newCode = () => Array.from({ length: CODE_LEN }, () => CODE_ABC[Math.floor(Math.random() * CODE_ABC.length)]).join('');
-const clean = (s) => String(s ?? '').replace(/[<>]/g, '').trim().slice(0, 16) || 'Anónimo';
+const clean = cleanName; // nombres válidos (abuso.mjs)
 
 export class AsedioRoom extends Room {
   maxClients = 2;
+  maxMessagesPerSecond = 20; // un jugador manda pocos mensajes; el que inunda queda afuera (anti-abuso)
+
+  // antes de reservar el lugar: límites por IP (anti-abuso.mjs)
+  onAuth(client, _o, ctx) {
+    const ip = ipOf(ctx), why = checkJoin(ip); if (why) throw new Error(why);
+    return { ip };
+  }
 
   // Sala privada ('amigos'): el id de la sala ES el código que se comparte (el amigo entra con joinById). No suma al ranking.
   async onCreate(o = {}) {
@@ -51,6 +60,7 @@ export class AsedioRoom extends Room {
   }
 
   onJoin(client, o = {}) {
+    if (o.eng !== ENG) throw new Error('VERSION'); // cliente con otro motor (app o página vieja): el juego le pide actualizar
     const name = clean(o.name);
     const p = DB.auth(o.pid, o.ptoken, name);
     if (!p) throw new Error('Identidad inválida');
@@ -58,6 +68,7 @@ export class AsedioRoom extends Room {
     const race = RACES[o.race] ? o.race : null;
     const deck = padDeck(Array.isArray(o.deck) && !validateDeck(o.deck, race) ? o.deck.map(Number) : (race ? STYLE_DECKS[race].equilibrado.deck : PRESETS.equilibrado.deck)); // mazo validado en el servidor
     const sleeve = Number.isInteger(o.sleeve) && CARDS[o.sleeve] && deck[o.sleeve - 1] > 0 ? o.sleeve : null; // carta de la manga elegida en el cliente (tiene que estar en el mazo)
+    this.ips ??= {}; this.ips[client.sessionId] = client.auth?.ip || '?'; takeSeat(this.ips[client.sessionId]); // por sessionId: sigue igual tras reconectar
     this.seats.push({ sessionId: client.sessionId, pid: p.id, name, rating: p.rating, connected: true, deck, race, sleeve });
     if (this.seats.length === 2) this.start();
   }
@@ -157,6 +168,7 @@ export class AsedioRoom extends Room {
 
   // Salida definitiva (se fue a propósito o no volvió a tiempo).
   onLeave(client) {
+    const ip = this.ips?.[client.sessionId]; if (ip) { freeSeat(ip); delete this.ips[client.sessionId]; }
     const seat = this.seatOf(client);
     if (this.state.phase === 'playing' && this.g && this.g.winner == null && seat >= 0) {
       this.g.winner = 1 - seat;

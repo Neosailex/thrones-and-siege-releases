@@ -75,7 +75,7 @@ export const RACE_CARDS = {
   112: ['Grito', 'Daño 5', c(0, 3), Z, o({ dmg: 5 })],
   113: ['Horda menor', 'Soldados +2', c(0, 10), s({ so: 2 }), Z],
   114: ['Berserker', 'Daño 12, tu muro −3', c(0, 8), s({ wall: -3 }), o({ dmg: 12 })],
-  115: ['Saqueadores', 'Daño 6; rival −4 ladrillos, vos +4', c(0, 9), s({ b: 4 }), o({ dmg: 6, b: 4 })],
+  115: ['Saqueadores', 'Daño 6; rival −4 ladrillos, vos +4 ladrillos', c(0, 9), s({ b: 4 }), o({ dmg: 6, b: 4 })],
   116: ['Trofeos', 'Armas +6', c(0, 0, 5), s({ w: 6 }), Z],
   117: ['Jabalíes', 'Daño 7 y rival −2 cristales', c(0, 6), Z, o({ dmg: 7, cr: 2 })],
   118: ['Chamán', 'Daño 8, cristales +2', c(0, 0, 8), s({ cr: 2 }), o({ dmg: 8 })],
@@ -127,13 +127,13 @@ export const FAVOR_CARDS = {
 };
 // Trampas (saltan en el turno rival), efectos duraderos (actúan al inicio de tus turnos), condicionales y cartas de rey (148-179)
 export const TACTIC_CARDS = {
-  148: ['Foso', 'Trampa: la próxima carga enemiga pierde la mitad del daño', c(8), Z, Z, { k: 'trap', t: 'moat' }],
+  148: ['Foso', 'Trampa: el próximo ataque cuerpo a cuerpo del rival (Ariete, Túnel, Asalto…) hace la mitad de daño', c(8), Z, Z, { k: 'trap', t: 'moat' }],
   149: ['Contrahechizo', 'Trampa: anula el próximo hechizo rival que te afecte (daño, quitarte algo o tu rey) y te da 5 cristales', c(0, 0, 10), Z, Z, { k: 'trap', t: 'counterspell' }],
-  150: ['Emboscada en el camino', 'Trampa: si el rival juega una carta de armas, recibe 6 de daño', c(0, 9), Z, Z, { k: 'trap', t: 'ambush' }],
+  150: ['Emboscada en el camino', 'Trampa: si el rival juega una carta que cuesta armas, recibe daño 6', c(0, 9), Z, Z, { k: 'trap', t: 'ambush' }],
   151: ['Red de espías', 'Trampa: cuando el rival juegue una carta que cueste 10 o más, ganás 8 cristales y ves su mano al empezar tu turno', c(0, 0, 6), Z, Z, { k: 'trap', t: 'spynet' }],
-  152: ['Lluvia de piedras', '3 turnos: 5 de daño al rival al inicio de cada turno tuyo', c(0, 14), Z, Z, { k: 'effect', e: 'rain', turns: 3 }],
-  153: ['Cantera activa', '3 turnos: +4 ladrillos al inicio de cada turno tuyo', c(10), Z, Z, { k: 'effect', e: 'quarry', turns: 3 }],
-  154: ['Muro vivo', '3 turnos: muro +5 al inicio de cada turno tuyo', c(0, 0, 12), Z, Z, { k: 'effect', e: 'livingwall', turns: 3 }],
+  152: ['Lluvia de piedras', '3 turnos: daño 5 al rival por turno', c(0, 14), Z, Z, { k: 'effect', e: 'rain', turns: 3 }],
+  153: ['Cantera activa', '3 turnos: +4 ladrillos por turno', c(10), Z, Z, { k: 'effect', e: 'quarry', turns: 3 }],
+  154: ['Muro vivo', '3 turnos: muro +5 por turno', c(0, 0, 12), Z, Z, { k: 'effect', e: 'livingwall', turns: 3 }],
   155: ['Asedio prolongado', '3 turnos: las cartas del rival no le suben el muro', c(0, 13), Z, Z, { k: 'effect', e: 'siegelock', turns: 3, onOpp: true }],
   156: ['Diezmo real', '3 turnos: tu rey gana +1 de carga por turno', c(8), Z, Z, { k: 'effect', e: 'tithe', turns: 3 }],
   157: ['Golpe de gracia', 'Daño 10; 20 si el castillo rival tiene menos de 30', c(0, 14), Z, Z, { k: 'cond' }],
@@ -151,12 +151,12 @@ export const TACTIC_CARDS = {
   169: ['Edicto de obras', '4 turnos: +1 constructor cada 2 turnos', cf(3, 3), Z, Z, { k: 'effect', e: 'edict', turns: 4 }],
   170: ['Puerta de hierro', 'Trampa: anula el próximo daño directo al castillo', c(7), Z, Z, { k: 'trap', t: 'irongate' }],
   171: ['Minas profundas', '3 turnos: +3 ladrillos y muro +1 por turno', cf(3, 4), Z, Z, { k: 'effect', e: 'mines', turns: 3 }],
-  172: ['Espejismo', 'Trampa: la próxima lluvia de flechas vuelve contra el rival', c(0, 0, 8), Z, Z, { k: 'trap', t: 'mirage' }],
+  172: ['Espejismo', 'Trampa: la próxima flecha del rival (Flechazo, Ballesta, Arqueros…) vuelve contra él', c(0, 0, 8), Z, Z, { k: 'trap', t: 'mirage' }],
   173: ['Canto antiguo', 'Cristales +5; +12 en vez de +5 si cambiaste una carta este turno', c(0, 0, 5), Z, Z, { k: 'cond' }],
   174: ['Pacto de sangre', 'Daño 8; 16 si el rey rival está desmayado', cf(2, 0, 6), Z, Z, { k: 'cond' }],
-  175: ['Susurros', '3 turnos: el rival pierde 3 cristales y vos ganás 1 al inicio de cada turno tuyo', c(0, 0, 8), Z, Z, { k: 'effect', e: 'whispers', turns: 3 }],
-  176: ['Mina terrestre', 'Trampa: la próxima carga enemiga explota: 10 de daño al atacante', cf(2, 0, 6), Z, Z, { k: 'trap', t: 'landmine' }],
-  177: ['Taller nocturno', '3 turnos: +3 armas al inicio de cada turno tuyo', c(6), Z, Z, { k: 'effect', e: 'nightshop', turns: 3 }],
+  175: ['Susurros', '3 turnos: el rival pierde 3 cristales y vos ganás 1 por turno', c(0, 0, 8), Z, Z, { k: 'effect', e: 'whispers', turns: 3 }],
+  176: ['Mina terrestre', 'Trampa: si el rival ataca cuerpo a cuerpo, recibe daño 10', cf(2, 0, 6), Z, Z, { k: 'trap', t: 'landmine' }],
+  177: ['Taller nocturno', '3 turnos: +3 armas por turno', c(6), Z, Z, { k: 'effect', e: 'nightshop', turns: 3 }],
   178: ['Frenesí', 'Daño 12; 18 si tu muro está por debajo de 10', c(0, 9), Z, Z, { k: 'cond' }],
   179: ['Tambores de guerra', '3 turnos: tus ataques hacen +4', cf(3, 5), Z, Z, { k: 'effect', e: 'drums', turns: 3 }],
 };
@@ -164,7 +164,7 @@ export const TACTIC_CARDS = {
 // castillo (rompe el muro), el rival pierde además 1 de cada unidad; si el muro aguanta, solo el daño (Juan 14/10). Con 30 rompe el muro ~59 %.
 const cm = (b, w, cr) => [0, b, 0, w, 0, cr, 0, 0, 5];
 const KA = { k: 'kingAttack', stun: 2, minCharge: 2 };
-const KA_TX = 'Ataque del rey: daño 30; si rompe el muro, el rival pierde además 1 de cada unidad. Solo con tu rey despierto y con 2+ de carga; después queda desmayado 2 turnos';
+const KA_TX = 'Ataque del rey: daño 30; si rompe el muro, el rival pierde además 1 de cada unidad. Solo con tu rey despierto y con 2 o más de carga; después queda desmayado 2 turnos';
 const KO = [0, 0, 0, 0, 0, 0, 30, 0]; // las unidades se pierden solo si rompe el muro (engine: kingAttack)
 export const MYTHIC_CARDS = {
   180: ['Carga de Aldric', KA_TX, cm(10, 10, 0), Z, KO, KA],
