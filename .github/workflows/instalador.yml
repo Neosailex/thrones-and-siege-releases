@@ -65,6 +65,19 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      # prueba real en Linux: abre la app sin pantalla y verifica que el updater baje el juego a la carpeta del usuario
+      - name: Probar que abre y se actualiza (Linux)
+        if: runner.os == 'Linux'
+        working-directory: shell/release
+        run: |
+          sudo apt-get install -y -qq xvfb libfuse2 >/dev/null
+          chmod +x *.AppImage && ./*.AppImage --appimage-extract >/dev/null
+          echo '{"version":"0.0.1"}' > squashfs-root/resources/app/app/version.json   # finge una versión vieja para forzar la descarga
+          (xvfb-run -a ./squashfs-root/thrones-and-siege --no-sandbox > app.log 2>&1 &)
+          for i in $(seq 1 60); do f=$(ls -d ~/.config/*/game 2>/dev/null | head -1); [ -n "$f" ] && [ -f "$f/version.json" ] && break; sleep 3; done
+          pkill -f squashfs-root || true
+          if [ -n "$f" ] && [ -f "$f/version.json" ]; then echo "OK: abrió y bajó el juego a $f ($(cat "$f/version.json" | head -c 80))"; else tail -20 app.log | sed 's/^/::error::/'; ls -la ~/.config/*/ 2>/dev/null; exit 1; fi
+          rm -rf squashfs-root app.log
       - uses: actions/upload-artifact@v4
         with:
           name: instalador-${{ runner.os }}
