@@ -1,31 +1,88 @@
 name: Instalador
+# Arma los instaladores de Windows (.exe), Mac (.dmg Intel y Apple Silicon) y Linux (.AppImage) y los sube a Releases.
+# S09 24/10: Mac y Linux. El updater es el mismo en los tres: baja el juego a la carpeta de datos del usuario.
+# "Run workflow" con prueba = true arma todo pero NO publica: los archivos quedan para bajar en la corrida (Artifacts).
+# Firma de Mac: si están los secretos MAC_CERT_P12, MAC_CERT_PASS, APPLE_ID, APPLE_APP_PASSWORD y APPLE_TEAM_ID,
+# firma y notariza; si no, firma "ad hoc" (abre con clic derecho > Abrir, ver INSTALAR-MAC.md).
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      prueba:
+        description: 'Solo armar (no publicar en Releases)'
+        type: boolean
+        default: false
 permissions:
   contents: write
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { so: windows-latest, args: '--win nsis --x64', out: '*.exe' }
+          - { so: macos-latest, args: '--mac dmg --x64 --arm64', out: '*.dmg' }
+          - { so: ubuntu-latest, args: '--linux AppImage --x64', out: '*.AppImage' }
+    runs-on: ${{ matrix.so }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Armar el instalador
+      - name: Preparar
         shell: bash
         run: |
           cp -r game/app shell/app
           cp -r game/app-server shell/app-server
           cd shell
+          # config de Mac/Linux (lo que ya traiga package.json manda)
+          node -e '
+            const fs=require("fs"),p=JSON.parse(fs.readFileSync("package.json")),b=p.build;
+            b.mac={category:"public.app-category.card-games",icon:"build/icon.png",identity:process.env.MAC_SIGN?undefined:"-",
+              hardenedRuntime:!!process.env.MAC_SIGN,gatekeeperAssess:false,notarize:!!process.env.MAC_SIGN,
+              artifactName:"Thrones-and-Siege-${version}-Mac-${arch}.${ext}",...(b.mac||{})};
+            b.dmg={title:"Thrones & Siege",...(b.dmg||{})};
+            b.linux={category:"Game",icon:"build/icon.png",executableName:"thrones-and-siege",synopsis:"Juego de cartas y castillos",
+              artifactName:"Thrones-and-Siege-${version}-Linux.${ext}",...(b.linux||{})};
+            fs.writeFileSync("package.json",JSON.stringify(p,null,2));'
           npm install --no-audit --no-fund
-          npx electron-builder --win nsis --x64 --publish never
           echo "VER=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+        env:
+          MAC_SIGN: ${{ secrets.MAC_CERT_P12 != '' && runner.os == 'macOS' && '1' || '' }}
+      - name: Armar
+        shell: bash
+        working-directory: shell
+        run: |
+          if [ "$RUNNER_OS" = macOS ] && [ -n "$CSC_LINK" ]; then echo "Mac: firmando y notarizando"; else export CSC_IDENTITY_AUTO_DISCOVERY=false; unset CSC_LINK CSC_KEY_PASSWORD; fi
+          npx electron-builder ${{ matrix.args }} --publish never
+        env:
+          CSC_LINK: ${{ runner.os == 'macOS' && secrets.MAC_CERT_P12 || '' }}
+          CSC_KEY_PASSWORD: ${{ runner.os == 'macOS' && secrets.MAC_CERT_PASS || '' }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: instalador-${{ runner.os }}
+          path: shell/release/${{ matrix.out }}
+          if-no-files-found: error
+          retention-days: 14
+  publicar:
+    needs: build
+    if: ${{ !inputs.prueba }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - run: echo "VER=$(node -p "require('./shell/package.json').version")" >> $GITHUB_ENV
       - name: Publicar en Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: shell/release/*.exe
+          files: out/*
           tag_name: v${{ env.VER }}
           target_commitish: main
           make_latest: true
