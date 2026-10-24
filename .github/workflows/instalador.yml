@@ -55,7 +55,8 @@ jobs:
         working-directory: shell
         run: |
           if [ "$RUNNER_OS" = macOS ] && [ -n "$CSC_LINK" ]; then echo "Mac: firmando y notarizando"; else export CSC_IDENTITY_AUTO_DISCOVERY=false; unset CSC_LINK CSC_KEY_PASSWORD; fi
-          npx electron-builder ${{ matrix.args }} --publish never
+          set -o pipefail
+          npx electron-builder ${{ matrix.args }} --publish never 2>&1 | tee eb.log || { tail -25 eb.log | sed 's/^/::error::/'; exit 1; }
         env:
           CSC_LINK: ${{ runner.os == 'macOS' && secrets.MAC_CERT_P12 || '' }}
           CSC_KEY_PASSWORD: ${{ runner.os == 'macOS' && secrets.MAC_CERT_PASS || '' }}
