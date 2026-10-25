@@ -41,15 +41,25 @@ const cacheHeaders = (r, file, st) => {
 };
 const serve = (dir) => express.static(dir, { lastModified: false, setHeaders: cacheHeaders });
 // la app de escritorio (origen app://) y otros sitios leen el ranking y los jugadores online
-app.use(['/api', '/stats'], (_q, r, next) => { r.setHeader('Access-Control-Allow-Origin', '*'); next(); });
+app.use(['/api', '/stats'], (q, r, next) => { r.setHeader('Access-Control-Allow-Origin', '*'); if (q.method === 'OPTIONS') { r.setHeader('Access-Control-Allow-Methods', 'GET, POST'); r.setHeader('Access-Control-Allow-Headers', 'content-type'); return r.sendStatus(204); } next(); });
+app.use('/api', express.json({ limit: '4kb' }));
 app.get('/', (q, r, next) => { if (q.query.server || process.env.NO_LANDING) return next(); r.setHeader('Cache-Control', 'no-cache'); r.sendFile(LANDING, (e) => e && next()); });
+app.get('/ranking', (_q, r) => { r.setHeader('Cache-Control', 'no-cache'); r.sendFile(path.join(SITE, 'ranking.html')); }); // ranking y perfiles en la web (?p=<id público>)
 app.use('/sitio', serve(path.join(SITE, 'sitio'))); // imágenes y estilos de la página de presentación (S04)
 app.use('/jugar', serve(staticDir));
 app.get('/descargar', async (_q, r) => r.redirect(302, await latestInstaller()));
 app.use(serve(staticDir));
 app.get('/health', (_q, r) => r.send('ok'));
 app.get('/version', (_q, r) => { r.setHeader('Access-Control-Allow-Origin', '*'); r.json({ eng: ENG }); }); // huella del motor (ver version.mjs)
-app.get('/api/leaderboard', (_q, r) => r.json(DB.leaderboard(20)));
+app.get('/api/leaderboard', (_q, r) => r.json(DB.leaderboard(20))); // compatibilidad: top 20 de la temporada actual
+// ranking con temporadas (S08, 25/10): ?season=AAAA-MM | all (histórico), ?limit=1..100
+app.get('/api/ranking', (q, r) => r.json(DB.ranking(q.query.season ? String(q.query.season) : null, q.query.limit)));
+// reportar jugador (S08, 25/10): { pid, ptoken, target (id público), reason, note }
+app.post('/api/report', (q, r) => { const x = DB.report(q.body || {}); r.status(x.ok ? 200 : 400).json(x); });
+// revisión de reportes: solo con la clave ADMIN_KEY (en Fly: fly secrets set ADMIN_KEY=...). Sin clave cargada, apagado.
+const adminOk = (k) => !!process.env.ADMIN_KEY && typeof k === 'string' && k.length === process.env.ADMIN_KEY.length && crypto.timingSafeEqual(Buffer.from(k), Buffer.from(process.env.ADMIN_KEY));
+app.get('/api/admin/reports', (q, r) => (adminOk(q.query.key) ? r.json(DB.pendingReports()) : r.sendStatus(403)));
+app.post('/api/admin/action', (q, r) => (adminOk(q.body?.key) ? r.json(DB.adminAction(q.body.target, q.body.action)) : r.sendStatus(403)));
 app.get('/api/profile/:id', (q, r) => { const p = DB.profile(q.params.id); p ? r.json(p) : r.status(q.query.soft ? 200 : 404).json({ error: 'sin partidas' }); }); // soft: sin 404 en la consola del cliente
 app.get('/stats', async (_q, r) => {
   const rooms = await matchMaker.query({}); // públicas ('asedio') y privadas con código ('amigos')

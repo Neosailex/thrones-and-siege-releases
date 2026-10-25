@@ -70,10 +70,12 @@ app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
   UPD = createUpdater({ bundledDir: __dirname, userDir: app.getPath('userData'), fetchImpl: (u, o) => net.fetch(u, o), nodeModulesDir: path.join(__dirname, 'node_modules'), base: process.env.TS_UPDATE_BASE || undefined });
   const win = LWIN = createLauncherWindow(); loadLauncher(win);
-  ipcMain.handle('launcher:info', (e) => { let notes = ''; try { notes = JSON.parse(fs.readFileSync(path.join(UPD.currentDir(), 'version.json'), 'utf8')).notes || ''; } catch {} return { current: UPD.currentVersion(), notes, frameless: fromWin(e) === LWIN, shell: UPD.SHELL_VERSION, page: UPD.PAGE }; });
+  ipcMain.handle('launcher:info', (e) => { let notes = ''; try { notes = JSON.parse(fs.readFileSync(path.join(UPD.currentDir(), 'version.json'), 'utf8')).notes || ''; } catch {} return { current: UPD.currentVersion(), channel: UPD.getChannel(), notes, frameless: fromWin(e) === LWIN, shell: UPD.SHELL_VERSION, page: UPD.PAGE }; });
   ipcMain.handle('launcher:ready', (e) => { const w = fromWin(e); w?.__launcherReady?.(); return true; });
   ipcMain.handle('launcher:win', (e, a) => { const w = fromWin(e); if (!w) return false; if (a === 'min') w.minimize(); else if (a === 'max') (w.isMaximized() ? w.unmaximize() : w.maximize()); else if (a === 'close') w.close(); return true; });
   ipcMain.handle('launcher:quit', () => { app.quit(); return true; });
+  // canal de actualización: sin argumento lo devuelve; con 'main'/'beta' lo cambia (S09 25/10)
+  ipcMain.handle('launcher:channel', (e, c) => (c ? UPD.setChannel(c) : UPD.getChannel()));
   ipcMain.handle('launcher:folder', async () => { const d = UPD.currentDir(); return (await shell.openPath(d)) === ''; });
   ipcMain.handle('launcher:check', async () => { const c = await UPD.check(); LATEST = c.manifest; const { manifest, ...rest } = c; return rest; });
   ipcMain.handle('launcher:update', async (e) => { const w = fromWin(e); return UPD.update(LATEST, (p) => { if (w && !w.isDestroyed()) w.webContents.send('launcher:progress', p); }); });

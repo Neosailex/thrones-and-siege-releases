@@ -7,7 +7,7 @@
 <title>Thrones &amp; Siege</title>
 <!-- Launcher actualizable: vive en app/launcher/ del juego, así los cambios visuales llegan con cada actualización.
      Lo carga main.cjs (app://game/launcher/index.html); si falla, usa el empaquetado y después desktop/launcher.html. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src 'self' https: http:">
 <style>
   @font-face { font-family: 'Cinzel'; font-weight: 700; src: url("../fonts/cinzel-latin-700-normal.woff2") format("woff2"); }
   @font-face { font-family: 'Cinzel'; font-weight: 900; src: url("../fonts/cinzel-latin-900-normal.woff2") format("woff2"); }
@@ -56,6 +56,12 @@
   .logo .ver i { width: 7px; height: 7px; border-radius: 50%; background: #7fd16a; box-shadow: 0 0 8px #7fd16a; }
   .logo .ver.old i { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
   .logo .ver.off i { background: #9a8a6e; box-shadow: none; }
+  /* estado del servidor online (S09 25/10) */
+  .logo .srv { display: flex; align-items: center; gap: 8px; margin: 6px 0 0 4px; font-size: 14px; color: #cdb995; text-shadow: 0 1px 2px #000; }
+  .logo .srv i { width: 7px; height: 7px; border-radius: 50%; background: #9a8a6e; flex: none; }
+  .logo .srv.up i { background: #7fd16a; box-shadow: 0 0 8px #7fd16a; }
+  .logo .srv.down { color: #ffb09f; } .logo .srv.down i { background: #e0563f; box-shadow: 0 0 8px #e0563f; }
+  .logo .srv[hidden] { display: none; }
 
   /* ---------- novedades ---------- */
   .news { position: absolute; left: 50px; top: 214px; width: 500px; max-height: calc(800px - 36px - 214px - var(--bar) - 22px); display: flex; flex-direction: column;
@@ -72,6 +78,11 @@
   .news .empty { color: var(--dim); font-style: italic; padding: 6px 2px; }
   .news .sep { height: 1px; margin: 12px auto 8px; width: 72%; background: linear-gradient(90deg, transparent, rgba(226,180,90,.7), transparent); box-shadow: 0 0 8px rgba(226,180,90,.4); }
   .news .foot { text-align: center; font-size: 13.5px; color: #a8977a; }
+  /* historial (S09 25/10) */
+  .news .old h4 { margin: 14px 0 2px; font: 700 14px var(--f-title); letter-spacing: .06em; color: var(--gold); }
+  .news .old h4 small { font: 500 12.5px var(--f-text); color: #a8977a; letter-spacing: 0; margin-left: 6px; }
+  .news .old li { font-size: 14.5px; color: #d9cbad; }
+  .news .more { display: block; margin: 10px auto 2px; --h: 34px; font-size: 13px; }
 
   /* ---------- barra inferior ---------- */
   .bar { position: absolute; left: 0; right: 0; bottom: 0; height: var(--bar); display: flex; align-items: center; gap: 22px; padding: 18px 44px 14px 56px;
@@ -161,13 +172,14 @@
   <button id="wClose" class="x" title="Cerrar" aria-label="Cerrar"><svg viewBox="0 0 14 14"><path d="M3 3l8 8M11 3l-8 8"/></svg></button>
 </header>
 <main>
-  <div class="logo in1"><h1>Thrones <span class="amp">&amp;</span> Siege</h1><p class="tag">Levantá tu castillo hasta 100 o derribá el del rival</p><div class="ver" id="ver"><i></i><span>Versión</span></div></div>
+  <div class="logo in1"><h1>Thrones <span class="amp">&amp;</span> Siege</h1><p class="tag">Levantá tu castillo hasta 100 o derribá el del rival</p><div class="ver" id="ver"><i></i><span>Versión</span></div><div class="srv" id="srv" hidden><i></i><span></span></div></div>
   <section class="news in2" aria-label="Novedades"><div class="ribbon" id="nTitle">Novedades</div><div class="body" id="notes"><p class="empty">Cargando…</p></div></section>
   <div class="pop" id="pop" role="dialog" aria-label="Ajustes del launcher">
     <h3>Ajustes</h3>
     <div class="row"><label><input type="checkbox" id="sAmb"> Sonido ambiente</label></div>
     <div class="row"><span>Volumen</span><input type="range" id="sVol" min="0" max="1" step="0.05"></div>
     <div class="row"><label><input type="checkbox" id="sVid"> Fondo animado</label></div>
+    <div class="row" id="rBeta" hidden><label title="Recibís antes las versiones de prueba (pueden tener errores). Destildalo para volver a la versión de todos."><input type="checkbox" id="sBeta"> Versiones beta (de prueba)</label></div>
     <div class="row" style="justify-content:center;gap:8px;flex-wrap:wrap"><button class="btn" id="sCheck">Buscar actualización</button><button class="btn" id="sFolder">Carpeta del juego</button></div>
   </div>
   <footer class="bar in3">
@@ -259,6 +271,8 @@
   $('bWeb').onclick = () => L && L.open && L.open(INFO.page || PAGE);
   $('bQuit').onclick = () => (L && L.quit ? L.quit() : win('close'));
   $('sCheck').onclick = () => { pop.classList.remove('on'); run(); };
+  // canal beta: solo con la app nueva (la cáscara vieja no lo tiene)
+  if (L && L.channel) { $('rBeta').hidden = false; L.channel().then((c) => { $('sBeta').checked = c === 'beta'; }).catch(() => {}); $('sBeta').onchange = async () => { try { await L.channel($('sBeta').checked ? 'beta' : 'main'); } catch {} pop.classList.remove('on'); run(); }; }
 
   /* estados */
   const st = $('status'), det = $('detail'), prog = $('prog'), fill = $('fill'), knob = $('knob'), play = $('play'), sub = $('playSub'), retry = $('retry');
@@ -269,12 +283,41 @@
     play.disabled = !canPlay; play.firstChild.textContent = playText; sub.textContent = playSub; retry.classList.toggle('on', retryOn);
     if (canPlay && !document.activeElement?.closest?.('button,input')) play.focus({ preventScroll: true });
   }
-  function setVersion(v, kind = '') { const el = $('ver'); el.className = 'ver ' + kind; el.querySelector('span').textContent = 'Versión ' + v + (kind === 'off' ? ' · sin conexión' : kind === 'old' ? ' · hay una nueva' : ''); }
+  function setVersion(v, kind = '') { const el = $('ver'); el.className = 'ver ' + kind; el.querySelector('span').textContent = 'Versión ' + v + (String(v).split('.').length > 3 ? ' beta' : '') + (kind === 'off' ? ' · sin conexión' : kind === 'old' ? ' · hay una nueva' : ''); }
   function showNotes(version, text, current) {
     $('nTitle').textContent = version ? `Novedades ${version}` : 'Novedades';
     const items = String(text || '').split(/\n+/).map((s) => s.replace(/^[\s•\-*·]+/, '').trim()).filter(Boolean);
     $('notes').innerHTML = items.length ? `<ul>${items.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>` : '<p class="empty">Las novedades aparecen cuando hay conexión.</p>';
-    $('notes').insertAdjacentHTML('beforeend', `<div class="sep"></div><p class="foot">Estás jugando la versión ${esc(current || '–')}</p>`);
+    $('notes').insertAdjacentHTML('beforeend', `<div class="sep"></div><p class="foot">Estás jugando la versión ${esc(current || '–')}</p><div class="old" id="hist"></div>`);
+    shownVer = version; renderHist();
+  }
+  /* historial de versiones (S09 25/10): changelog.json del repo público; si no hay conexión, el último que se vio */
+  const CHANGELOG = 'https://raw.githubusercontent.com/Neosailex/thrones-and-siege-releases/main/changelog.json';
+  let HIST = store.get('hist', []), shownVer = '', histAll = false;
+  const liOf = (t) => String(t || '').split(/\n+/).map((s) => s.replace(/^[\s•\-*·]+/, '').trim()).filter(Boolean).map((s) => `<li>${esc(s)}</li>`).join('');
+  const fecha = (d) => { const m = /^(\d{4})-(\d\d)-(\d\d)/.exec(d || ''); return m ? `${+m[3]}/${+m[2]}/${m[1]}` : ''; };
+  function renderHist() {
+    const box = $('hist'); if (!box) return;
+    const list = (Array.isArray(HIST) ? HIST : []).filter((e) => e && e.version && e.version !== shownVer);
+    if (!list.length) { box.innerHTML = ''; return; }
+    const show = histAll ? list : list.slice(0, 5);
+    box.innerHTML = '<div class="sep"></div><p class="foot">Versiones anteriores</p>' + show.map((e) => `<h4>${esc(e.version)}<small>${esc(fecha(e.date))}</small></h4><ul>${liOf(e.notes) || '<li>Sin notas.</li>'}</ul>`).join('') +
+      (list.length > show.length ? `<button class="btn more" id="hMore">Ver todas (${list.length})</button>` : '');
+    const m = $('hMore'); if (m) m.onclick = () => { histAll = true; renderHist(); };
+  }
+  async function loadHist() {
+    try { const ctl = new AbortController(); setTimeout(() => ctl.abort(), 8000); const r = await fetch(CHANGELOG + '?t=' + Math.floor(Date.now() / 6e4), { signal: ctl.signal, cache: 'no-store' }); if (!r.ok) return; const j = await r.json(); if (Array.isArray(j)) { HIST = j.slice(0, 60); store.set('hist', HIST); renderHist(); } } catch {}
+  }
+  /* servidor online (S09 25/10): el mismo que usa el juego (Ajustes del juego) o el público de Fly */
+  const FLY = 'https://thrones-and-siege.fly.dev';
+  const serverUrl = () => { let s = ''; try { s = JSON.parse(localStorage.getItem('asedio-settings') || '{}').server || ''; } catch {} return (s || FLY).replace(/\/$/, ''); };
+  async function checkServer() {
+    const el = $('srv'), txt = el.querySelector('span'); el.hidden = false;
+    let ok = false;
+    for (let k = 0; k < 2 && !ok; k++) { try { const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 6000); const r = await fetch(serverUrl() + '/version?t=' + Date.now(), { signal: ctl.signal, cache: 'no-store' }); clearTimeout(t); ok = r.ok; } catch {} }
+    if (ok) { el.className = 'srv up'; txt.textContent = 'Online: en línea'; el.title = ''; }
+    else if (navigator.onLine === false) { el.className = 'srv'; txt.textContent = 'Online: sin internet'; el.title = ''; }
+    else { el.className = 'srv down'; txt.textContent = 'Online caído por ahora · podés jugar contra la CPU'; el.title = 'El servidor de partidas online no responde. Probamos de nuevo cada minuto.'; }
   }
   // velocidad: promedio de los últimos segundos
   let samples = [];
@@ -302,6 +345,7 @@
     try { c = await L.check(); }
     catch (e) { busy = false; setVersion(cur, 'off'); showNotes(cur, info.notes || '', cur); return setState('Sin conexión', { detail: `Jugás con la versión ${esc(cur)}. Se vuelve a intentar la próxima vez.`, canPlay: true, playSub: 'Versión ' + cur, retryOn: true }); }
     showNotes(c.available ? c.latest : c.current || cur, c.notes, c.current || cur);
+    if (c.beta && c.available) $('nTitle').textContent = `Beta ${c.latest}`;
     if (!c.available) { busy = false; setVersion(c.current || cur); return setState('Tenés la última versión', { detail: 'Todo listo para la batalla.', canPlay: true, playSub: 'Versión ' + (c.current || cur) }); }
     if (c.needsShell) { busy = false; setVersion(cur, 'old'); return setState(`Hay una versión nueva (${c.latest})`, { detail: 'Necesita reinstalar el juego: bajala de la página de descargas (botón de la flecha).', canPlay: true, playSub: 'Versión ' + cur }); }
     setVersion(cur, 'old');
@@ -325,6 +369,7 @@
     try { INFO = (L && (await L.info())) || {}; } catch {}
     if (INFO.frameless) tb.classList.remove('native');
     try { L && L.ready && L.ready(); } catch {}
+    checkServer(); setInterval(checkServer, 60000); loadHist();
     if (L) run(); else setState('Vista previa del launcher', { detail: 'Sin la app de escritorio no hay actualizador.', canPlay: false });
   })();
 })();

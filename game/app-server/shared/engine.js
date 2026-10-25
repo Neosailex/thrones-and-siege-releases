@@ -245,8 +245,8 @@ export function cardVectors(g, p, o, id) {
   if (p.race === 'orco' && s[6] > 0) s[6] = Math.max(0, s[6] - 1);
   if (p.race === 'orco' && op[6] + op[7] >= 6) { if (op[6] > 0) op[6] += 1; else op[7] += 1; }
   if (p.race === 'drow') for (const k of [1, 3, 5]) if (op[k] > 0) op[k] = op[k] * 2;
-  // elfos, maestros arqueros (Juan 22/10): sus flechas hacen +2
-  if (p.race === 'elfo' && ARROW_IDS.has(id) && (op[6] > 0 || op[7] > 0)) { if (op[6] > 0) op[6] += 2; else op[7] += 2; }
+  // elfos, maestros arqueros (Juan 22/10: +2; 25/10: +3, elfo Difícil 47,6 → 52,2)
+  if (p.race === 'elfo' && ARROW_IDS.has(id) && (op[6] > 0 || op[7] > 0)) { if (op[6] > 0) op[6] += 3; else op[7] += 3; }
   // tambores de guerra: ataques +3
   if (p.effects?.some((e) => e.e === 'drums') && (op[6] > 0 || op[7] > 0)) { if (op[6] > 0) op[6] += 4; else op[7] += 4; }
   // gnomos, máquinas de asedio: contra un muro de 25 o más, sus ataques de 10+ (contando Tambores) mandan además 4 directo al castillo
@@ -502,7 +502,7 @@ function endTurnInner(g) {
     e.turns--; const pce = glCtx(g, 'efecto', e.e);
     switch (e.e) {
       case 'rain': statRemove(g, o3, [0, 0, 0, 0, 0, 0, 5, 0], false, []); effectsLog.push('rain'); break;
-      case 'quarry': p.brick += 4; effectsLog.push('quarry'); break;
+      case 'quarry': p.brick += 6; effectsLog.push('quarry'); break;
       case 'livingwall': p.wall += 5; effectsLog.push('livingwall'); break;
       case 'tithe': p.kingCharge = (p.kingCharge || 0) + 1; effectsLog.push('tithe'); break;
       case 'edict': if (e.turns % 2 === 0) { p.builder += 1; effectsLog.push('edict'); } break;
@@ -631,7 +631,7 @@ export function evaluate(g, seat, Wt = W) {
     // trampas: valen más cuando el rival tiene con qué caer en ellas
     const TV = { moat: 3 + Math.min(8, o.weapon / 3), counterspell: 3 + Math.min(8, o.crystal / 3), ambush: 3 + Math.min(6, o.weapon / 4), spynet: 4, militia: 4, irongate: 4, mirage: 3 + Math.min(6, o.weapon / 4), landmine: 3 + Math.min(8, o.weapon / 3) };
     if (g.campaign) v -= p.hand.reduce((a, id) => a + (isCurse(id) ? 8 : isState(id) ? 4 : 0), 0); // campaña: las maldiciones en mano pesan (así la IA las mete y el jugador las saca)
-    v += (p.favor || 0) * 1.2 + (p.trap ? (TV[p.trap] || 6) : 0) + (p.effects || []).reduce((a, e) => a + e.turns * 3, 0) ;
+    v += (p.favor || 0) * 1.2 + (p.trap ? (TV[p.trap] || 6) : 0) + (p.effects || []).reduce((a, e) => a + (e.from != null && g.players[e.from] !== p ? -1 : 1) * e.turns * 3, 0); // efecto que le puso el rival (Asedio prolongado) resta: antes sumaba y la IA casi nunca lo jugaba (1 %)
     const pot = p.weapon * 0.8 + p.crystal * 0.9, def = o.wall + o.castle;
     if (pot > def * W.threatK) v += (pot - def * W.threatK) * W.threat;
     return v;

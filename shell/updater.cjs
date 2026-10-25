@@ -6,10 +6,12 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 
 const SHELL_VERSION = 1; // subir si cambia main.cjs/launcher de forma incompatible (pide reinstalar)
-const BASE = 'https://raw.githubusercontent.com/Neosailex/thrones-and-siege-releases/main';
+const REPO = 'Neosailex/thrones-and-siege-releases';
+const BASE = `https://raw.githubusercontent.com/${REPO}/main`;
 const PAGE = 'https://github.com/Neosailex/thrones-and-siege-releases/releases/latest';
 
-const cmpVer = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); } return 0; };
+// (S09 25/10) 4 números: las beta son 0.61.0.1, 0.61.0.2… (= después de la 0.61.0 y antes de la 0.62.0)
+const cmpVer = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 4; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); } return 0; };
 const readJson = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } };
 const sha1 = (buf) => crypto.createHash('sha1').update(buf).digest('hex');
 async function sha1File(f) { try { return sha1(await fsp.readFile(f)); } catch { return null; } }
@@ -17,8 +19,13 @@ const enc = (p) => p.split('/').map(encodeURIComponent).join('/');
 // en Windows un archivo abierto (antivirus, video del launcher) puede trabar el renombre unos instantes
 async function retry(fn, n = 6) { for (let k = 0; ; k++) { try { return await fn(); } catch (e) { if (k >= n - 1 || !/EBUSY|EPERM|EACCES/.test(e.code || '')) throw e; await new Promise((ok) => setTimeout(ok, 400 * (k + 1))); } } }
 
-function createUpdater({ bundledDir, userDir, fetchImpl, nodeModulesDir, base = BASE }) {
+function createUpdater({ bundledDir, userDir, fetchImpl, nodeModulesDir, base }) {
   const GAME = path.join(userDir, 'game');
+  // canal (S09 25/10): 'main' (todos) o 'beta' (versiones de prueba; recibe también las de main si son más nuevas)
+  const CH_FILE = path.join(userDir, 'canal.json');
+  const getChannel = () => ((readJson(CH_FILE) || {}).canal === 'beta' ? 'beta' : 'main');
+  const setChannel = (c) => { fs.mkdirSync(userDir, { recursive: true }); fs.writeFileSync(CH_FILE, JSON.stringify({ canal: c === 'beta' ? 'beta' : 'main' })); return getChannel(); };
+  const baseOf = (branch) => base || `https://raw.githubusercontent.com/${REPO}/${branch}`;
   const bundledVersion = () => (readJson(path.join(bundledDir, 'app', 'version.json')) || {}).version || '0.0.0';
   const installedVersion = () => (readJson(path.join(GAME, 'version.json')) || {}).version || null;
   // carpeta desde donde se juega: la descargada si es más nueva que la que vino con el instalador
@@ -34,23 +41,31 @@ function createUpdater({ bundledDir, userDir, fetchImpl, nodeModulesDir, base = 
     try { const r = await fetchImpl(url, { signal: ctl.signal, cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); } finally { clearTimeout(t); }
   }
   // raw.githubusercontent cachea unos minutos: pedimos el commit actual a la API y bajamos todo fijado a ese commit
-  let pinned = base;
-  async function pin() {
-    pinned = base;
-    if (!base.startsWith('https://raw.githubusercontent.com/')) return;
-    const repo = base.replace('https://raw.githubusercontent.com/', '').split('/').slice(0, 2).join('/');
+  let pinned = baseOf('main');
+  async function pin(branch) {
+    const b = baseOf(branch);
+    if (!b.startsWith('https://raw.githubusercontent.com/')) return b;
+    const repo = b.replace('https://raw.githubusercontent.com/', '').split('/').slice(0, 2).join('/');
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 6000);
     try {
-      const r = await fetchImpl(`https://api.github.com/repos/${repo}/commits/main`, { signal: ctl.signal, cache: 'no-store', headers: { Accept: 'application/vnd.github.sha' } });
+      const r = await fetchImpl(`https://api.github.com/repos/${repo}/commits/${branch}`, { signal: ctl.signal, cache: 'no-store', headers: { Accept: 'application/vnd.github.sha' } });
       const sha = r.ok ? (await r.text()).trim() : '';
-      if (/^[0-9a-f]{40}$/.test(sha)) pinned = `https://raw.githubusercontent.com/${repo}/${sha}`;
+      if (/^[0-9a-f]{40}$/.test(sha)) return `https://raw.githubusercontent.com/${repo}/${sha}`;
     } catch {} finally { clearTimeout(t); }
+    return b;
   }
+  async function manifestOf(branch) { const at = await pin(branch); return { at, latest: await getJson(`${at}/latest.json?t=${Date.now()}`) }; }
+  // canal del juego instalado (los viejos no lo tienen: son de main)
+  const installedChannel = () => (currentDir() === GAME ? (readJson(path.join(GAME, 'version.json')) || {}).channel || 'main' : 'main');
   async function check() {
-    await pin();
-    const latest = await getJson(`${pinned}/latest.json?t=${Date.now()}`);
-    const cur = currentVersion();
-    return { current: cur, latest: latest.version, notes: latest.notes || '', size: latest.size || 0, needsShell: (latest.minShell || 1) > SHELL_VERSION, available: cmpVer(latest.version, cur) > 0, page: PAGE, manifest: latest };
+    const channel = getChannel();
+    let pick = await manifestOf('main');
+    if (channel === 'beta') { try { const b = await manifestOf('beta'); if (cmpVer(b.latest.version, pick.latest.version) > 0) pick = { ...b, beta: true }; } catch {} } // sin rama beta: queda main
+    pinned = pick.at; const latest = pick.latest, cur = currentVersion();
+    const from = pick.beta ? 'beta' : 'main';
+    // al salir de la beta vuelve a la de main aunque el número sea menor
+    const available = cmpVer(latest.version, cur) > 0 || (installedChannel() !== from && latest.version !== cur);
+    return { current: cur, latest: latest.version, notes: latest.notes || '', size: latest.size || 0, needsShell: (latest.minShell || 1) > SHELL_VERSION, available, page: PAGE, manifest: { ...latest, channel: from }, channel, beta: !!pick.beta };
   }
   async function download(url, tries = 3) {
     for (let k = 0; ; k++) {
@@ -82,7 +97,7 @@ function createUpdater({ bundledDir, userDir, fetchImpl, nodeModulesDir, base = 
       }
     }
     await Promise.all(Array.from({ length: 6 }, worker));
-    await fsp.writeFile(path.join(stage, 'version.json'), JSON.stringify({ version: manifest.version, notes: manifest.notes || '' }));
+    await fsp.writeFile(path.join(stage, 'version.json'), JSON.stringify({ version: manifest.version, notes: manifest.notes || '', channel: manifest.channel || 'main' }));
     await fsp.writeFile(path.join(stage, 'app', 'version.json'), JSON.stringify({ version: manifest.version }));
     // el servidor para "Hostear partida" usa las librerías que vinieron con el instalador
     if (nodeModulesDir && fs.existsSync(nodeModulesDir)) { try { await fsp.symlink(nodeModulesDir, path.join(stage, 'node_modules'), 'junction'); } catch {} }
@@ -94,6 +109,6 @@ function createUpdater({ bundledDir, userDir, fetchImpl, nodeModulesDir, base = 
     onProgress({ phase: 'done', version: manifest.version });
     return { version: manifest.version, downloaded: todo.length, reused };
   }
-  return { check, update, currentDir, currentVersion, bundledVersion, SHELL_VERSION, PAGE };
+  return { check, update, currentDir, currentVersion, bundledVersion, getChannel, setChannel, SHELL_VERSION, PAGE };
 }
 module.exports = { createUpdater, cmpVer };

@@ -7,14 +7,14 @@ export const CARDS = {"1":[[0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,2,0]
 export const NAMES = {
  1:['Pedrada','Daño 2'],2:['Flechazo','Daño 5'],3:['Catapulta','Daño 18'],4:['Ariete','Daño 20'],
  5:['Espía','Mirás la mano rival y quemás la próxima carta de su mazo (sale del juego)'],6:['Ballesta','Daño 9'],7:['Zapadores','15 directo al castillo rival'],8:['Arqueros','Daño 10'],
- 9:['Ladrón','Robás hasta 8 ladrillos, armas y cristales'],10:['Leva','Soldados +1'],11:['Empalizada','Muro +12'],
- 12:['Emboscada','El rival no produce en su turno'],13:['Forja','Todos producen armas el próximo turno'],14:['Sabotaje','Descartás 1 carta de la mano rival (sale del juego); no gasta recursos'],
+ 9:['Bandido de caminos','Robás hasta 8 ladrillos, armas y cristales'],10:['Leva','Soldados +1'],11:['Empalizada','Muro +12'],
+ 12:['Celada','El rival no produce en su turno'],13:['Forja','Todos producen armas el próximo turno'],14:['Sabotaje','Descartás 1 carta de la mano rival (sale del juego); no gasta recursos'],
  15:['Aprendiz','Magos +1'],16:['Rayo','Daño 22'],17:['Tormenta','Daño 28'],18:['Bendición','Castillo +22'],19:['Muro arcano','Muro +20'],
- 20:['Escudo','Escudo: anula el daño del próximo ataque rival'],21:['Furia','Tu próximo ataque hace el doble'],22:['Alquimia: armas','Armas +8'],
- 23:['Alquimia: cristales','Cristales +8'],24:['Alquimia: ladrillos','Ladrillos +8'],25:['Óxido','Rival −8 armas'],26:['Drenaje','Rival −8 cristales'],
+ 20:['Égida','Escudo: anula el daño del próximo ataque rival'],21:['Sed de sangre','Tu próximo ataque hace el doble'],22:['Fragua de armas','Armas +8'],
+ 23:['Pozo de maná','Cristales +8'],24:['Horno de ladrillos','Ladrillos +8'],25:['Óxido','Rival −8 armas'],26:['Drenaje','Rival −8 cristales'],
  27:['Derrumbe','Rival −8 ladrillos'],28:['Meditación','Todos producen cristales el próximo turno'],29:['Albañil','Constructores +1'],
  30:['Torre','Castillo +10'],31:['Torreón','Castillo +15'],32:['Almena','Castillo +5'],33:['Ciudadela','Castillo +30'],34:['Cerca','Muro +6'],
- 35:['Academia','+1 de cada unidad'],36:['Muralla','Muro +9'],37:['Trabuquete','Daño 12'],38:['Mangonel','Daño 9'],
+ 35:['Colegio de oficios','+1 de cada unidad'],36:['Muralla','Muro +9'],37:['Trabuquete','Daño 12'],38:['Mangonel','Daño 9'],
  39:['Túnel','6 directo al castillo rival y castillo +6'],40:['Cantera','Todos producen ladrillos el próximo turno'],41:['Gran muralla','Muro +20'],
  42:['Reforma','Pasás 4 de muro al castillo: castillo +8'],43:['Traición','−1 constructor tuyo, −2 al rival'],44:['Hechizo prohibido','−1 mago tuyo, −2 al rival'],
  45:['Deserción','−1 soldado tuyo, −2 al rival'],46:['Dragón','Daño 38'],47:['Asalto','30 directo al castillo rival'],48:['Gólem','Daño 30'],
@@ -37,12 +37,13 @@ export const GNOME_MACHINES = [103, 105, 107, 110, 143, 144]; // lo que puede in
     8: { o: { 6: 12 }, t: 'Daño 12' },
     // Saqueo (Juan 14/10): roba de los tres recursos (antes solo ladrillos y cristales). Cuesta 13 armas (antes 11): con 11 los mazos que la llevan subían 49,2 → 51,2 %; con 13, 49,9 %
     53: { c: { 3: 13 }, s: { 3: 3 }, o: { 3: 6 }, t: 'Rival −6 de cada recurso; vos +3 de cada recurso' }, 7: { c: { 3: 15 } }, 9: { c: { 3: 12 } }, 33: { c: { 1: 20 } }, 35: { c: { 1: 20 } },
-    5: { c: { 3: 0, 5: 8 } }, 49: { c: { 1: 0, 3: 0, 5: 16 }, o: { 1: 6, 3: 6, 5: 6, 6: 6, 7: 6 } }, 47: { c: { 1: 12, 3: 16 } }, 55: { s: { 6: 10, 7: 10 }, t: 'Castillo +10, muro +10' },
+    // Juan 25/10: cartas poco jugadas (Espía 8→5, Furia 15→10, Muro vivo 12→9, Erudición 8→6, Doble corona 12→9; Cantera activa +6 en engine)
+    5: { c: { 3: 0, 5: 5 } }, 21: { c: { 5: 10 } }, 154: { c: { 5: 9 } }, 160: { c: { 5: 6 } }, 49: { c: { 1: 0, 3: 0, 5: 16 }, o: { 1: 6, 3: 6, 5: 6, 6: 6, 7: 6 } }, 47: { c: { 1: 12, 3: 16 } }, 55: { s: { 6: 10, 7: 10 }, t: 'Castillo +10, muro +10' },
     43: { c: { 0: 0, 1: 10 }, o: { 0: 1, 1: 5 }, t: 'Rival −1 constructor y −5 ladrillos' }, // Juan 21/10: cuesta 10 ladrillos en vez de 1 constructor tuyo
     44: { c: { 4: 0, 5: 10 }, o: { 4: 1, 5: 5 }, t: 'Rival −1 mago y −5 cristales' }, // Juan 21/10: cuesta 10 cristales en vez de 1 mago tuyo
     45: { c: { 2: 0, 3: 10 }, o: { 2: 1, 3: 5 }, t: 'Rival −1 soldado y −5 armas' }, // Juan 21/10: cuesta 10 armas en vez de 1 soldado tuyo
     112: { o: { 3: 2 }, t: 'Daño 5 y rival −2 armas' }, 116: { s: { 3: 9 }, t: 'Armas +9' }, 119: { s: { 6: 10 }, t: 'Muro +10' },
-    152: { c: { 3: 10 } }, 165: { c: { 5: 12 } }, 163: { c: { 5: 10 } }, 156: { c: { 1: 5 } }, 145: { c: { 8: 4 } },
+    152: { c: { 3: 10 } }, 165: { c: { 5: 9 } }, 163: { c: { 5: 10 } }, 156: { c: { 1: 5 } }, 145: { c: { 8: 4 } },
     167: { t: 'El rey rival queda desmayado 1 turno; mientras siga desmayado, sus cartas cuestan 2 más' },
     148: { t: 'Trampa: el próximo ataque cuerpo a cuerpo del rival (Ariete, Túnel, Asalto…) hace la mitad de daño' },
     176: { t: 'Trampa: si el rival ataca cuerpo a cuerpo, recibe daño 10' },

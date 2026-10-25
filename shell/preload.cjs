@@ -16,4 +16,5 @@ contextBridge.exposeInMainWorld('launcher', {
   win: (action) => ipcRenderer.invoke('launcher:win', action),
   quit: () => ipcRenderer.invoke('launcher:quit'),
   openFolder: () => ipcRenderer.invoke('launcher:folder'),
+  channel: (c) => ipcRenderer.invoke('launcher:channel', c),
 });

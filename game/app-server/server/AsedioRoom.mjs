@@ -69,13 +69,13 @@ export class AsedioRoom extends Room {
     const deck = padDeck(Array.isArray(o.deck) && !validateDeck(o.deck, race) ? o.deck.map(Number) : (race ? STYLE_DECKS[race].equilibrado.deck : PRESETS.equilibrado.deck)); // mazo validado en el servidor
     const sleeve = Number.isInteger(o.sleeve) && CARDS[o.sleeve] && deck[o.sleeve - 1] > 0 ? o.sleeve : null; // carta de la manga elegida en el cliente (tiene que estar en el mazo)
     this.ips ??= {}; this.ips[client.sessionId] = client.auth?.ip || '?'; takeSeat(this.ips[client.sessionId]); // por sessionId: sigue igual tras reconectar
-    this.seats.push({ sessionId: client.sessionId, pid: p.id, name, rating: p.rating, connected: true, deck, race, sleeve });
+    this.seats.push({ sessionId: client.sessionId, pid: p.id, pub: p.pub || DB.pubOf(p.id), name, rating: p.rating, connected: true, deck, race, sleeve });
     if (this.seats.length === 2) this.start();
   }
 
   seatOf(client) { return this.seats.findIndex((s) => s.sessionId === client.sessionId); }
   clientOf(seat) { return this.clients.find((c) => c.sessionId === this.seats[seat]?.sessionId); }
-  info(seat) { return { seat, names: this.seats.map((s) => s.name), ratings: this.seats.map((s) => s.rating), races: this.seats.map((s) => s.race) }; }
+  info(seat) { return { seat, pubs: this.seats.map((s) => s.pub), names: this.seats.map((s) => s.name), ratings: this.seats.map((s) => s.rating), races: this.seats.map((s) => s.race) }; }
 
   start() {
     this.lock();
@@ -144,7 +144,7 @@ export class AsedioRoom extends Room {
     this.timer?.clear();
     this.state.phase = 'over';
     let ratings = null;
-    if (!this.priv) try { ratings = DB.recordMatch({ ids: this.seats.map((s) => s.pid), winner, reason, turns: this.g?.turnNo ?? 0, plays: this.plays }); } catch (e) { console.error('No se pudo guardar la partida', e); }
+    if (!this.priv) try { ratings = DB.recordMatch({ ids: this.seats.map((s) => s.pid), winner, reason, turns: this.g?.turnNo ?? 0, plays: this.plays, races: this.seats.map((s) => s.race) }); } catch (e) { console.error('No se pudo guardar la partida', e); }
     this.broadcast('over', { winner, reason, ratings });
     this.clock.setTimeout(() => this.disconnect(), 30000);
   }

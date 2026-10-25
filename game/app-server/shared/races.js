@@ -2,7 +2,7 @@
 export const RACES = {
   humano: { name: 'Humanos', passive: 'Cada turno producen +1 del recurso que menos tienen (si tienen menos de 6) y muro +1 si tienen menos de 10', cards: [62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 130, 131, 132, 168, 169, 180], favor: 'Oro' },
   enano:  { name: 'Enanos', passive: 'Las cartas de muro dan +3', cards: [72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 133, 134, 135, 170, 171, 181], favor: 'Runas' },
-  elfo:   { name: 'Elfos', passive: 'Pueden cambiar 2 cartas por turno en vez de 1, las cartas de cristales cuestan 2 cristales menos (mínimo 1) y sus flechas hacen +2 de daño', cards: [82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 136, 137, 138, 172, 173, 182], favor: 'Savia' },
+  elfo:   { name: 'Elfos', passive: 'Pueden cambiar 2 cartas por turno en vez de 1, las cartas de cristales cuestan 2 cristales menos (mínimo 1) y sus flechas hacen +3 de daño', cards: [82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 136, 137, 138, 172, 173, 182], favor: 'Savia' },
   drow:   { name: 'Elfos oscuros', passive: 'Las cartas que le quitan recursos al rival quitan el doble, y ven las trampas del rival', cards: [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 139, 140, 141, 174, 175, 183], favor: 'Sombra' },
   gnomo:  { name: 'Gnomos', passive: 'Sus máquinas (Ballesta de repetición, Autómata, Catapulta gnoma, Gran máquina, Bombarda y Autómata mayor) cuestan 2 menos, y contra un muro de 25 o más sus ataques de 10 o más hacen además 4 directo al castillo', cards: [102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 142, 143, 144, 176, 177, 184], favor: 'Engranajes' },
   orco:   { name: 'Orcos', passive: 'Cada ataque de 6 o más de daño hace +1, pero las cartas de muro dan 1 menos', cards: [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 145, 146, 147, 178, 179, 185], favor: 'Sangre' },
@@ -132,7 +132,7 @@ export const TACTIC_CARDS = {
   150: ['Emboscada en el camino', 'Trampa: si el rival juega una carta que cuesta armas, recibe daño 6', c(0, 9), Z, Z, { k: 'trap', t: 'ambush' }],
   151: ['Red de espías', 'Trampa: cuando el rival juegue una carta que cueste 10 o más, ganás 8 cristales y ves su mano al empezar tu turno', c(0, 0, 6), Z, Z, { k: 'trap', t: 'spynet' }],
   152: ['Lluvia de piedras', '3 turnos: daño 5 al rival por turno', c(0, 14), Z, Z, { k: 'effect', e: 'rain', turns: 3 }],
-  153: ['Cantera activa', '3 turnos: +4 ladrillos por turno', c(10), Z, Z, { k: 'effect', e: 'quarry', turns: 3 }],
+  153: ['Cantera activa', '3 turnos: +6 ladrillos por turno', c(10), Z, Z, { k: 'effect', e: 'quarry', turns: 3 }],
   154: ['Muro vivo', '3 turnos: muro +5 por turno', c(0, 0, 12), Z, Z, { k: 'effect', e: 'livingwall', turns: 3 }],
   155: ['Asedio prolongado', '3 turnos: las cartas del rival no le suben el muro', c(0, 13), Z, Z, { k: 'effect', e: 'siegelock', turns: 3, onOpp: true }],
   156: ['Diezmo real', '3 turnos: tu rey gana +1 de carga por turno', c(8), Z, Z, { k: 'effect', e: 'tithe', turns: 3 }],
