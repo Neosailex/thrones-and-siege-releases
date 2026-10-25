@@ -108,7 +108,7 @@ export class AsedioRoom extends Room {
     if (only == null && !keepTimer) this.deadline = g.winner != null ? 0 : Date.now() + (g.phase === 'sleeve' ? SLEEVE_MS : g.pending ? PENDING_MS : TURN_MS);
     for (const [seat] of this.seats.entries()) {
       const c = this.clientOf(seat); if (!c || (only != null && seat !== only)) continue;
-      const evs = events.map((e) => (e.type === 'discard' && e.seat !== seat ? { ...e, cards: e.cards.map(() => 0) } : e));
+      const evs = E.eventsFor(events, seat).map((e) => (e.type === 'discard' && e.seat !== seat ? { ...e, cards: e.cards.map(() => 0) } : e)); // trampas ocultas: la del rival llega tapada
       c.send('update', { view: E.viewFor(g, seat), events: evs, deadline: this.deadline });
     }
     if (only != null || keepTimer) return;

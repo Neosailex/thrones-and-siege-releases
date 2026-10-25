@@ -30,7 +30,7 @@ for (const [id, [nm, tx, c, sf, op, fx]] of Object.entries(TACTIC_CARDS)) { CARD
 for (const [id, [nm, tx, c, sf, op, fx]] of Object.entries(MYTHIC_CARDS)) { CARDS[id] = [c, sf, op]; NAMES[id] = [nm, tx]; if (fx) FX[id] = fx; } // míticas 180-185 (PvP)
 for (const [id, [nm, tx, c, sf, op, fx]] of Object.entries(CAMPAIGN_CARDS)) { CARDS[id] = [c, sf, op]; NAMES[id] = [nm, tx]; if (fx) FX[id] = fx; } // solo campaña (190+), fuera de NCARDS
 // Balance 0.35: cartas revividas, orcos y gnomos
-export const RAPID = new Set([1, 95, 13, 28, 40, 32, 34, 126, 129]); // "Rápida": se juegan y seguís jugando una vez más (máximo 2 rápidas por turno: con la segunda termina el turno)
+export const RAPID = new Set([1, 95, 13, 28, 40, 32, 34, 126, 129, 186]); // "Rápida": se juegan y seguís jugando una vez más (máximo 2 rápidas por turno: con la segunda termina el turno)
 export const GNOME_MACHINES = [103, 105, 107, 110, 143, 144]; // lo que puede inventar el rey Fizzwick
 {
   const BAL = {
@@ -83,7 +83,7 @@ export function validateDeck(d, race = null) {
 }
 export const DEFAULT_RES = {builder:2,brick:5,recruit:2,weapon:5,mage:2,crystal:5,wall:15,castle:30}; // castillo 30 y muro 15: partidas más largas que el original (24/10)
 export const HAND = 5;
-export const NCARDS = 185; // 1-179 como siempre (49 originales, 12 neutrales, 60 de raza, 8 de rey, 18 de favor, 32 tácticas) + 6 míticas (180-185)
+export const NCARDS = 186; // 1-179 como siempre (49 originales, 12 neutrales, 60 de raza, 8 de rey, 18 de favor, 32 tácticas) + 6 míticas (180-185) + Ojo del vigía (186, ver trampas)
 export const NCARDS_ALL = Math.max(...Object.keys(CAMPAIGN_CARDS).map(Number)); // último id con las cartas de campaña (190+); los mazos de campaña usan este largo
 // Cartas raras: una sola copia en el mazo. Espía y Sabotaje no descuentan su costo (como en el original).
 export const RARE = new Set([5, 14]);

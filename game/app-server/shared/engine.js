@@ -30,7 +30,7 @@ export function newGame({ starter = 0, rnd = Math.random, decks = [DEFAULT_DECK,
   const mkp = (i) => makePlayer(sc(i).deck || decks[i], { ...res, ...(sc(i).res || {}) }, rnd, sc(i).hand ?? HAND);
   const g = { players: [mkp(0), mkp(1)], turn: starter, pending: null, winner: null, turnNo: 1, cycled: false, extraTurn: false, dev: dev ? { infinite: true, noWin: true } : null };
   g.players[0].race = (seats ? sc(0).race : races[0]) || null; g.players[1].race = (seats ? sc(1).race : races[1]) || null;
-  for (const p of g.players) { p.kingCharge = 0; p.kingStun = 0; p.kingGuard = false; p.favor = 0; p.trap = null; p.effects = []; p.lastDamage = 0; p.dmgRound = 0; p.kingDouble = false; p.luto = false; p.stunTurn = false; } if (dev) { g.players[0].devRace = races[0] || null; g.players[1].devRace = races[1] || null; }
+  for (const p of g.players) { p.kingCharge = 0; p.kingStun = 0; p.kingGuard = false; p.favor = 0; p.trap = null; p.trapSeen = false; p.effects = []; p.lastDamage = 0; p.dmgRound = 0; p.kingDouble = false; p.luto = false; p.stunTurn = false; } if (dev) { g.players[0].devRace = races[0] || null; g.players[1].devRace = races[1] || null; }
   if (seats || campaign) {
     g.campaign = { noWin100: !!campaign?.noWin100, baseProd: campaign?.baseProd || 0 };
     g.hooks = [sc(0).hooks || null, sc(1).hooks || null]; if (!g.hooks[0] && !g.hooks[1]) g.hooks = null;
@@ -299,7 +299,7 @@ function playInner(g, i) {
     if (t === 'irongate' && op[7] > 0) { op[7] = 0; pas7 = 0; fired = true; }
     if (t === 'mirage' && isArrow && hits) { const pc = glCtx(g, 'trampa', t); statRemove(g, p, [0, 0, 0, 0, 0, 0, op[6], op[7]], false, fx, true); glRestore(g, pc); op[6] = 0; op[7] = 0; pas7 = 0; fired = true; }
     if (t === 'landmine' && isMelee) { const pc = glCtx(g, 'trampa', t); statRemove(g, p, [0, 0, 0, 0, 0, 0, 10, 0], false, fx, true); glRestore(g, pc); fired = true; }
-    if (fired) { fx.push('trap:' + t); o.trap = null; }
+    if (fired) { fx.push('trap:' + t); o.trap = null; o.trapSeen = false; }
   }
   if (sp === 'spy' || sp === 'sabotage') {
     if (id >= 50 || id === 5) payCost(p, c); // las de raza y el Espía pagan; el Sabotaje original no
@@ -340,7 +340,8 @@ function playInner(g, i) {
     if (k === 'doubleCrystal') p.statsType = 5;
     if (k === 'extraTurn') { g.extraTurn = 2; g.hourglass = true; fx.push('extraTurn'); }
     if (k === 'horde') { p.weapon = 0; fx.push('horde'); } // el daño ya salió en op (cardVectors)
-    if (k === 'trap') { p.trap = special.t; fx.push('trapSet'); }
+    if (k === 'trap') { p.trap = special.t; p.trapSeen = !TRAPS.hidden || (TRAPS.drowSee && o.race === 'drow'); fx.push('trapSet'); }
+    if (k === 'revealTrap') { if (o.trap) { o.trapSeen = true; fx.push('trapReveal:' + o.trap); } else fx.push('trapReveal:none'); }
     if (k === 'effect') { const tgt = special.onOpp ? o : p; tgt.effects.push({ e: special.e, turns: special.turns + (special.e === 'drums' || special.e === 'siegelock' ? 1 : 0), from: seat }); fx.push('effectSet'); }
     if (k === 'usurp') { if (o.kingGuard) { o.kingGuard = false; fx.push('kingGuarded'); } else { const take = Math.min(2, o.kingCharge || 0); o.kingCharge -= take; p.kingCharge += take; fx.push('kingDrain'); } }
     if (k === 'kingNow') { if (hasKing(p)) { p.kingCharge = 0; const ka = kingAct(g, p); fx.push('kingNow'); if (ka.fx) fx.push(...ka.fx); if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); if (k2.fx) fx.push(...k2.fx); } } } // Doble corona también cuenta acá
@@ -364,6 +365,7 @@ function playInner(g, i) {
   if (RAPID.has(id) && (g.rapidUsed || 0) < 1) { g.rapidUsed = (g.rapidUsed || 0) + 1; g.rapidPending = true; fx.push('rapid'); }
   devClamp(g);
   const ev = { type: 'play', seat, card: id, fx, before, after: [stats(g.players[0]), stats(g.players[1])], sleeve: fromSleeve };
+  if (special?.k === 'trap') ev.trapSeen = !!p.trapSeen; // eventsFor: si la trampa queda oculta, el rival no ve qué carta fue
   glMark(g);
   if (g.hooks) { fire(g, 'onCardPlayed', { seat, id, ev, fx, attack: op[6] > 0 || op[7] > 0, dmg: op[6] + op[7] }); glMark(g, 'efecto', 'regla'); ev.after = [stats(g.players[0]), stats(g.players[1])]; }
   return ev;
@@ -570,10 +572,21 @@ export const aiSabotagePick = (rnd = Math.random) => Math.floor(rnd() * HAND);
 
 // Vista de la partida para un asiento: oculta la mano rival salvo que un Espía o Sabotaje propio la revele.
 export function viewFor(g, seat) {
-  const pub = (p) => ({ race: p.race || null, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, ...(p.devKA ? { devKA: true } : {}), favor: p.favor || 0, trap: p.trap || null, effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, stunTurn: !!p.stunTurn, kingPeriod: hasKing(p) ? kingPeriod(p) : 0, handSize: handSize(p), noKing: !!p.noKing, rage: p.rage || 0, sleeve: p.sleeve != null, sleeveDone: p.sleeveDone !== false, acted: !!p.acted, wounded: woundedList(p) });
+  const pub = (p, mine) => ({ race: p.race || null, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, ...(p.devKA ? { devKA: true } : {}), favor: p.favor || 0, trap: p.trap && (mine || p.trapSeen) ? p.trap : p.trap ? 'oculta' : null, hasTrap: !!p.trap, trapSeen: !!(p.trap && p.trapSeen), effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, stunTurn: !!p.stunTurn, kingPeriod: hasKing(p) ? kingPeriod(p) : 0, handSize: handSize(p), noKing: !!p.noKing, rage: p.rage || 0, sleeve: p.sleeve != null, sleeveDone: p.sleeveDone !== false, acted: !!p.acted, wounded: woundedList(p) });
   const me = g.players[seat], op = g.players[1 - seat];
   const reveal = g.pending && g.pending.seat === seat;
-  return { seat, phase: g.phase || 'play', turn: g.turn, winner: g.winner, pending: g.pending, turnNo: g.turnNo, campaign: g.campaign || null, intent: g.intent && g.intent.seat !== seat ? g.intent : null, cycled: g.cycled, cyclesLeft: g.turn === seat ? cyclesLeft(g) : 0, inExtra: !!g.inExtra, extraLeft: g.inExtra ? g.extraTurn + 1 : 0, rapid: !!g.rapidMode, races: [g.players[0].race, g.players[1].race], me: { ...pub(me), hand: me.hand.slice(), sleeveChoices: g.phase === 'sleeve' ? sleeveChoices(me) : null, sleeveCard: me.sleeve, sleevePlayable: g.turn === seat && playableSleeve(me), sleeveCost: me.sleeve != null ? costOf(me, me.sleeve, true) : null }, op: { ...pub(op), hand: reveal ? op.hand.slice() : null } };
+  return { seat, phase: g.phase || 'play', turn: g.turn, winner: g.winner, pending: g.pending, turnNo: g.turnNo, campaign: g.campaign || null, intent: g.intent && g.intent.seat !== seat ? g.intent : null, cycled: g.cycled, cyclesLeft: g.turn === seat ? cyclesLeft(g) : 0, inExtra: !!g.inExtra, extraLeft: g.inExtra ? g.extraTurn + 1 : 0, rapid: !!g.rapidMode, races: [g.players[0].race, g.players[1].race], me: { ...pub(me, true), hand: me.hand.slice(), sleeveChoices: g.phase === 'sleeve' ? sleeveChoices(me) : null, sleeveCard: me.sleeve, sleevePlayable: g.turn === seat && playableSleeve(me), sleeveCost: me.sleeve != null ? costOf(me, me.sleeve, true) : null }, op: { ...pub(op, false), hand: reveal ? op.hand.slice() : null } };
+}
+
+// Eventos vistos desde un asiento (Juan 24/10, trampas ocultas): la trampa que arma el rival llega como carta tapada
+// (card 0, hidden 'trap'); los descartes del rival ya llegaban con cartas 0 desde el servidor.
+export function eventsFor(evs, seat) {
+  return (evs || []).map((e) => (e && e.type === 'play' && e.seat !== seat && e.card && FX[e.card]?.k === 'trap' && !e.trapSeen ? { type: 'play', seat: e.seat, card: 0, hidden: 'trap', fx: ['trapSet'], before: e.before, after: e.after, ...(e.sleeve ? { sleeve: e.sleeve } : {}) } : e));
+}
+// Lo que la IA del asiento `seat` sabe: la trampa rival oculta no la conoce (sin esto la IA la esquivaba simulando la jugada)
+function aiBelief(g, seat) {
+  const o = g.players[1 - seat]; if (!o.trap || o.trapSeen) return g;
+  const c = cloneGame(g); c.players[1 - seat].trap = null; c.players[1 - seat].trapHidden = true; return c;
 }
 
 /* ======================= IA POR NIVELES ======================= */
@@ -591,6 +604,8 @@ export const W = { castle: 0.8, castleHi: 7.9, castleLo: 3.9, wall: 1.63, wallCa
 export const W2 = { castle: 0.92, castleHi: 21.8, castleLo: 3.4, wall: 2.4, wallCap: 29, unit: 46.5, unitCap: 20.2, res: 0.8, resCap: 25.8, shield: 9.2, x2: 20.6, threat: 1.38, threatK: 0.7, oppW: 1.64 }; // pesos del nivel Difícil
 // Pesos de la IA sobre el rey rival (14/10, para que use Luto y los desmayos cuando el rey está por actuar). Antes: { stunNear: 9, stunTurn: false, luto: false }.
 export const AIW = { stunNear: 30, stunTurn: true, luto: true };
+// Trampas ocultas (Juan 24/10): el rival sabe que hay una, no cuál. drowSee: los drow ven las trampas sin carta (a medir).
+export const TRAPS = { hidden: true, drowSee: true };
 export function evaluate(g, seat, Wt = W) {
   const W = Wt;
   if (g.winner != null) return g.winner === seat ? 1e5 : -1e5;
@@ -695,6 +710,7 @@ function aiMC(g, rnd) {
   for (let k = 0; k < HARD.R; k++) {
     const base = cloneGame(g); base._rnd = rnd; const o = base.players[opSeat], me = base.players[seat];
     const pl = o.deck.concat(o.hand); shuffle(pl, rnd); const nh = o.hand.length; o.hand = pl.slice(0, nh); o.deck = pl.slice(nh); o.sleeve = null; shuffle(me.deck, rnd);
+    if (o.trapHidden) { const ts = o.deck.concat(o.hand, o.used).filter((id) => FX[id]?.k === 'trap').map((id) => FX[id].t); o.trap = ts.length ? ts[Math.floor(rnd() * ts.length)] : null; } // Difícil: sabe que hay una trampa y prueba con las que puede tener su mazo
     moves.forEach((m, i) => {
       const c = cloneGame(base); c._rnd = rnd; 
       if (m.type === 'play') { if (!play(c, m.index)) { score[i] -= 1e9; return; } } else if (!discard(c, m.indexes)) { score[i] -= 1e9; return; }
@@ -726,6 +742,7 @@ export function aiChooseLevel(g, level = 'normal', rnd = Math.random) {
   if (g.intent && g.intent.seat === g.turn) { const it = g.intent; g.intent = null; if (it.turnNo === g.turnNo && it.type === 'play') { const p = g.players[g.turn], i = p.hand.indexOf(it.card); if (i >= 0 && playable(p, it.card)) return { type: 'play', index: i, intent: true }; } }
   { const p = g.players[g.turn]; if (p.forceAttack) { let bi = -1, bd = 0; p.hand.forEach((id, i) => { if (!playable(p, id)) return; const { op } = cardVectors(g, p, other(g, p), id); const d = op[6] + op[7]; if (d > bd) { bd = d; bi = i; } }); if (bi >= 0) return { type: 'play', index: bi, forced: true }; } } // regla de jefe: este turno va con su mejor ataque
   if (level === 'facil') return aiChoose(g);
+  g = aiBelief(g, g.turn); // la trampa rival oculta no la conoce
   if (level === 'dificil' && HARD.v2) { const m = aiHard(g, rnd); if (m) return m; }
   const seat = g.turn, moves = candidateMoves(g);
   const scored = [];

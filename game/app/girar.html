@@ -1,0 +1,19 @@
+<!doctype html>
+<!-- (Juan 24/10) "Jugar acostado" en el celular parado: el juego entero va adentro de este iframe girado 90° (girar/giro.js, el
+     mismo giro del lab). Adentro el juego cree que la pantalla es apaisada, así que el tacto y las posiciones andan solos.
+     Se llega acá desde index.html cuando está guardado "asedio-acostado" (botón Jugar acostado); Ajustes → Parado vuelve. -->
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#15110d"><title>Thrones &amp; Siege</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/icon-180.png">
+<style>html,body{margin:0;height:100%;background:#15110d;overflow:hidden;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none}
+#juego{border:0;display:block;background:#15110d}</style>
+<script src="girar/giro.js"></script></head>
+<body><iframe id="juego" allow="autoplay; fullscreen; clipboard-write" title="Thrones & Siege"></iframe>
+<script>
+const q = new URLSearchParams(location.search); q.set('dentro', '1');
+const f = document.getElementById('juego'); f.src = './?' + q.toString() + location.hash;
+// gira solo si eligió "Jugar acostado"; si vino por ser un celu chico acostado (667×375), solo se achica a 844 de ancho
+let acostado = false; try { acostado = localStorage.getItem('asedio-acostado') === '1'; } catch (e) {}
+Giro.montar(f, { activo: () => acostado, minAncho: 844 });
+</script></body></html>
