@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.62.1 · 2026-10-25
+
+- Aelwyn: las 3 explosiones grandes del final revientan en pedazos que salen volando. Gólem: carga la energía en el brazo con el que pega y tiene sonido propio para cada momento (se arma, despierta, pasos, puñetazo, se desarma).
+
 ## 0.62.0 · 2026-10-25
 
 - Fin de partida nuevo: el castillo perdedor se parte, cae su estandarte y su rey; el ganador festeja. Trampas, efectos de 3 turnos, Peste y Espía se ven en el campo. Las cartas muestran de dónde sale el daño (8 +1 orco = 9). Ajustes: gráficos automáticos, tamaño de la interfaz y pantalla completa. Sin sonidos ni imágenes de Argentum Online; martillazos nuevos. Gólem nuevo. Descartar arrastrando a la pila. Balance: Espía, Sed de sangre, Doble corona, Muro vivo y Erudición más baratas; Cantera activa +6; flechas élficas +3. Online: temporadas, perfil con historial, denunciar y silenciar. Cartas renombradas. Castillos rotos sin bajar los FPS.
