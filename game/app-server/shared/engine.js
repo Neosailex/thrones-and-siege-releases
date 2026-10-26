@@ -34,7 +34,8 @@ export function newGame({ starter = 0, rnd = Math.random, decks = [DEFAULT_DECK,
   if (seats || campaign) {
     g.campaign = { noWin100: !!campaign?.noWin100, baseProd: campaign?.baseProd || 0 };
     g.hooks = [sc(0).hooks || null, sc(1).hooks || null]; if (!g.hooks[0] && !g.hooks[1]) g.hooks = null;
-    g.players.forEach((p, i) => { const c = sc(i); if (c.king === false) p.noKing = true; if (c.capCastle != null) p.capCastle = c.capCastle; if (c.capWall != null) p.capWall = c.capWall; if (c.kingPeriod) p.kingPeriod = c.kingPeriod; p.rs = {}; });
+    g.players.forEach((p, i) => { const c = sc(i); if (c.king === false) p.noKing = true; if (c.capCastle != null) p.capCastle = c.capCastle; if (c.capWall != null) p.capWall = c.capWall; if (c.kingPeriod) p.kingPeriod = c.kingPeriod; p.rs = {}; if (campaign) campSeat(p, c); });
+    if (campaign) g.playsLeft = Math.floor(g.players[starter].plays || 1);
   }
   g._rnd = rnd;
   if (setup) { g.phase = 'sleeve'; g.players.forEach((p) => { p.sleeveDone = false; }); devClamp(g); return g; } // manos vacías hasta que los dos elijan su As
@@ -47,6 +48,7 @@ export function newGame({ starter = 0, rnd = Math.random, decks = [DEFAULT_DECK,
 function dealHands(g) {
   const rnd = g._rnd, order = [], redeal = [0, 0], H = g.players.map(handSize);
   for (let i = 0; i < Math.max(H[0], H[1]); i++) for (const seat of [g.turn, 1 - g.turn]) if (i < H[seat]) { g.players[seat].hand.push(draw(g, g.players[seat], rnd)); order.push(seat); }
+  for (const p of g.players) if (p.camp) campInnate(p); // campaña: las cartas "De mano" arrancan en la mano
   // mano inicial garantizada (se arma antes de mostrarla, sin re-repartir): si hay menos de 2 cartas jugables, las injugables más caras
   // vuelven al mazo y se cambian por jugables del mazo. Antes se re-repartía hasta 3 veces: saltaba en el 72 % de las manos y en el 39 %
   // quedaba mala igual. `redeal` queda siempre en 0 (se mantiene el campo por compatibilidad).
@@ -167,7 +169,12 @@ function statRemove(g, p, a, keep, fx, foe = g.turn !== g.players.indexOf(p), pa
   const o = other(g, p), hits = a[6] > 0 || a[7] > 0, w0 = p.wall, c0 = p.castle;
   if (!p.noDamage) {
     const m = o.x2 && hits ? 2 : 1; if (m === 2) { if (!keep) o.x2 = false; fx.push('double'); }
-    let dw = a[6] * m; const dc = a[7] * m;
+    let dw = a[6] * m; let dc = a[7] * m;
+    if (p.camp && hits) { // campaña: Soborno de guardia (mitad), Escudo de runas (el muro no baja de…), Piel de jabalí (castillo a salvo)
+      if (p.halfNext) { dw = Math.floor(dw / 2); dc = Math.floor(dc / 2); p.halfNext = false; fx.push('camp:half'); }
+      if (p.wallFloor != null && p.wall - dw < p.wallFloor) { dw = Math.max(0, p.wall - p.wallFloor); fx.push('camp:runes'); }
+      if (p.castleShield && (dc > 0 || dw > p.wall)) { dc = 0; dw = Math.min(dw, p.wall); p.castleShield = false; fx.push('camp:hide'); }
+    }
     p.wall -= dw; p.castle -= dc; glDw = dw; glDc = dc; pas7 *= m;
   } else {
     if (o.x2 && hits && !keep) o.x2 = false;
@@ -203,6 +210,7 @@ export function costOf(p, id, sleeve = false) {
   if (p.costMod) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] = Math.max(1, c[i] + (p.costMod[i] || 0)); // campaña: regla de jefe o equipo que encarece/abarata
   if (p.hand?.includes(194)) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] += 1; // estado Pánico: todo cuesta 1 más
   if (sleeve) for (const i of [1, 3, 5, 8]) if (c[i] > 0) c[i] = Math.ceil(c[i] * SLEEVE_MULT); // desde la manga: 1/3 más
+  if (p.camp) campCost(p, id, c); // campaña: Juramento, Plan de batalla, Cuerno de batalla, Talismán de hoja
   return c;
 }
 // ¿Puede el rey bajar a atacar? (mítica): rey propio, despierto y con la carga mínima
@@ -213,7 +221,9 @@ export const lutoOn = (p) => !!p.luto && (p.kingStun > 0 || !!p.stunTurn);
 export const thiefCap = (p) => 8; // (los drow ya no roban extra con el Ladrón)
 export function playable(p, id, sleeve = false) {
   if (stuck(id) || !kingAttackOk(p, id)) return false;
+  if (FX[id]?.camp && !campPlayable(p, id)) return false; // campaña: oro, cartas de fuera de pelea, Taller de urgencia sin Obras
   const s = stats(p), c = costOf(p, id, sleeve);
+  if (c[7] && p.castle <= c[7]) return false; // pagar con castillo (orcos de campaña): no te podés matar
   if (c[8] && (p.favor || 0) < c[8]) return false;
   for (let i = 0; i < 8; i++) if (s[i] < c[i]) return false;
   return !(s[0] <= c[0] || s[2] <= c[2] || s[4] <= c[4]);
@@ -238,6 +248,8 @@ export function cardVectors(g, p, o, id) {
       178: () => { op[6] = p.wall < 10 ? 16 : 10; },
     }[id]; if (bonus) bonus();
   }
+  // campaña: cartas con efecto que depende del estado (oro, muro, estados del rival…)
+  if (special?.camp?.dyn) special.camp.dyn({ g, p, o, id, plus: !!special.plus, s, op });
   // Horda: tus armas + 3 por soldado + 1 (antes de pagar la carta); después le suman pasivas y Tambores como a cualquier ataque
   if (special?.k === 'horde') op[6] = (p.weapon || 0) + 3 * (p.recruit || 0) + 1;
   // pasivas de raza sobre los vectores
@@ -256,6 +268,7 @@ export function cardVectors(g, p, o, id) {
     if (p.rage) { if (op[6] > 0) op[6] += p.rage; else op[7] += p.rage; }
     if (p.lowCastleBonus && p.castle < p.lowCastleBonus.below) { if (op[6] > 0) op[6] += p.lowCastleBonus.amount; else op[7] += p.lowCastleBonus.amount; }
     if (p.hand?.includes(192)) { if (op[6] > 0) op[6] = Math.max(0, op[6] - 1); else op[7] = Math.max(0, op[7] - 1); }
+    if (p.camp) { const b = campAtkBonus(p); if (b) { if (op[6] > 0) op[6] += b; else op[7] += b; } } // Furia de sangre, Estandarte, Tambor de huesos
   }
   if (s[6] > 0 && p.hand?.includes(193)) s[6] = Math.floor(s[6] / 2);
   // asedio prolongado sobre mí: no puedo subir el muro
@@ -312,6 +325,7 @@ function playInner(g, i) {
   }
   if (c[8]) p.favor = Math.max(0, (p.favor || 0) - c[8]);
   glMark(g); payCost(p, c); glMark(g, 'costo', id);
+  if (p.camp) campPay(p, id, c);
   if (cancelled) { fx.push('cancelled'); devClamp(g); return { type: 'play', seat, card: id, fx, before, after: [stats(g.players[0]), stats(g.players[1])] }; }
   // efectos de las cartas originales (después del Contrahechizo: si la anula, no pasa nada)
   if (sp === 'thief') { const cap = thiefCap(p); for (const k of ['brick', 'weapon', 'crystal']) { const t = Math.min(cap, o[k]); p[k] += t; o[k] -= t; } }
@@ -340,7 +354,7 @@ function playInner(g, i) {
     if (k === 'doubleCrystal') p.statsType = 5;
     if (k === 'extraTurn') { g.extraTurn = 2; g.hourglass = true; fx.push('extraTurn'); }
     if (k === 'horde') { p.weapon = 0; fx.push('horde'); } // el daño ya salió en op (cardVectors)
-    if (k === 'trap') { p.trap = special.t; p.trapSeen = !TRAPS.hidden || (TRAPS.drowSee && o.race === 'drow'); fx.push('trapSet'); }
+    if (k === 'trap') { p.trap = special.t; p.trapSeen = !TRAPS.hidden || (TRAPS.drowSee && o.race === 'drow') || !!o.seeTraps; fx.push('trapSet'); }
     if (k === 'revealTrap') { if (o.trap) { o.trapSeen = true; fx.push('trapReveal:' + o.trap); } else fx.push('trapReveal:none'); }
     if (k === 'effect') { const tgt = special.onOpp ? o : p; tgt.effects.push({ e: special.e, turns: special.turns + (special.e === 'drums' || special.e === 'siegelock' ? 1 : 0), from: seat }); fx.push('effectSet'); }
     if (k === 'usurp') { if (o.kingGuard) { o.kingGuard = false; fx.push('kingGuarded'); } else { const take = Math.min(2, o.kingCharge || 0); o.kingCharge -= take; p.kingCharge += take; fx.push('kingDrain'); } }
@@ -361,6 +375,7 @@ function playInner(g, i) {
     if (k === 'kingAttack' && !g.dev) { p.kingStun = Math.max(p.kingStun || 0, special.stun || 2); fx.push('kingStun'); } // en DEV el rey no queda desmayado: se puede repetir el ataque // bajó a pelear: desmayado 2 turnos (mantiene la carga) // campaña: mete una maldición/estado en la mano del rival
   }
   if (p.rage && (op[6] > 0 || op[7] > 0)) p.rage = 0; // la furia acumulada se gasta en el ataque
+  if (p.camp) campAfter(g, p, o, id, special, fx, s, op, c);
   if (p.castle <= 0) p.castle = 0;
   if (RAPID.has(id) && (g.rapidUsed || 0) < 1) { g.rapidUsed = (g.rapidUsed || 0) + 1; g.rapidPending = true; fx.push('rapid'); }
   devClamp(g);
@@ -370,6 +385,102 @@ function playInner(g, i) {
   if (g.hooks) { fire(g, 'onCardPlayed', { seat, id, ev, fx, attack: op[6] > 0 || op[7] > 0, dmg: op[6] + op[7] }); glMark(g, 'efecto', 'regla'); ev.after = [stats(g.players[0]), stats(g.players[1])]; }
   return ev;
 }
+/* ---------- Campaña estilo Slay the Spire (Juan 25/10): jugadas por turno, Obras, palabras clave, oro de la run ----------
+   Todo esto corre solo si el jugador tiene p.camp (lo pone newGame cuando hay `campaign`). En PvP no se toca nada.
+   Las cartas de campaña (shared/campaign-cards.js) traen FX[id].camp = { kw: ['quema'|'guardada'|'mano'|'obra'|'crece'],
+   gold (costo en oro), can(p) (se puede jugar), outside (solo fuera de pelea), dyn(x) (cambia los vectores según el estado),
+   after(x) (efecto después de jugarla), work: { tick(x), slots, atk, value } (Obra), start(x) (al empezar la pelea, Crece),
+   end(x) (al terminar la pelea, Crece/oro) }. La versión mejorada (+) es otra carta: id + PLUS, con FX.plus = true. */
+export const PLUS = 1000;
+export const WORK_MAX = 3;
+// jugadas de este turno: plays puede ser fraccionario para los enemigos (1,5 = 1 y 2 alternados: "actúa dos veces cada 2 turnos")
+function campPlays(p) { const n = p.plays || 1, b = Math.floor(n); if (n === b) return b; p.playAcc = (p.playAcc || 0) + (n - b); if (p.playAcc >= 1 - 1e-9) { p.playAcc -= 1; return b + 1; } return b; }
+export const campKw = (id, k) => !!FX[id]?.camp?.kw?.includes(k);
+const owns = (p, id) => [p.deck, p.hand, p.used, p.burned || []].some((l) => l.includes(id) || l.includes(id + PLUS));
+function campSeat(p, c) {
+  p.camp = true; p.plays = c.plays || 1; p.discardHand = !!c.discardHand;
+  p.gold = c.gold || 0; p.goldStart = p.gold; p.maxCastle = c.maxCastle ?? p.castle; p.kills = c.kills || 0;
+  p.grow = { ...(c.grow || {}) }; p.grown = {}; p.burned = []; p.works = (c.works || []).map((id) => ({ id, age: 0 }));
+  p.statesGiven = 0; p.drawnBattle = 0; p.cyclesBattle = 0; p.turnPlays = 0; p.turnAtks = 0; p.turnAtk = 0; p.nextAtk = 0; p.cycleBonus = 0;
+  for (const id of new Set(p.deck)) FX[id]?.camp?.start?.(campCtx(null, p, null, id, []));
+}
+function campInnate(p) {
+  for (let j = p.deck.length - 1; j >= 0; j--) {
+    const id = p.deck[j]; if (!campKw(id, 'mano')) continue;
+    const k = p.hand.findIndex((h) => !campKw(h, 'mano')); p.deck.splice(j, 1);
+    if (k >= 0) { p.deck.unshift(p.hand[k]); p.hand[k] = id; j++; } else p.hand.push(id);
+  }
+}
+function campCost(p, id, c) {
+  const zero = () => { for (const i of [1, 3, 5, 7, 8]) c[i] = 0; };
+  if (p.freeTurn) return zero(); // Juramento: este turno todo cuesta 0
+  if (p.firstFree && !p.playedAny) return zero(); // Cuerno de batalla: la primera carta de la pelea
+  if (p.rapidFree && RAPID.has(id) && !p.turnRapidFree) return zero(); // Talismán de hoja: la primera Rápida de cada turno
+  let less = p.nextLess || 0; // Plan de batalla: la próxima carta cuesta N menos
+  for (const i of [1, 3, 5]) { const d = Math.min(c[i], less); c[i] -= d; less -= d; }
+}
+export const goldCost = (p, id) => (p.freeTurn || (p.firstFree && !p.playedAny) ? 0 : FX[id]?.camp?.gold || 0);
+function campPlayable(p, id) {
+  const k = FX[id].camp; if (k.outside) return false;
+  if (k.gold && (p.gold || 0) < goldCost(p, id)) return false;
+  return !k.can || k.can(p);
+}
+function campPay(p, id, c) {
+  p.gold = (p.gold || 0) - goldCost(p, id);
+  if (p.nextLess && c) p.nextLess = 0;
+  if (p.rapidFree && RAPID.has(id)) p.turnRapidFree = true;
+  if (p.bloodCup && c[7] > 0) p.weapon += 2; // Copa de sangre
+}
+function campAtkBonus(p) { let b = (p.turnAtk || 0) + (p.nextAtk || 0); for (const w of p.works || []) b += FX[w.id]?.camp?.work?.atk || 0; return b; }
+function campCtx(g, p, o, id, fx) {
+  const x = { g, p, o, id, plus: !!FX[id]?.plus, fx };
+  x.draw = (n) => { for (let i = 0; i < n; i++) { const d = draw(g, p); if (d == null) break; p.hand.push(d); p.drawnBattle++; } };
+  x.give = (q, cid, n = 1) => { for (let i = 0; i < n; i++) { q.hand.push(cid); if (q !== p && isState(cid)) { p.statesGiven++; if (p.poisonVial) q.keepStates = Math.max(q.keepStates || 0, 1); } } fx.push('give:' + cid); };
+  x.giveDeck = (q, cid, n = 1) => { for (let i = 0; i < n; i++) q.deck.splice(Math.floor(g._rnd() * (q.deck.length + 1)), 0, cid); fx.push('giveDeck:' + cid); };
+  x.states = (q) => q.hand.filter(isState).length;
+  x.hurt = (dmg, direct = 0, q = o, origen = 'obra:' + id) => { if (dmg <= 0 && direct <= 0) return; const pc = glCtx(g, 'efecto', origen); statRemove(g, q, [0, 0, 0, 0, 0, 0, dmg, direct], false, fx, q !== p); glRestore(g, pc); };
+  x.grow = (gid, n = 1) => { p.grown[gid] = (p.grown[gid] || 0) + n; fx.push('grow:' + gid); };
+  x.growth = (gid) => (p.grow[gid] || 0) + (p.grown[gid] || 0) + (p.grow[gid + PLUS] || 0) + (p.grown[gid + PLUS] || 0);
+  x.runWorks = (times = 1, mult = 1) => { for (let t = 0; t < times; t++) for (const w of p.works.slice()) FX[w.id]?.camp?.work?.tick?.({ ...campCtx(g, p, o, w.id, fx), w, mult }); };
+  x.addWork = (wid) => campAddWork(g, p, o, wid, fx);
+  return x;
+}
+function campAddWork(g, p, o, id, fx) {
+  const slots = (w) => FX[w]?.camp?.work?.slots || 1, need = slots(id);
+  while (p.works.length && p.works.reduce((a, w) => a + slots(w.id), 0) + need > WORK_MAX) { const old = p.works.shift(); fx.push('workGone:' + old.id); }
+  p.works.push({ id, age: 0 }); fx.push('work:' + id);
+  if (owns(p, 259)) { const pl = [p.deck, p.hand, p.used, p.burned].some((l) => l.includes(259 + PLUS)); p.grown[259] = (p.grown[259] || 0) + (pl ? 2 : 1); } // Patente: cada Obra construida en la run
+}
+function campAfter(g, p, o, id, special, fx, s, op, c) {
+  const k = special?.camp, attack = op[6] > 0 || op[7] > 0;
+  if (attack) { p.nextAtk = 0; p.turnAtks++; }
+  p.turnPlays++; p.playedAny = true;
+  if (p.wallGloves && s[6] > 0) campCtx(g, p, o, id, fx).hurt(2, 0, o, 'regla'); // Guantes de albañil
+  if (p.bloodCup && s[7] < 0) p.weapon += 2; // Copa de sangre: perdiste castillo por tu carta
+  if (!k) return;
+  const x = campCtx(g, p, o, id, fx);
+  k.after?.(x);
+  if (k.work) { x.addWork(id); k.work.build?.(x); }
+  if (k.kw?.includes('quema')) { const j = p.used.lastIndexOf(id); if (j >= 0) p.used.splice(j, 1); p.burned.push(id); fx.push('exhaust:' + id); }
+}
+function campBeforeEnd(g, q, fx) { // Susurro venenoso: el que termina su turno con estados en la mano pierde castillo
+  const src = other(g, q), n = q.hand.filter(isState).length;
+  if (src.poison && n) { const pc = glCtx(g, 'efecto', 'poison'); statRemove(g, q, [0, 0, 0, 0, 0, 0, 0, src.poison * n], false, fx, true); glRestore(g, pc); fx.push('camp:poison'); }
+}
+function campDiscardHand(g, p) {
+  const keep = []; for (const id of p.hand) { if (isState(id) || campKw(id, 'guardada')) keep.push(id); else p.used.push(id); } // las maldiciones también se van al descarte (vuelven cuando las levantás, como en Slay the Spire)
+  p.hand = keep; while (p.hand.length < handSize(p)) { const d = draw(g, p); if (d == null) break; p.hand.push(d); }
+}
+function campTurnStart(g, p, o, log) {
+  p.turnPlays = 0; p.turnAtks = 0; p.turnAtk = 0; p.nextAtk = 0; p.freeTurn = false; p.cycleBonus = 0; p.turnRapidFree = false;
+  if (p.wallFloorTurns > 0) p.wallFloorTurns--; else p.wallFloor = null; // Escudo de runas
+  p.castleShield = false; // Piel de jabalí: dura hasta tu próximo turno
+  const mult = 1 + (p.workBoost || 0); p.workBoost = 0;
+  for (const w of p.works.slice()) { const fx = []; FX[w.id]?.camp?.work?.tick?.({ ...campCtx(g, p, o, w.id, fx), w, mult }); w.age++; log.push('work:' + w.id); }
+}
+function campView(p) { return { gold: p.gold || 0, plays: p.plays || 1, works: (p.works || []).map((w) => ({ id: w.id, age: w.age })), workMax: WORK_MAX, burned: (p.burned || []).slice(), grown: { ...(p.grown || {}) }, discardHand: !!p.discardHand, turnPlays: p.turnPlays || 0 }; }
+function campClone(p) { return { works: (p.works || []).map((w) => ({ ...w })), burned: (p.burned || []).slice(), grown: { ...(p.grown || {}) } }; }
+function campValue(p) { let v = 0; for (const w of p.works || []) v += FX[w.id]?.camp?.work?.value ?? 6; if (p.halfNext) v += 5; if (p.castleShield) v += 4; if (p.wallFloor != null) v += 4; return v; }
 // Campaña: meter una carta (maldición/estado) en la mano de un jugador; si la mano está llena, igual entra (la mano se agranda)
 export function giveCard(g, p, id) { if (!CARDS[id]) return false; p.hand.push(id); return true; }
 // Campaña: sacar una maldición/estado de la mano (fogata, mercader, templo). Devuelve true si la sacó.
@@ -422,17 +533,18 @@ export function devPassives(g, on) { if (!g.dev) return; for (const p of g.playe
 // Tope de mano: la base es HAND (5); se puede pasar con cartas extra hasta 6, los elfos hasta 8
 export const handCap = (p) => handSize(p) + (p.race === 'elfo' ? 3 : 1);
 // Cambiar carta: todos pueden cambiar 1 carta por turno sin perder el turno; los elfos, 2
-export const cycleMax = (p) => (p.race === 'elfo' ? 2 : 1);
+export const cycleMax = (p) => (p.mantle ? 99 : (p.race === 'elfo' ? 2 : 1) + (p.cycleBonus || 0)); // campaña: Brisa / Bosque que responde suman; Manto del bosque sin límite
 export const cyclesLeft = (g) => Math.max(0, cycleMax(g.players[g.turn]) - (g.cycles || 0));
 export function cycle(g, i) {
   if (g.winner != null || g.pending || g.phase === 'sleeve' || !cyclesLeft(g)) return null;
   const p = g.players[g.turn]; if (i < 0 || i >= p.hand.length || stuck(p.hand[i])) return null;
-  const card = p.hand[i]; p.used.push(card); p.hand[i] = draw(g, p); g.cycles = (g.cycles || 0) + 1; g.cycled = true; p.acted = true;
+  if (p.mantle && (g.cycles || 0) >= 3) { if (p.crystal < 1) return null; p.crystal -= 1; } // Manto del bosque: desde el 4.º cambio, 1 cristal
+  const card = p.hand[i]; p.used.push(card); p.hand[i] = draw(g, p); g.cycles = (g.cycles || 0) + 1; g.cycled = true; p.acted = true; if (p.camp) p.cyclesBattle = (p.cyclesBattle || 0) + 1;
   return { type: 'cycle', seat: g.turn, card, left: cyclesLeft(g) };
 }
 export function aiMaybeCycle(g) {
   if (g.pending || g.winner != null || g.phase === 'sleeve') return null; const p = g.players[g.turn]; let ev = null, n = 0;
-  while (cyclesLeft(g)) {
+  while (cyclesLeft(g) && n < 8) {
     let worst = -1, wc = -1;
     p.hand.forEach((id, i) => { if (!playable(p, id) && !stuck(id)) { const cc = CARDS[id][0].reduce((x, y) => x + y, 0) + (CARDS[id][0][8] || 0) * 2; if (cc > wc) { wc = cc; worst = i; } } });
     if (worst < 0) break; ev = cycle(g, worst); n++;
@@ -440,6 +552,11 @@ export function aiMaybeCycle(g) {
   return ev ? { ...ev, count: n } : null;
 }
 
+// Campaña: pasar el turno (botón): corta las jugadas que queden y después hay que llamar a endTurn como siempre
+export function passTurn(g) {
+  if (g.winner != null || g.pending || !g.campaign || g.phase === 'sleeve') return null;
+  g.playsLeft = 0; g.extraTurn = 0; g.rapidPending = false; return { type: 'pass', seat: g.turn };
+}
 // Cortar las jugadas extra del Reloj de arena antes de tiempo
 export function passExtra(g) {
   if (g.winner != null || g.pending || !g.inExtra) return null;
@@ -480,8 +597,13 @@ function endTurnInner(g) {
   }
   if (g.rapidPending) { g.rapidPending = false; g.inExtra = true; g.rapidMode = true; const p = g.players[g.turn]; return { type: 'turn', seat: g.turn, before: stats(p), after: stats(p), blocked: true, extra: true, rapid: true, left: 1 }; }
   if (g.extraTurn > 0) { g.extraTurn--; g.inExtra = true; g.rapidMode = false; g.cycled = false; g.cycles = 0; const p = g.players[g.turn]; return { type: 'turn', seat: g.turn, before: stats(p), after: stats(p), blocked: true, extra: true, left: g.extraTurn + 1 }; }
+  // campaña: jugadas por turno (2; la aldea sube a 3): mientras queden, el mismo jugador sigue (como el Reloj de arena, sin reiniciar los cambios)
+  if (g.campaign && g.playsLeft > 1) { g.playsLeft--; g.inExtra = true; g.rapidMode = false; const p = g.players[g.turn]; return { type: 'turn', seat: g.turn, before: stats(p), after: stats(p), blocked: true, extra: true, plays: true, left: g.playsLeft }; }
   g.inExtra = false; g.rapidMode = false; g.rapidUsed = 0; g.hourglass = false; g.players[g.turn].halfId = null;
-  { const q = g.players[g.turn]; if (q.hand.some(isState)) { q.hand = q.hand.filter((id) => !isState(id)); while (q.hand.length < handSize(q)) q.hand.push(draw(g, q)); } } // campaña: los estados se van al terminar tu turno
+  const endFx = [];
+  if (g.players[g.turn].camp || g.players[1 - g.turn].poison) campBeforeEnd(g, g.players[g.turn], endFx); // Susurro venenoso
+  { const q = g.players[g.turn]; if (q.keepStates > 0) q.keepStates--; else if (q.hand.some(isState)) { q.hand = q.hand.filter((id) => !isState(id)); while (q.hand.length < handSize(q)) q.hand.push(draw(g, q)); } } // campaña: los estados se van al terminar tu turno (Frasco de veneno: uno más)
+  if (g.players[g.turn].discardHand) campDiscardHand(g, g.players[g.turn]); // campaña: la mano se descarta al terminar el turno (salvo Guardada y maldiciones)
   g.turn = 1 - g.turn; g.turnNo++; g.cycled = false; g.cycles = 0;
   const p = g.players[g.turn], before = stats(p), both = () => [stats(g.players[0]), stats(g.players[1])], S0 = both();
   const wd = p.wounded || 0, ub = wd & 1 ? 0 : p.builder, ur = wd & 2 ? 0 : p.recruit, um = wd & 4 ? 0 : p.mage, all = ub + ur + um, healed = woundedList(p); // unidades heridas: este turno no producen
@@ -514,7 +636,9 @@ function endTurnInner(g) {
     }
     glRestore(g, pce);
   }
-  p.effects = p.effects.filter((e) => e.turns > 0); const S2 = both();
+  p.effects = p.effects.filter((e) => e.turns > 0);
+  if (g.campaign) { g.playsLeft = campPlays(p); if (p.camp) campTurnStart(g, p, o3, effectsLog); } // campaña: jugadas del turno, Obras
+  const S2 = both();
   // el rey: si está desmayado se recupera un turno; si no, carga; al completar el período, actúa
   let king = null;
   // desmayo: este turno el rey no carga (stunTurn) y, si fue Luto, las cartas cuestan 2 más; al terminar el desmayo se va el Luto
@@ -529,7 +653,7 @@ function endTurnInner(g) {
   devClamp(g);
   glMark(g); if (!blocked && p.race === 'humano') { const k = ['brick', 'weapon', 'crystal'].sort((x, y) => p[x] - p[y])[0]; if (p[k] < 6) p[k] += 1; if (p.wall < 10) p.wall += 1; glMark(g, 'pasiva', 'humano'); }
   p.statsType = 0; devClamp(g);
-  const ev = { type: 'turn', seat: g.turn, before, after: stats(p), blocked, king, effects: effectsLog, steps: [S0, S1, S2, both()], fx: [], ...(healed.length ? { woundedIdle: healed } : {}) };
+  const ev = { type: 'turn', seat: g.turn, before, after: stats(p), blocked, king, effects: effectsLog, steps: [S0, S1, S2, both()], fx: endFx, ...(healed.length ? { woundedIdle: healed } : {}) };
   if (g.hooks) { glMark(g); for (const id of p.hand) if (FX[id]?.tick) statAdd(p, FX[id].tick); fire(g, 'onTurnStart', { seat: g.turn, ev, fx: ev.fx }); glMark(g, 'efecto', 'regla'); ev.after = stats(p); ev.steps[3] = both(); } // campaña: maldiciones que pican y reglas/equipo
   const o2 = other(g, p); if (o2.castle <= 0 || (p.castle >= 100 && !no100) || (o2.castle >= 100 && !no100) || p.castle <= 0) { if (!g.dev?.noWin) { if (o2.castle <= 0 || (p.castle >= 100 && !no100)) g.winner = g.turn; else g.winner = 1 - g.turn; } }
   return ev;
@@ -572,10 +696,10 @@ export const aiSabotagePick = (rnd = Math.random) => Math.floor(rnd() * HAND);
 
 // Vista de la partida para un asiento: oculta la mano rival salvo que un Espía o Sabotaje propio la revele.
 export function viewFor(g, seat) {
-  const pub = (p, mine) => ({ race: p.race || null, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, ...(p.devKA ? { devKA: true } : {}), favor: p.favor || 0, trap: p.trap && (mine || p.trapSeen) ? p.trap : p.trap ? 'oculta' : null, hasTrap: !!p.trap, trapSeen: !!(p.trap && p.trapSeen), effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, stunTurn: !!p.stunTurn, kingPeriod: hasKing(p) ? kingPeriod(p) : 0, handSize: handSize(p), noKing: !!p.noKing, rage: p.rage || 0, sleeve: p.sleeve != null, sleeveDone: p.sleeveDone !== false, acted: !!p.acted, wounded: woundedList(p) });
+  const pub = (p, mine) => ({ race: p.race || null, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, ...(p.devKA ? { devKA: true } : {}), favor: p.favor || 0, trap: p.trap && (mine || p.trapSeen) ? p.trap : p.trap ? 'oculta' : null, hasTrap: !!p.trap, trapSeen: !!(p.trap && p.trapSeen), effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, stunTurn: !!p.stunTurn, kingPeriod: hasKing(p) ? kingPeriod(p) : 0, handSize: handSize(p), noKing: !!p.noKing, rage: p.rage || 0, sleeve: p.sleeve != null, sleeveDone: p.sleeveDone !== false, acted: !!p.acted, wounded: woundedList(p), ...(p.camp ? campView(p) : {}) });
   const me = g.players[seat], op = g.players[1 - seat];
   const reveal = g.pending && g.pending.seat === seat;
-  return { seat, phase: g.phase || 'play', turn: g.turn, winner: g.winner, pending: g.pending, turnNo: g.turnNo, campaign: g.campaign || null, intent: g.intent && g.intent.seat !== seat ? g.intent : null, cycled: g.cycled, cyclesLeft: g.turn === seat ? cyclesLeft(g) : 0, inExtra: !!g.inExtra, extraLeft: g.inExtra ? g.extraTurn + 1 : 0, rapid: !!g.rapidMode, races: [g.players[0].race, g.players[1].race], me: { ...pub(me, true), hand: me.hand.slice(), sleeveChoices: g.phase === 'sleeve' ? sleeveChoices(me) : null, sleeveCard: me.sleeve, sleevePlayable: g.turn === seat && playableSleeve(me), sleeveCost: me.sleeve != null ? costOf(me, me.sleeve, true) : null }, op: { ...pub(op, false), hand: reveal ? op.hand.slice() : null } };
+  return { seat, phase: g.phase || 'play', turn: g.turn, ...(g.campaign ? { playsLeft: g.turn === seat ? Math.max(0, g.playsLeft ?? 1) + (g.extraTurn > 0 ? g.extraTurn : 0) + (g.rapidPending ? 1 : 0) : 0 } : {}), winner: g.winner, pending: g.pending, turnNo: g.turnNo, campaign: g.campaign || null, intent: g.intent && g.intent.seat !== seat ? g.intent : null, cycled: g.cycled, cyclesLeft: g.turn === seat ? cyclesLeft(g) : 0, inExtra: !!g.inExtra, extraLeft: g.inExtra ? g.extraTurn + 1 : 0, rapid: !!g.rapidMode, races: [g.players[0].race, g.players[1].race], me: { ...pub(me, true), hand: me.hand.slice(), sleeveChoices: g.phase === 'sleeve' ? sleeveChoices(me) : null, sleeveCard: me.sleeve, sleevePlayable: g.turn === seat && playableSleeve(me), sleeveCost: me.sleeve != null ? costOf(me, me.sleeve, true) : null }, op: { ...pub(op, false), hand: reveal ? op.hand.slice() : null } };
 }
 
 // Eventos vistos desde un asiento (Juan 24/10, trampas ocultas): la trampa que arma el rival llega como carta tapada
@@ -594,7 +718,7 @@ function aiBelief(g, seat) {
 // muestreando manos posibles con las cartas que le quedan (no espía su mano real).
 
 function cloneGame(g) {
-  const cp = (p) => ({ ...p, deck: p.deck.slice(), used: p.used.slice(), hand: p.hand.slice(), effects: (p.effects || []).map((e) => ({ ...e })), ...(p.rs ? { rs: { ...p.rs } } : {}) });
+  const cp = (p) => ({ ...p, deck: p.deck.slice(), used: p.used.slice(), hand: p.hand.slice(), effects: (p.effects || []).map((e) => ({ ...e })), ...(p.rs ? { rs: { ...p.rs } } : {}), ...(p.camp ? campClone(p) : {}) });
   return { ...g, players: [cp(g.players[0]), cp(g.players[1])], pending: g.pending ? { ...g.pending } : null, _noGl: true, _gl: null };
 }
 const clampV = (v, cap, slope) => (v <= cap ? v : cap + (v - cap) * slope);
@@ -631,6 +755,7 @@ export function evaluate(g, seat, Wt = W) {
     // trampas: valen más cuando el rival tiene con qué caer en ellas
     const TV = { moat: 3 + Math.min(8, o.weapon / 3), counterspell: 3 + Math.min(8, o.crystal / 3), ambush: 3 + Math.min(6, o.weapon / 4), spynet: 4, militia: 4, irongate: 4, mirage: 3 + Math.min(6, o.weapon / 4), landmine: 3 + Math.min(8, o.weapon / 3) };
     if (g.campaign) v -= p.hand.reduce((a, id) => a + (isCurse(id) ? 8 : isState(id) ? 4 : 0), 0); // campaña: las maldiciones en mano pesan (así la IA las mete y el jugador las saca)
+    if (p.camp) v += campValue(p);
     v += (p.favor || 0) * 1.2 + (p.trap ? (TV[p.trap] || 6) : 0) + (p.effects || []).reduce((a, e) => a + (e.from != null && g.players[e.from] !== p ? -1 : 1) * e.turns * 3, 0); // efecto que le puso el rival (Asedio prolongado) resta: antes sumaba y la IA casi nunca lo jugaba (1 %)
     const pot = p.weapon * 0.8 + p.crystal * 0.9, def = o.wall + o.castle;
     if (pot > def * W.threatK) v += (pot - def * W.threatK) * W.threat;

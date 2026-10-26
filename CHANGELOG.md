@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.62.2 · 2026-10-26
+
+- Dragón nuevo: portal de fuego, despega a 90° con onda de aire, silbido y pasada rasante tipo jet con bola de plasma y explosión naranja. Castillos sin puntitos después de la destrucción. Gólem pintado a mano.
+
 ## 0.62.1 · 2026-10-25
 
 - Aelwyn: las 3 explosiones grandes del final revientan en pedazos que salen volando. Gólem: carga la energía en el brazo con el que pega y tiene sonido propio para cada momento (se arma, despierta, pasos, puñetazo, se desarma).

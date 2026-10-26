@@ -28,6 +28,13 @@ export const HITS = {
   180: h('asalto', 'medio'), 181: h('asalto', 'alto'), 182: h('flechas', 'alto'), 183: h('magia', 'medio', 'drow'), 184: h('explosion', 'medio'), 185: h('asalto', 'medio'),
   // campaña (cartas de bicho)
   196: h('fuego', 'medio'), 197: h('flechas', 'alto'), 198: h('asalto', 'medio'),
+  // campaña estilo StS (25/10, 210-284; la versión + usa el de su carta base; las Obras pegan con el de su carta: origen 'obra:<id>')
+  210: h('asalto', 'medio'), 218: h('asalto', 'medio'), 220: h('piedra', 'medio'), 224: h('piedra', 'alto'), 225: h('piedra', 'base'), 228: h('piedra', 'alto'),
+  231: h('asalto', 'medio'), 232: h('asalto', 'medio'), 234: h('asalto', 'medio'), 237: h('asalto', 'medio'), 239: h('asalto', 'base'),
+  240: h('magia', 'medio', 'elfo'), 243: h('flechas', 'alto'), 246: h('flechas', 'alto'), 249: h('magia', 'alto', 'elfo'),
+  250: h('explosion', 'medio'), 254: h('flechas', 'medio'), 255: h('explosion', 'medio'), 257: h('explosion', 'alto'),
+  261: h('asalto', 'medio'), 262: h('magia', 'medio', 'drow'), 266: h('asalto', 'medio'), 269: h('magia', 'alto', 'drow'),
+  270: h('asalto', 'medio'), 272: h('asalto', 'medio'), 276: h('asalto', 'medio'), 278: h('piedra', 'alto'), 281: h('asalto', 'medio'),
 };
 // por nombre de efecto, trampa o rey (el `origen` de los golpes que no son una carta jugada)
 export const HIT_FX = {
@@ -36,9 +43,13 @@ export const HIT_FX = {
   landmine: h('explosion', 'base'),     // Mina terrestre (176), le explota al que cargó
   mirage: h('flechas', 'alto'),         // Espejismo (172): la flecha vuelve contra el que la tiró
   orco: h('asalto', 'medio'),           // acción del rey Gorrak: daño 12
+  poison: h('magia', 'base', 'drow'),   // campaña: Susurro venenoso (pierde castillo por estados en la mano)
+  regla: h('asalto', 'medio'),          // campaña: equipo que pega (Guantes de albañil)
 };
 // { arma, altura, color } para un golpe de daño; null si no hay tipo cargado (la auditoría lo marca)
 export function hitOf(origen, casterRace) {
+  if (typeof origen === 'number' && origen > 1000) origen -= 1000; // versión + de campaña
+  if (typeof origen === 'string' && origen.startsWith('obra:')) origen = +origen.slice(5) % 1000; // Obra de campaña: pega como su carta
   const e = typeof origen === 'number' ? HITS[origen] : HIT_FX[origen]; if (!e) return null;
   return { arma: e.arma, altura: e.altura, color: e.arma === 'magia' ? MAGIC_COLORS[e.race || casterRace] || MAGIC_COLORS.neutral : null };
 }

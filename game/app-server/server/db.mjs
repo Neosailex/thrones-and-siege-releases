@@ -36,6 +36,10 @@ if (db) db.exec(`
   -- reportes (S08, 25/10)
   CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY AUTOINCREMENT, reporter TEXT NOT NULL, target TEXT NOT NULL, reason TEXT NOT NULL, note TEXT, ts INTEGER NOT NULL, done INTEGER NOT NULL DEFAULT 0);
   CREATE INDEX IF NOT EXISTS reports_target ON reports (target, ts);
+  -- desafío diario de campaña (S08, 25/10; lógica en diario.mjs)
+  CREATE TABLE IF NOT EXISTS daily (day TEXT NOT NULL, player TEXT NOT NULL, token TEXT NOT NULL, started INTEGER NOT NULL, finished INTEGER,
+    kingdom TEXT, floor INTEGER, won INTEGER, turns INTEGER, castle INTEGER, PRIMARY KEY (day, player));
+  CREATE INDEX IF NOT EXISTS daily_rank ON daily (day, won DESC, floor DESC, castle DESC, turns ASC);
 `);
 // columnas nuevas en bases que ya existen (Fly): se agregan una sola vez
 if (db) {
@@ -52,6 +56,7 @@ if (db) {
 const hash = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
 const now = () => Date.now();
 // id público: no deja ver el id secreto del jugador (con el que se identifica) y sirve para ver perfiles de otros
+export const rawDb = () => db; // para diario.mjs
 export function pubOf(id) { return crypto.createHash('sha256').update('pub:' + id).digest('base64url').slice(0, 12); }
 
 // ---- temporadas: una por mes calendario (UTC). id 'AAAA-MM' ----
@@ -188,7 +193,7 @@ const qr = !db ? null : {
   del: [ // borrado a pedido (privacidad): jugador, estadísticas, temporadas, reportes; en las partidas del rival queda como "borrado"
     db.prepare('DELETE FROM card_plays WHERE player = ?'), db.prepare('DELETE FROM season_stats WHERE player = ?'),
     db.prepare('DELETE FROM reports WHERE target = ? OR reporter = ?'), db.prepare("UPDATE matches SET a = 'borrado' WHERE a = ?"),
-    db.prepare("UPDATE matches SET b = 'borrado' WHERE b = ?"), db.prepare('DELETE FROM players WHERE id = ?')],
+    db.prepare("UPDATE matches SET b = 'borrado' WHERE b = ?"), db.prepare('DELETE FROM daily WHERE player = ?'), db.prepare('DELETE FROM players WHERE id = ?')],
   oldMatches: db.prepare('DELETE FROM matches WHERE ts < ?'),
   oldReports: db.prepare('DELETE FROM reports WHERE done = 1 AND ts < ?'),
 };

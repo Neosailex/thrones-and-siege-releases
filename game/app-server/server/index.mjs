@@ -9,6 +9,7 @@ import { WebSocketTransport } from '@colyseus/ws-transport';
 import { AsedioRoom } from './AsedioRoom.mjs';
 import * as DB from './db.mjs';
 import { ENG } from './version.mjs';
+import * as DIARIO from './diario.mjs';
 
 // Último instalador de Windows (Releases del repo público). Se consulta a GitHub como mucho 1 vez cada 15 min;
 // si falla, se manda a la página de la última versión.
@@ -54,6 +55,14 @@ app.get('/version', (_q, r) => { r.setHeader('Access-Control-Allow-Origin', '*')
 app.get('/api/leaderboard', (_q, r) => r.json(DB.leaderboard(20))); // compatibilidad: top 20 de la temporada actual
 // ranking con temporadas (S08, 25/10): ?season=AAAA-MM | all (histórico), ?limit=1..100
 app.get('/api/ranking', (q, r) => r.json(DB.ranking(q.query.season ? String(q.query.season) : null, q.query.limit)));
+// desafío diario de campaña (S08, 25/10; API en docs/sesiones/S08 "Desafío diario")
+const answer = (r, x) => r.status(x.ok || !x.error ? 200 : x.error === 'ya jugaste' ? 409 : x.error === 'identidad' ? 401 : 400).json(x);
+app.get('/api/diario', (q, r) => r.json(DIARIO.ranking(q.query.dia ? String(q.query.dia) : null, q.query.limit)));
+app.get('/api/diario/hoy', (_q, r) => { const i = DIARIO.dayInfo(); r.json({ ...i, maxFloor: DIARIO.MAX_FLOOR, winMinFloor: DIARIO.WIN_MIN_FLOOR, rules: DIARIO.RULES }); });
+app.post('/api/diario/empezar', (q, r) => answer(r, DIARIO.start(q.body || {})));
+app.post('/api/diario/yo', (q, r) => answer(r, DIARIO.mine(q.body || {})));
+app.post('/api/diario/resultado', (q, r) => answer(r, DIARIO.finish(q.body || {})));
+app.get('/diario', (_q, r) => { r.setHeader('Cache-Control', 'no-cache'); r.sendFile(path.join(SITE, 'diario.html')); }); // ranking del día en la web
 // reportar jugador (S08, 25/10): { pid, ptoken, target (id público), reason, note }
 app.post('/api/report', (q, r) => { const x = DB.report(q.body || {}); r.status(x.ok ? 200 : 400).json(x); });
 // revisión de reportes: solo con la clave ADMIN_KEY (en Fly: fly secrets set ADMIN_KEY=...). Sin clave cargada, apagado.
