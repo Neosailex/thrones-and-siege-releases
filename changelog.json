@@ -5,6 +5,11 @@
   "notes": "Campaña nueva estilo Slay the Spire: 2 jugadas por turno, palabras clave, 75 cartas nuevas con versión mejorada, equipo nuevo, desafío diario con ranking, eventos arreglados, sonidos y textos nuevos. Dragón nuevo: portal de fuego, despegue, pasada rápida con silbido y bola de plasma (daño 40). Cartas base con balance propio: las 37 que tenían los números de origen cambian de a 1. Celular: un toque alcanza en los botones (en iPhone hacía falta tocar dos veces). Ruinas: vuelven los puntitos de los huecos."
  },
  {
+  "version": "0.62.2",
+  "date": "2026-10-26",
+  "notes": "Dragón nuevo: portal de fuego, despega a 90° con onda de aire, silbido y pasada rasante tipo jet con bola de plasma y explosión naranja. Castillos sin puntitos después de la destrucción. Gólem pintado a mano."
+ },
+ {
   "version": "0.62.1",
   "date": "2026-10-25",
   "notes": "Aelwyn: las 3 explosiones grandes del final revientan en pedazos que salen volando. Gólem: carga la energía en el brazo con el que pega y tiene sonido propio para cada momento (se arma, despierta, pasos, puñetazo, se desarma)."
