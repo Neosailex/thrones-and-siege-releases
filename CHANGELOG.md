@@ -2,9 +2,9 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
-## 0.62.2 · 2026-10-26
+## 0.63.0 · 2026-10-26
 
-- Dragón nuevo: portal de fuego, despega a 90° con onda de aire, silbido y pasada rasante tipo jet con bola de plasma y explosión naranja. Castillos sin puntitos después de la destrucción. Gólem pintado a mano.
+- Campaña nueva estilo Slay the Spire: 2 jugadas por turno, palabras clave, 75 cartas nuevas con versión mejorada, equipo nuevo, desafío diario con ranking, eventos arreglados, sonidos y textos nuevos. Dragón nuevo: portal de fuego, despegue, pasada rápida con silbido y bola de plasma (daño 40). Cartas base con balance propio: las 37 que tenían los números de origen cambian de a 1. Celular: un toque alcanza en los botones (en iPhone hacía falta tocar dos veces). Ruinas: vuelven los puntitos de los huecos.
 
 ## 0.62.1 · 2026-10-25
 

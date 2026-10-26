@@ -1,8 +1,8 @@
 {
- "version": "0.62.2",
+ "version": "0.63.0",
  "minShell": 1,
- "notes": "Dragón nuevo: portal de fuego, despega a 90° con onda de aire, silbido y pasada rasante tipo jet con bola de plasma y explosión naranja. Castillos sin puntitos después de la destrucción. Gólem pintado a mano.",
- "date": "2026-10-26T20:00:19.794Z",
+ "notes": "Campaña nueva estilo Slay the Spire: 2 jugadas por turno, palabras clave, 75 cartas nuevas con versión mejorada, equipo nuevo, desafío diario con ranking, eventos arreglados, sonidos y textos nuevos. Dragón nuevo: portal de fuego, despegue, pasada rápida con silbido y bola de plasma (daño 40). Cartas base con balance propio: las 37 que tenían los números de origen cambian de a 1. Celular: un toque alcanza en los botones (en iPhone hacía falta tocar dos veces). Ruinas: vuelven los puntitos de los huecos.",
+ "date": "2026-10-26T20:03:58.109Z",
  "size": 112125730,
  "files": {
   "app/anim/dragon/v4/ala.webp": "c0ada761b2803296d150a4890779e472b457c7f7",
@@ -1620,7 +1620,7 @@
   "app/ui2/textura_piedra.webp": "d83160a20fd1532fac07729797b9a775981a0381",
   "app/ui2/ventana_marco.webp": "3426f5664a07510917dc6b9d3f06625117b9add8",
   "app/ui2/ventana_marco_chico.webp": "868e5d3d71e18614d881b5604ba36d90e4c04ff4",
-  "app/version.json": "970a1ed4a6b7213ba12db37be67ad16d293ba5eb",
+  "app/version.json": "e48fc6ff3f5e89db78f1f51c11d2d28a612552d6",
   "app-server/package.json": "29d143c64c007820d4ae5ebc368f35258483d620",
   "app-server/server/AsedioRoom.mjs": "ed388dde10c88f616bd34ce81ce049d8c119fb66",
   "app-server/server/abuso.mjs": "43622ba102f43dd55cbff5d1d906d5dd40a9faf2",
