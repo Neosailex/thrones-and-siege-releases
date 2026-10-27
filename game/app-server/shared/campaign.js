@@ -41,7 +41,7 @@ export const RULES = {
   // Castillo bajo pega más (Gorrak)
   lowCastleBonus: { text: (r) => `Con castillo por debajo de ${r.below}, sus ataques hacen +${r.amount}`, onBattleStart(g, me, r) { g.players[me].lowCastleBonus = { below: r.below, amount: r.amount }; } },
   // Te mete una maldición/estado cada N turnos (Lor drow, cultistas)
-  curseEvery: { text: (r) => `Cada ${r.every} turnos te mete ${NAMES[r.id][0]}`, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.rs.curse = (p.rs.curse || 0) + 1; if (p.rs.curse % r.every) return; E.giveCard(g, g.players[1 - me], r.id); info.fx.push('curse:' + r.id); } },
+  curseEvery: { text: (r) => `${r.every > 1 ? `Cada ${r.every} turnos` : 'Cada turno'} te mete ${NAMES[r.id][0]}`, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.rs.curse = (p.rs.curse || 0) + 1; if (p.rs.curse % r.every) return; E.giveCard(g, g.players[1 - me], r.id); info.fx.push('curse:' + r.id); } },
   // Encarece las cartas del rival de un recurso (Lor elfo: cristales +2). res: 1 ladrillos, 3 armas, 5 cristales
   costUp: { text: (r) => `Tus cartas de ${{ 1: 'ladrillos', 3: 'armas', 5: 'cristales' }[r.res]} cuestan ${r.amount} más`, onBattleStart(g, me, r) { const o = g.players[1 - me]; o.costMod = o.costMod || [0, 0, 0, 0, 0, 0, 0, 0]; o.costMod[r.res] += r.amount; } },
   // Empieza con una trampa armada (Lor gnomo)
@@ -70,7 +70,51 @@ export const RULES = {
   demonChalice: { name: 'Cáliz del demonio', rar: 'jefe', text: () => '+5 de cada recurso al empezar cada pelea; cada pelea empieza con una Plaga de ratas en tu mano', onBattleStart(g, me) { const p = g.players[me]; p.brick += 5; p.weapon += 5; p.crystal += 5; E.giveCard(g, p, 190); } },
   cartographer: { name: 'Mapa del cartógrafo', rar: 'jefe', seeMap: true, noCampfire: true, text: () => 'Ves todo el mapa y los enemigos de cada nodo; no hay fogatas en la run' },
   watcherEye: { name: 'Ojo del vigía', rar: 'jefe', hand: -1, text: () => 'Ves siempre la trampa y la jugada exacta del enemigo; tu mano es 1 menos', onBattleStart(g, me) { const p = g.players[me]; p.seeTraps = true; p.seeIntentAlways = true; const o = g.players[1 - me]; if (o.trap) o.trapSeen = true; } },
+  /* ---- reyes poseídos y Grieta (Juan 27/10, diseño §7b) ---- */
+  // Fase demoníaca: cuando el castillo baja a `at` (0,5 = la mitad de con lo que arrancó), el demonio lo posee: fx 'possessed' (UI: cinemática)
+  // y desde ahí corren las reglas de `rules` (su "carta demoníaca"). En la vista: view.op.possessed = true.
+  possess: { text: (r) => `A media vida, el demonio lo posee: ${(r.rules || []).map((x) => ruleText(x)).join('; ')}`,
+    onBattleStart(g, me, r) { g.players[me].rs.castle0 = g.players[me].castle; },
+    onDamage(g, me, r, info) { const p = g.players[me]; if (info.seat !== me || p.possessed || p.castle <= 0) return; if (p.castle > Math.ceil((p.rs.castle0 || p.castle) * (r.at ?? 0.5))) return;
+      p.possessed = true; info.fx.push('possessed'); for (const x of r.rules || []) RULES[x.k]?.onBattleStart?.(g, me, x, info); },
+    onTurnStart(g, me, r, info) { if (g.players[me].possessed) for (const x of r.rules || []) RULES[x.k]?.onTurnStart?.(g, me, x, info); },
+    onCardPlayed(g, me, r, info) { if (g.players[me].possessed) for (const x of r.rules || []) RULES[x.k]?.onCardPlayed?.(g, me, x, info); },
+    onKingAct(g, me, r, info) { if (g.players[me].possessed) for (const x of r.rules || []) RULES[x.k]?.onKingAct?.(g, me, x, info); } },
+  // Daño directo a tu castillo cada N turnos suyos (bombas, rayos del demonio)
+  dmgEvery: { text: (r) => `Cada ${r.every} turno${r.every > 1 ? 's' : ''} te pega ${r.amount} directo al castillo`, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.rs.dmg = (p.rs.dmg || 0) + 1; if (p.rs.dmg % r.every) return; hit(g.players[1 - me], 0, r.amount); info.fx.push('rule:dmgEvery'); } },
+  // Grieta: ayudas de los reyes liberados
+  freeStrike: { text: (r) => `Una vez por pelea, en tu primer turno: daño ${r.dmg}`, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; if (p.rs.strike) return; p.rs.strike = true; hit(g.players[1 - me], r.dmg, 0); info.fx.push('rule:freeStrike'); } },
+  handPlus: { text: (r) => `Mano +${r.amount}`, onBattleStart(g, me, r) { const p = g.players[me]; p.handSize = (p.handSize || 0) + r.amount; for (let i = 0; i < r.amount && p.deck.length; i++) p.hand.push(p.deck.pop()); } },
+  startWork: { text: (r) => `Empezás con ${NAMES[r.id][0]} construida`, onBattleStart(g, me, r) { const p = g.players[me]; if (p.works) p.works.push({ id: r.id, age: 0 }); } },
+  enemyDrain: { text: (r) => `El rival empieza con −${r.amount} de cada recurso`, onBattleStart(g, me, r) { const o = g.players[1 - me]; for (const k of ['brick', 'weapon', 'crystal']) o[k] = Math.max(0, o[k] - r.amount); } },
 };
+// daño de regla (sin carta): primero al muro, lo que sobra al castillo; `direct` va derecho al castillo
+function hit(q, dmg, direct) { q.wall -= dmg; if (q.wall < 0) { q.castle += q.wall; q.wall = 0; } q.castle = Math.max(0, q.castle - direct); }
+// Regla demoníaca de cada rey (fase poseída, Juan 27/10): lo que hace desde que el demonio lo posee
+export const DEMON_RULES = {
+  humano: [{ k: 'curseEvery', every: 3, id: 192 }],                 // Aldric poseído: cada 3 turnos te mete Miedo en la mano (tus ataques −1). Medido: cada turno el jugador ganaba 12 %; así, 28 %
+  enano: [{ k: 'regenWall', amount: 6 }],                            // Thorgrim: su muro se regenera +6 por turno
+  orco: [{ k: 'lowCastleBonus', below: 999, amount: 4 }],           // Gorrak: todos sus ataques +4
+  elfo: [{ k: 'costUp', res: 5, amount: 3 }],                        // Aelwyn: tus cartas de cristales cuestan 3 más
+  gnomo: [{ k: 'dmgEvery', every: 2, amount: 5 }],                   // Fizzwick: cada 2 turnos una bomba, 5 directo al castillo
+  drow: [{ k: 'curseEvery', every: 1, id: 194 }],                    // Vaelith: cada turno te mete Pánico (tus cartas cuestan 1 más)
+};
+export const possessRule = (race, at = 0.5) => ({ k: 'possess', at, rules: DEMON_RULES[race] || [] });
+// Grieta: lo que da cada rey liberado en la pelea final (Juan 27/10; números a medir) y las míticas de los otros reyes
+export const GRIETA_ALLIES = {
+  humano: { k: 'startRes', amount: 6 },             // Aldric: +6 de cada recurso al arrancar
+  enano: { k: 'startStat', stat: 'wall', amount: 15 }, // Thorgrim: muro +15 al arrancar
+  orco: { k: 'freeStrike', dmg: 15 },              // Gorrak: un golpe de 15 gratis en tu primer turno
+  elfo: { k: 'handPlus', amount: 1 },              // Aelwyn: mano +1
+  gnomo: { k: 'startWork', id: 250 },              // Fizzwick: empezás con una Torreta de vapor (Obra)
+  drow: { k: 'enemyDrain', amount: 8 },            // Vaelith: el rival empieza con −8 de cada recurso
+};
+export const MYTHIC_OF = { humano: 180, enano: 181, elfo: 182, drow: 183, gnomo: 184, orco: 185 };
+// grietaSetup(tuRaza, razasLiberadas) → { rules: ayudas (sumalas a player.rules), mythics: ids de "Ataque del rey" de los OTROS reyes liberados
+// (sumalas al mazo; al jugarlas entra el rey invitado: fx 'guestKing:<raza>', y tu rey no se desmaya) }
+export function grietaSetup(race, freed = []) {
+  return { rules: freed.map((r) => GRIETA_ALLIES[r]).filter(Boolean), mythics: freed.filter((r) => r !== race).map((r) => MYTHIC_OF[r]).filter(Boolean) };
+}
 // Equipo nuevo (cartas.md §5): ids de regla → se pasan en player.rules como { k: 'wallGloves' } etc. EQUIP_RULES lista los 15 con nombre y rareza.
 export const EQUIP_RULES = ['wallGloves', 'goldBag', 'warHorn', 'leafTalisman', 'eternalGear', 'bloodCup', 'forestMantle', 'poisonVial', 'treasurerBag', 'runicAnvil', 'warCrown', 'stolenThrone', 'demonChalice', 'cartographer', 'watcherEye'];
 export const ruleText = (r) => RULES[r.k]?.text(r) ?? r.k;
@@ -98,10 +142,34 @@ export const ENEMIES = {
     lor: { name: 'Lor Edmund, el Recaudador', tier: 4, race: 'humano', king: false, ai: 'normal', hand: 3, plays: 1.5, res: U(2, 1, 2, 8, 8, 6, 25, 55),
       deck: deckOf({ 8: 2, 37: 2, 50: 1, 60: 2, 6: 2, 199: 2, 69: 2, 36: 1, 11: 1 }), rules: [{ k: 'tithe', every: 4, amount: 2, min: 2 }] },
     rey: { name: 'Rey Aldric', tier: 5, race: 'humano', king: true, ai: 'dificil', hand: 4, plays: 1.5, res: U(2, 2, 2, 6, 6, 6, 20, 50),
-      deck: deckOf({ 8: 2, 37: 1, 50: 1, 60: 1, 6: 2, 2: 2, 62: 1, 63: 1, 66: 1, 36: 1, 11: 1, 68: 1, 69: 1 }), rules: [{ k: 'startRes', amount: 8 }] },
+      deck: deckOf({ 8: 2, 37: 1, 50: 1, 60: 1, 6: 2, 2: 2, 62: 1, 63: 1, 66: 1, 36: 1, 11: 1, 68: 1, 69: 1 }), rules: [{ k: 'startRes', amount: 2 }, possessRule('humano', 0.5)] }, // con la fase poseída arranca con +2 (antes +8)
   },
 };
 export const BOSS_LOOT = { humano: [200, 201] };
+// Variedad (Juan 27/10): 2-3 enemigos por tier y reino para el mapa procedural. ENEMIES[reino][tier] sigue siendo el primero (compatibilidad);
+// enemyFor(reino, tier, rnd) elige uno del pozo. kind: 'campamento' | 'bestia' (sin muro) | 'castillo' | 'constructo' (para el arte, S04/S10).
+export const ENEMY_POOL = {
+  humano: {
+    t1: [ { ...ENEMIES.humano.t1, kind: 'campamento' },
+      { name: 'Jauría de lobos', tier: 1, kind: 'bestia', race: null, king: false, ai: 'facil', hand: 3, plays: 1, capWall: 0, res: U(1, 3, 1, 2, 6, 2, 0, 32),
+        deck: deckOf({ 196: 4, 1: 4, 2: 4, 6: 1 }), rules: [] },
+      { name: 'Bandidos del camino', tier: 1, kind: 'campamento', race: null, king: false, ai: 'facil', hand: 3, plays: 1, res: U(1, 2, 1, 4, 6, 4, 8, 32),
+        deck: deckOf({ 196: 3, 2: 3, 25: 2, 26: 1, 27: 1, 34: 1, 6: 1 }), rules: [] } ],
+    t2: [ { ...ENEMIES.humano.t2, kind: 'castillo' },
+      { name: 'Torre de arqueros', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 2, res: U(1, 3, 1, 6, 10, 4, 30, 38),
+        deck: deckOf({ 197: 4, 2: 4, 6: 3, 8: 2, 36: 1 }), rules: [] },
+      { name: 'Constructo de piedra', tier: 2, kind: 'constructo', race: null, king: false, ai: 'normal', hand: 3, plays: 1.5, res: U(2, 2, 1, 8, 6, 2, 20, 45),
+        deck: deckOf({ 37: 3, 38: 3, 3: 1, 36: 2, 11: 2, 197: 2 }), rules: [{ k: 'regenWall', amount: 3 }] } ],
+    t3: [ { ...ENEMIES.humano.t3, kind: 'castillo' },
+      { name: 'Gólem de asedio', tier: 3, kind: 'constructo', race: null, king: false, ai: 'normal', hand: 3, plays: 2, capWall: 0, res: U(2, 2, 1, 10, 8, 4, 0, 75),
+        deck: deckOf({ 37: 3, 3: 2, 38: 3, 198: 2, 48: 1, 30: 1 }), rules: [{ k: 'bigHit', every: 2 }] },
+      { name: 'Capitán mercenario', tier: 3, kind: 'campamento', race: null, king: false, ai: 'normal', hand: 3, plays: 2, res: U(1, 3, 1, 6, 10, 4, 25, 60),
+        deck: deckOf({ 198: 3, 8: 3, 37: 1, 6: 3, 9: 2, 36: 1, 34: 1 }), rules: [{ k: 'startRes', amount: 6 }] } ],
+    lor: [ENEMIES.humano.lor],
+    rey: [ENEMIES.humano.rey],
+  },
+};
+export function enemyFor(reino, tier, rnd = Math.random) { const l = ENEMY_POOL[reino]?.[tier] || (ENEMIES[reino]?.[tier] ? [ENEMIES[reino][tier]] : null); return l ? l[Math.floor(rnd() * l.length)] : null; }
 
 /* ---------- armar una pelea ---------- */
 // player = { deck, hand, res, race, rules (equipo), king }; enemy = una entrada de ENEMIES. Devuelve el juego; el jugador es el asiento 0, el enemigo el 1.
@@ -117,7 +185,7 @@ export function makeBattle(player, enemy, { starter = 0, rnd = Math.random } = {
     seats: [
       { deck: player.deck, hand: Math.max(1, (player.hand ?? PLAYER_START.hand) + sum('hand')), res: { ...PLAYER_START.res, ...(player.res || {}) }, race: player.race || 'humano', king: player.king !== false, hooks: ruleHooks(pr), rules: pr,
         plays: (player.plays ?? CAMPAIGN.plays) + sum('plays'), discardHand: player.discardHand ?? CAMPAIGN.discardHand, gold: player.gold || 0, kills: player.kills || 0, grow: player.grow || {}, works: keepWorks ? player.works || [] : [], maxCastle: player.maxCastle ?? player.res?.castle ?? PLAYER_START.res.castle },
-      { deck: enemy.deck, hand: enemy.hand, res: enemy.res, race: enemy.race, king: !!enemy.king, hooks: ruleHooks(er), rules: er, plays: enemy.plays || 1, discardHand: !!enemy.discardHand },
+      { deck: enemy.deck, hand: enemy.hand, res: enemy.res, race: enemy.race, king: !!enemy.king, hooks: ruleHooks(er), rules: er, plays: enemy.plays || 1, discardHand: !!enemy.discardHand, ...(enemy.capWall != null ? { capWall: enemy.capWall } : {}) },
     ],
   });
   g.enemy = { name: enemy.name, tier: enemy.tier, ai: enemy.ai, rules: er.map((r) => ({ ...r, text: ruleText(r) })) }; g.rules = [pr, er];

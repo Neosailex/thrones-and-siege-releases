@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.65.0 · 2026-10-27
+
+- Balance con los críticos (ronda 4): Peste máximo 1 copia; una unidad herida produce 1; Guardia real ya no frena el Ataque del rey; enanos +2 de muro (era +3); las legendarias desde la manga cuestan +1; mazos oficiales de humano y elfo rearmados. Arreglos: Sed de sangre no duplica la máquina de Fizzwick, la Máquina del fin del mundo no baja el castillo, Horda desde la manga, la carga del rey no pasa del tope, Susurros con el bonus drow. IA Difícil que se cura a tiempo y no se traba juntando recursos. Campaña: mapa nuevo en cada partida, cofres, aldea que ayuda más, reyes poseídos y la Grieta con reyes invitados.
+
 ## 0.64.0 · 2026-10-27
 
 - Balance con el informe de los 12 críticos: descartar te da +2 del recurso que menos tenés; las cartas 'tu muro −N' no se juegan sin ese muro; Thorgrim da +5 (era +8); Asalto hace 10 + 20 directo; el x2 de Sed de sangre no se suma al rey; pasiva drow x1,5; la manga cuesta +2 de cada recurso y la mítica ya no pide carga del rey; cartas de rey 2 más baratas y +1 de carga; Gorrak 13; mazos oficiales de drow, elfo y gnomo rearmados. La carta de la manga ya no vuelve al mazo (la mítica se juega una sola vez). IA Difícil que remata. Flechas explosivas para todas las razas. Campaña: varios arreglos.

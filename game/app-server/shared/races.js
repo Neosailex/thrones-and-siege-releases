@@ -1,7 +1,7 @@
 // Razas: cada una tiene una habilidad pasiva (siempre activa) y 10 cartas exclusivas: 8 comunes, 1 rara (muy fuerte, 1 copia) y 1 legendaria (cambia la partida, 1 copia).
 export const RACES = {
   humano: { name: 'Humanos', passive: 'Cada turno producen +1 del recurso que menos tienen (si tienen menos de 6) y muro +1 si tienen menos de 10', cards: [62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 130, 131, 132, 168, 169, 180], favor: 'Oro' },
-  enano:  { name: 'Enanos', passive: 'Las cartas de muro dan +3', cards: [72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 133, 134, 135, 170, 171, 181], favor: 'Runas' },
+  enano:  { name: 'Enanos', passive: 'Las cartas de muro dan +2', cards: [72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 133, 134, 135, 170, 171, 181], favor: 'Runas' },
   elfo:   { name: 'Elfos', passive: 'Pueden cambiar 2 cartas por turno en vez de 1, las cartas de cristales cuestan 2 cristales menos (mínimo 1) y sus flechas hacen +3 de daño', cards: [82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 136, 137, 138, 172, 173, 182], favor: 'Savia' },
   drow:   { name: 'Elfos oscuros', passive: 'Las cartas que le quitan recursos al rival quitan 1,5 veces más (redondeado para arriba), y ven las trampas del rival', cards: [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 139, 140, 141, 174, 175, 183], favor: 'Sombra' },
   gnomo:  { name: 'Gnomos', passive: 'Sus máquinas (Ballesta de repetición, Autómata, Catapulta gnoma, Gran máquina, Bombarda y Autómata mayor) cuestan 2 menos, y contra un muro de 25 o más sus ataques de 10 o más hacen además 4 directo al castillo', cards: [102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 142, 143, 144, 176, 177, 184], favor: 'Engranajes' },
@@ -97,7 +97,7 @@ export const KING_CARDS = {
   122: ['Flecha envenenada', 'El rey rival queda desmayado 2 turnos', c(0, 9), Z, Z, { k: 'stunKing', turns: 2 }],
   123: ['Asesino real', 'El rey rival queda desmayado 3 turnos y pierde 2 de carga', c(0, 14), Z, Z, { k: 'stunKing', turns: 3, drain: 2 }],
   124: ['Sabotaje a la corte', 'El rey rival pierde toda su carga', c(0, 0, 10), Z, Z, { k: 'drainKing', all: true }],
-  125: ['Guardia real', 'El próximo ataque a tu rey falla', c(6), Z, Z, { k: 'guardKing' }],
+  125: ['Guardia real', 'La próxima carta contra tu rey (desmayo, carga, Luto, Usurpación) falla; no frena el Ataque del rey', c(6), Z, Z, { k: 'guardKing' }],
   126: ['Médico de la corte', 'Despierta a tu rey y le da +1 de carga', c(0, 0, 5), Z, Z, { k: 'wakeKing', charge: 1 }],
   127: ['Asalto al balcón', 'Daño 12 y el rey rival desmayado 2 turnos', c(0, 16), Z, o({ dmg: 12 }), { k: 'stunKing', turns: 2 }],
   128: ['Rayo cortesano', 'Daño 14 y el rey rival pierde 3 de carga', c(0, 0, 18), Z, o({ dmg: 14 }), { k: 'drainKing', drain: 3 }],
@@ -154,7 +154,7 @@ export const TACTIC_CARDS = {
   172: ['Espejismo', 'Trampa: la próxima flecha del rival (Flechazo, Ballesta, Arqueros…) vuelve contra él', c(0, 0, 8), Z, Z, { k: 'trap', t: 'mirage' }],
   173: ['Canto antiguo', 'Cristales +5; +12 en vez de +5 si cambiaste una carta este turno', c(0, 0, 5), Z, Z, { k: 'cond' }],
   174: ['Pacto de sangre', 'Daño 8; 16 si el rey rival está desmayado', cf(2, 0, 6), Z, Z, { k: 'cond' }],
-  175: ['Susurros', '3 turnos: el rival pierde 3 cristales y vos ganás 1 por turno', c(0, 0, 8), Z, Z, { k: 'effect', e: 'whispers', turns: 3 }],
+  175: ['Susurros', '3 turnos: el rival pierde 5 cristales (3 ×1,5 drow) y vos ganás 1 por turno', c(0, 0, 8), Z, Z, { k: 'effect', e: 'whispers', turns: 3 }],
   176: ['Mina terrestre', 'Trampa: si el rival ataca cuerpo a cuerpo, recibe daño 10', cf(2, 0, 6), Z, Z, { k: 'trap', t: 'landmine' }],
   177: ['Taller nocturno', '3 turnos: +3 armas por turno', c(6), Z, Z, { k: 'effect', e: 'nightshop', turns: 3 }],
   178: ['Frenesí', 'Daño 12; 18 si tu muro está por debajo de 10', c(0, 9), Z, Z, { k: 'cond' }],

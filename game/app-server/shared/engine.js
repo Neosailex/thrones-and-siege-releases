@@ -1,6 +1,6 @@
 // Motor del Asedio. Sin dependencias de DOM ni de red: lo usan el servidor y el cliente.
 import { hitOf } from './hits.js';
-import { CARDS, SPECIAL, FX, DEFAULT_DECK, DEFAULT_RES, HAND, KINGS, FAVOR_MAX, ARROW_IDS, MELEE_IDS, RAPID, GNOME_MACHINES, NAMES, MYTHIC, padDeck, raceOf } from './cards.js';
+import { LEGENDARY, CARDS, SPECIAL, FX, DEFAULT_DECK, DEFAULT_RES, HAND, KINGS, FAVOR_MAX, ARROW_IDS, MELEE_IDS, RAPID, GNOME_MACHINES, NAMES, MYTHIC, padDeck, raceOf } from './cards.js';
 
 const KEYS = ['builder', 'brick', 'recruit', 'weapon', 'mage', 'crystal', 'wall', 'castle'];
 export const stats = (p) => KEYS.map((k) => p[k]);
@@ -106,7 +106,7 @@ function draw(g, p, rnd = g._rnd) {
 export const SLEEVE_MULT = 4 / 3;
 // Opciones de reglas para medir el paquete del informe 2 de los críticos (26/10). Los valores de acá son las reglas vigentes.
 // Juan 26/10 (informe 2): descartar da +2 del recurso más bajo, el x2 no suma al rey, drow ×1,5, manga +2 fijo, Thorgrim +5, Gorrak 13
-export const OPT = { discardGain: 2, cycles: 0, noX2King: true, drowMult: 1.5, prodFloor: 0, sleeveAdd: 2, thorgrim: 5, fizzBest: false, gorrak: 13, finalSiege: 0, siegeRamp: 0.5 };
+export const OPT = { discardGain: 2, cycles: 0, noX2King: true, drowMult: 1.5, prodFloor: 0, sleeveAdd: 2, thorgrim: 5, fizzBest: false, gorrak: 13, finalSiege: 0, siegeRamp: 0.5, pesteNoDrow: false, pesteNoUnits: false, woundedMin: 1, guardNoMythic: true, gateCap: 0, sleeveLegend: 1 }; // Juan 27/10 (informe 4): herida produce 1, Guardia real no frena la mítica, legendarias +1 desde la manga
 // (Sin fase de elección, para DEV/campaña) Elegir o cambiar la carta de la manga ya repartida: solo antes de la primera acción del jugador. Saca una copia del mazo (o de la mano, si todas están ahí).
 export function setSleeve(g, seat, id) {
   if (g.phase === 'sleeve') return chooseSleeve(g, seat, id);
@@ -212,12 +212,13 @@ export function costOf(p, id, sleeve = false) {
   if (p.halfId === id) for (const i of [1, 3, 5, 8]) c[i] = 0; // invento del rey gnomo: gratis ese turno
   if (p.costMod) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] = Math.max(1, c[i] + (p.costMod[i] || 0)); // campaña: regla de jefe o equipo que encarece/abarata
   if (p.hand?.includes(194)) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] += 1; // estado Pánico: todo cuesta 1 más
-  if (sleeve) for (const i of [1, 3, 5, 8]) if (c[i] > 0) c[i] = OPT.sleeveAdd ? c[i] + OPT.sleeveAdd : Math.ceil(c[i] * SLEEVE_MULT); // desde la manga: 1/3 más (o un recargo fijo)
+  if (sleeve) for (const i of [1, 3, 5, 8]) if (c[i] > 0) c[i] = OPT.sleeveAdd ? c[i] + (OPT.sleeveLegend && LEGENDARY.has(id) ? OPT.sleeveLegend : OPT.sleeveAdd) : Math.ceil(c[i] * SLEEVE_MULT); // desde la manga: 1/3 más (o un recargo fijo)
   if (p.camp) campCost(p, id, c); // campaña: Juramento, Plan de batalla, Cuerno de batalla, Talismán de hoja
   return c;
 }
 // ¿Puede el rey bajar a atacar? (mítica): rey propio, despierto y con la carga mínima
-export const kingAttackOk = (p, id) => { const f = FX[id]; if (f?.k !== 'kingAttack') return true; if (p.devKA) return true; /* modo DEV: sin requisito de carga ni de rey despierto */ return hasKing(p) && !(p.kingStun > 0) && !p.stunTurn && (p.kingCharge || 0) >= (f.minCharge || 0); };
+export const isGuestKing = (p, id) => FX[id]?.k === 'kingAttack' && !!raceOf(id) && !!p.race && raceOf(id) !== p.race; // Grieta: la mítica de otro rey liberado (no pide tu rey ni lo desmaya)
+export const kingAttackOk = (p, id) => { const f = FX[id]; if (f?.k !== 'kingAttack') return true; if (p.devKA) return true; if (isGuestKing(p, id)) return true; /* modo DEV: sin requisito de carga ni de rey despierto */ return hasKing(p) && !(p.kingStun > 0) && !p.stunTurn && (p.kingCharge || 0) >= (f.minCharge || 0); };
 // Luto: mientras el rey esté desmayado (incluido el turno en que se recupera) las cartas cuestan 2 más
 export const playableSleeve = (p) => p.sleeve != null && playable(p, p.sleeve, true);
 export const lutoOn = (p) => !!p.luto && (p.kingStun > 0 || !!p.stunTurn);
@@ -236,7 +237,7 @@ export function playable(p, id, sleeve = false) {
 // Juega la carta en la posición i de la mano del jugador de turno.
 // Devuelve un evento para animar; si es Espía o Sabotaje deja g.pending y el turno sigue abierto.
 // Vectores reales de una carta (condicionales, pasivas de raza y efectos), antes de trampas y Furia.
-export function cardVectors(g, p, o, id) {
+export function cardVectors(g, p, o, id, sleeve = false) {
   let [, s, op] = CARDS[id]; s = s.slice(); op = op.slice(); const special = FX[id] || null;
   // condicionales: el efecto depende del estado
   if (special?.k === 'cond') {
@@ -255,12 +256,13 @@ export function cardVectors(g, p, o, id) {
   // campaña: cartas con efecto que depende del estado (oro, muro, estados del rival…)
   if (special?.camp?.dyn) special.camp.dyn({ g, p, o, id, plus: !!special.plus, s, op });
   // Horda: tus armas + 3 por soldado + 1 (antes de pagar la carta); después le suman pasivas y Tambores como a cualquier ataque
-  if (special?.k === 'horde') op[6] = Math.max(0, (p.weapon || 0) - costOf(p, id)[3]) + 3 * (p.recruit || 0) + 1; // las armas que te quedan después de pagarla (antes contaba también las del costo: críticos 2, 26/10)
+  if (special?.k === 'horde') op[6] = Math.max(0, (p.weapon || 0) - costOf(p, id, sleeve)[3]) + 3 * (p.recruit || 0) + 1; // las armas que te quedan después de pagarla (antes contaba también las del costo: críticos 2, 26/10)
   // pasivas de raza sobre los vectores
-  if (p.race === 'enano' && s[6] > 0) s[6] += 3;
+  if (p.race === 'enano' && s[6] > 0) s[6] += 2; // Juan 27/10: +2 (antes +3)
   if (p.race === 'orco' && s[6] > 0) s[6] = Math.max(0, s[6] - 1);
   if (p.race === 'orco' && op[6] + op[7] >= 6) { if (op[6] > 0) op[6] += 1; else op[7] += 1; }
-  if (p.race === 'drow') for (const k of [1, 3, 5]) if (op[k] > 0) op[k] = Math.ceil(op[k] * OPT.drowMult);
+  if (p.race === 'drow' && !(OPT.pesteNoDrow && id === 49)) for (const k of [1, 3, 5]) if (op[k] > 0) op[k] = Math.ceil(op[k] * OPT.drowMult);
+  if (OPT.pesteNoUnits && id === 49) { op[0] = 0; op[2] = 0; op[4] = 0; }
   // elfos, maestros arqueros (Juan 22/10: +2; 25/10: +3, elfo Difícil 47,6 → 52,2)
   if (p.race === 'elfo' && ARROW_IDS.has(id) && (op[6] > 0 || op[7] > 0)) { if (op[6] > 0) op[6] += 3; else op[7] += 3; }
   // tambores de guerra: ataques +3
@@ -298,7 +300,7 @@ function playInner(g, i) {
   const sp = SPECIAL[id];
   if (fromSleeve) { if (!g.dev) p.sleeve = null; fx.push('sleeve'); } // modo DEV: la carta de la manga no se gasta (para probarla muchas veces)
   else if (p.hand.length > handSize(p)) p.hand.splice(i, 1); else p.hand[i] = draw(g, p); // la carta extra del rey elfo no se repone
-  let { s, op, siege, pas7 } = cardVectors(g, p, o, id); if (siege) fx.push('siegeLocked');
+  let { s, op, siege, pas7 } = cardVectors(g, p, o, id, fromSleeve); if (siege) fx.push('siegeLocked');
   const tipo0 = g._kingInvent || special?.k === 'kingAttack' ? 'rey' : 'normal'; glMark(g); if (g._gl) g._glCtx = { tipo: tipo0, origen: id };
   // moneda: se tira antes, así el extra de daño es parte del mismo ataque (escudo, Furia, trampas, pasivas)
   let coin = null;
@@ -342,7 +344,7 @@ function playInner(g, i) {
   let kaGuarded = false;
   if (special?.k === 'kingAttack') { // el rey baja a pelear: si el rival tiene Guardia real, la carga se anula (igual queda desmayado)
     fx.push('kingAttack');
-    if (o.kingGuard) { o.kingGuard = false; op = op.map(() => 0); kaGuarded = true; fx.push('kingGuarded'); }
+    if (o.kingGuard && !OPT.guardNoMythic) { o.kingGuard = false; op = op.map(() => 0); kaGuarded = true; fx.push('kingGuarded'); }
   }
   const castleBefore = o.castle;
   // robos (Saqueadores, Diplomacia: lo que te sacan = lo que ganás): no ganás más de lo que el rival tenía (críticos 2, 26/10)
@@ -356,7 +358,7 @@ function playInner(g, i) {
   if (special) {
     const k = special.k;
     if (k === 'edicto') { const ca = Math.floor((p.castle + o.castle) / 2), wa = Math.floor((p.wall + o.wall) / 2); p.castle = o.castle = Math.max(1, ca); p.wall = p.effects?.some((e) => e.e === 'siegelock') && wa > p.wall ? p.wall : wa; o.wall = wa; fx.push('edicto'); }
-    if (k === 'wallToCastle') { p.castle += p.wall; p.wall = 0; fx.push('wallToCastle'); }
+    if (k === 'wallToCastle') { const m = OPT.gateCap ? Math.min(p.wall, OPT.gateCap) : p.wall; p.castle += m; p.wall -= m; fx.push('wallToCastle'); }
     if (k === 'cycle2') { const costly = p.hand.map((cid, j) => [j, cid, CARDS[cid][0].reduce((x, y) => x + y, 0)]).filter(([, cid]) => !playable(p, cid) && !stuck(cid)).sort((x, y) => y[2] - x[2]).slice(0, 2); for (const [j, cid] of costly) { p.used.push(cid); p.hand[j] = draw(g, p); } fx.push('cycle'); }
     if (k === 'doubleCrystal') p.statsType = 5;
     if (k === 'extraTurn') { g.extraTurn = 2; g.hourglass = true; fx.push('extraTurn'); }
@@ -376,10 +378,11 @@ function playInner(g, i) {
     if (k === 'wakeKing') { p.kingStun = 0; p.stunTurn = false; p.luto = false; p.kingCharge += special.charge || 0; fx.push('kingWake'); }
     if (k === 'chargeKing') { p.kingCharge += special.charge || 0; fx.push('kingCharge'); }
     if (k === 'coin' && coin) { // lo de daño al rival ya se sumó al ataque; acá lo propio
-      if (coin.self) statAdd(p, coin.self); if (coin.selfCost) payCost(p, coin.selfCost); if (coin.selfDmg) statAdd(p, coin.selfDmg.map((v) => -v)); // "tu muro −10": pérdida propia (no la frena tu escudo ni la dobla la Furia rival)
+      if (coin.self) statAdd(p, coin.self); if (coin.selfCost) payCost(p, coin.selfCost); if (coin.selfDmg) { const d = coin.selfDmg.slice(); d[6] = Math.min(d[6], Math.max(0, p.wall)); statAdd(p, d.map((v) => -v)); } // "tu muro −10": pérdida propia (no la frena tu escudo ni la dobla la Furia rival)
     }
     if (k === 'giveCurse') { giveCard(g, special.target === 'self' ? p : o, special.id); fx.push('curse:' + special.id); }
-    if (k === 'kingAttack' && !g.dev) { p.kingStun = Math.max(p.kingStun || 0, special.stun || 2); fx.push('kingStun'); } // en DEV el rey no queda desmayado: se puede repetir el ataque // bajó a pelear: desmayado 2 turnos (mantiene la carga) // campaña: mete una maldición/estado en la mano del rival
+    if (k === 'kingAttack' && isGuestKing(p, id)) fx.push('guestKing:' + raceOf(id)); // rey invitado: tu rey no se desmaya (Juan 27/10)
+    else if (k === 'kingAttack' && !g.dev) { p.kingStun = Math.max(p.kingStun || 0, special.stun || 2); fx.push('kingStun'); } // en DEV el rey no queda desmayado: se puede repetir el ataque // bajó a pelear: desmayado 2 turnos (mantiene la carga) // campaña: mete una maldición/estado en la mano del rival
   }
   if (special?.kingPlus && hasKing(p)) { p.kingCharge = (p.kingCharge || 0) + special.kingPlus; fx.push('kingCharge'); } // cartas de rey: +1 de carga a tu rey (Juan 26/10)
   if (p.rage && (op[6] > 0 || op[7] > 0)) p.rage = 0; // la furia acumulada se gasta en el ataque
@@ -514,7 +517,7 @@ function kingActInner(g, p) {
       fx.push('invent:' + nid);
       const save = { inExtra: g.inExtra, extraTurn: g.extraTurn, rapidPending: g.rapidPending, rapidUsed: g.rapidUsed, cycled: g.cycled };
       p.hand.push(nid); p.halfId = nid; const pend = g.pending; g.pending = null; g.inExtra = false;
-      const ki = g._kingInvent; g._kingInvent = true; const ev = play(g, p.hand.length - 1); g._kingInvent = ki; // el invento cuenta como golpe del rey
+      const ki = g._kingInvent, x2 = OPT.noX2King ? p.x2 : null; if (x2 != null) p.x2 = false; g._kingInvent = true; const ev = play(g, p.hand.length - 1); g._kingInvent = ki; if (x2 != null) p.x2 = x2; // el x2 no se aplica a la máquina del rey (críticos 4) // el invento cuenta como golpe del rey
       if (!ev) { p.hand.pop(); p.halfId = null; }
       if (p.hand.length > handSize(p) && p.hand.includes(nid) && !ev) p.hand.splice(p.hand.lastIndexOf(nid), 1);
       Object.assign(g, save); g.pending = pend || g.pending; p.halfId = null;
@@ -531,7 +534,7 @@ function kingActInner(g, p) {
   return kev;
 }
 // Modo desarrollador: recursos fijos en 99, la partida no termina, mano editable, razas y pasivas cambiables
-export function devClamp(g) { if (g.dev?.infinite) for (const p of g.players) { p.brick = p.weapon = p.crystal = 99; p.favor = FAVOR_MAX; p.devKA = true; } }
+export function devClamp(g) { for (const p of g.players) if (hasKing(p) && p.kingCharge > kingPeriod(p)) p.kingCharge = kingPeriod(p); /* la carga del rey no pasa del tope (críticos 4, 27/10) */ if (g.dev?.infinite) for (const p of g.players) { p.brick = p.weapon = p.crystal = 99; p.favor = FAVOR_MAX; p.devKA = true; } }
 export function devSetCard(g, seat, i, id) { if (!g.dev || !CARDS[id] || i < 0 || i >= g.players[seat].hand.length) return null; g.players[seat].hand[i] = id; return { type: 'devCard', seat, index: i, card: id }; }
 export function devSetRace(g, seat, race, passives = true) {
   if (!g.dev) return null; const p = g.players[seat]; p.devRace = race || null; p.race = passives ? p.devRace : null;
@@ -618,7 +621,7 @@ function endTurnInner(g) {
   g.turn = 1 - g.turn; g.turnNo++; g.cycled = false; g.cycles = 0;
   const p = g.players[g.turn], before = stats(p), both = () => [stats(g.players[0]), stats(g.players[1])], S0 = both();
   if (OPT.finalSiege && !g.campaign && g.turnNo > OPT.finalSiege) { const pc = glCtx(g, 'efecto', 'siege'); statRemove(g, p, [0, 0, 0, 0, 0, 0, 0, Math.floor((g.turnNo - OPT.finalSiege - 1) * OPT.siegeRamp) + 1], false, [], true); glRestore(g, pc); } // asedio final (opción)
-  const wd = p.wounded || 0, ub = wd & 1 ? 0 : p.builder, ur = wd & 2 ? 0 : p.recruit, um = wd & 4 ? 0 : p.mage, all = ub + ur + um, healed = woundedList(p); // unidades heridas: este turno no producen
+  const wd = p.wounded || 0, wm = Math.min(OPT.woundedMin, 1e9), ub = wd & 1 ? wm : p.builder, ur = wd & 2 ? wm : p.recruit, um = wd & 4 ? wm : p.mage, all = ub + ur + um, healed = woundedList(p); // unidades heridas: este turno no producen
   switch (p.statsType) {
     case 0: { const f = g.campaign ? 0 : OPT.prodFloor; p.brick += Math.max(f, ub); p.weapon += Math.max(f, ur); p.crystal += Math.max(f, um); break; }
     case 1: p.brick += all; break;
@@ -641,7 +644,7 @@ function endTurnInner(g) {
       case 'tithe': p.kingCharge = (p.kingCharge || 0) + 1; effectsLog.push('tithe'); break;
       case 'edict': if (e.turns % 2 === 0) { p.builder += 1; effectsLog.push('edict'); } break;
       case 'mines': p.brick += 3; p.wall += 1; effectsLog.push('mines'); break;
-      case 'whispers': o3.crystal = Math.max(0, o3.crystal - 3); p.crystal += 1; effectsLog.push('whispers'); break;
+      case 'whispers': o3.crystal = Math.max(0, o3.crystal - (p.race === 'drow' ? Math.ceil(3 * OPT.drowMult) : 3)); p.crystal += 1; effectsLog.push('whispers'); break;
       case 'nightshop': p.weapon += 3; effectsLog.push('nightshop'); break;
       case 'siegelock': effectsLog.push('siegelock'); break;
       case 'drums': effectsLog.push('drums'); break;
@@ -708,7 +711,7 @@ export const aiSabotagePick = (rnd = Math.random) => Math.floor(rnd() * HAND);
 
 // Vista de la partida para un asiento: oculta la mano rival salvo que un Espía o Sabotaje propio la revele.
 export function viewFor(g, seat) {
-  const pub = (p, mine) => ({ race: p.race || null, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, ...(p.devKA ? { devKA: true } : {}), favor: p.favor || 0, trap: p.trap && (mine || p.trapSeen) ? p.trap : p.trap ? 'oculta' : null, hasTrap: !!p.trap, trapSeen: !!(p.trap && p.trapSeen), effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, stunTurn: !!p.stunTurn, kingPeriod: hasKing(p) ? kingPeriod(p) : 0, handSize: handSize(p), noKing: !!p.noKing, rage: p.rage || 0, sleeve: p.sleeve != null, sleeveDone: p.sleeveDone !== false, acted: !!p.acted, wounded: woundedList(p), ...(p.camp ? campView(p) : {}) });
+  const pub = (p, mine) => ({ race: p.race || null, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, ...(p.devKA ? { devKA: true } : {}), favor: p.favor || 0, trap: p.trap && (mine || p.trapSeen) ? p.trap : p.trap ? 'oculta' : null, hasTrap: !!p.trap, trapSeen: !!(p.trap && p.trapSeen), effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, stunTurn: !!p.stunTurn, kingPeriod: hasKing(p) ? kingPeriod(p) : 0, handSize: handSize(p), noKing: !!p.noKing, rage: p.rage || 0, sleeve: p.sleeve != null, sleeveDone: p.sleeveDone !== false, acted: !!p.acted, wounded: woundedList(p), ...(p.possessed ? { possessed: true } : {}), ...(p.camp ? campView(p) : {}) });
   const me = g.players[seat], op = g.players[1 - seat];
   const reveal = g.pending && g.pending.seat === seat;
   return { seat, phase: g.phase || 'play', turn: g.turn, ...(g.campaign ? { playsLeft: g.turn === seat ? Math.max(0, g.playsLeft ?? 1) + (g.extraTurn > 0 ? g.extraTurn : 0) + (g.rapidPending ? 1 : 0) : 0 } : {}), winner: g.winner, pending: g.pending, turnNo: g.turnNo, campaign: g.campaign || null, intent: g.intent && g.intent.seat !== seat ? g.intent : null, cycled: g.cycled, cyclesLeft: g.turn === seat ? cyclesLeft(g) : 0, inExtra: !!g.inExtra, extraLeft: g.inExtra ? g.extraTurn + 1 : 0, rapid: !!g.rapidMode, races: [g.players[0].race, g.players[1].race], me: { ...pub(me, true), hand: me.hand.slice(), sleeveChoices: g.phase === 'sleeve' ? sleeveChoices(me) : null, sleeveCard: me.sleeve, sleevePlayable: g.turn === seat && playableSleeve(me), sleeveCost: me.sleeve != null ? costOf(me, me.sleeve, true) : null }, op: { ...pub(op, false), hand: reveal ? op.hand.slice() : null } };
@@ -738,8 +741,10 @@ const clampV = (v, cap, slope) => (v <= cap ? v : cap + (v - cap) * slope);
 // Valor de la posición desde el punto de vista de `seat`.
 export const W = { castle: 0.8, castleHi: 7.9, castleLo: 3.9, wall: 1.63, wallCap: 29, unit: 35, unitCap: 15.8, res: 0.8, resCap: 22.6, shield: 13, x2: 20, threat: 1.52, threatK: 0.46, oppW: 2.33 }; // ajustados por búsqueda automática
 export const W2 = { castle: 0.92, castleHi: 21.8, castleLo: 3.4, wall: 2.4, wallCap: 29, unit: 46.5, unitCap: 20.2, res: 0.8, resCap: 25.8, shield: 9.2, x2: 20.6, threat: 1.38, threatK: 0.7, oppW: 1.64 }; // pesos del nivel Difícil
+// Pesos de la IA Difícil para valorar cómo queda la partida al final de cada simulación (arrancan iguales a W; se afinan aparte)
+export const WH = { ...W };
 // Pesos de la IA sobre el rey rival (14/10, para que use Luto y los desmayos cuando el rey está por actuar). Antes: { stunNear: 9, stunTurn: false, luto: false }.
-export const AIW = { stunNear: 30, stunTurn: true, luto: true, lethal: true, mcDiscard: 0.03, mcTrap: 0.03 };
+export const AIW = { stunNear: 30, stunTurn: true, luto: true, lethal: true, mcDiscard: 0.03, mcTrap: 0.03, danger: 0.08, finish: 0, noDoubleProd: false };
 // Trampas ocultas (Juan 24/10): el rival sabe que hay una, no cuál. drowSee: los drow ven las trampas sin carta (a medir).
 export const TRAPS = { hidden: true, drowSee: true };
 export function evaluate(g, seat, Wt = W) {
@@ -857,12 +862,21 @@ function aiMC(g, rnd) {
         aiMaybeCycle(c); const a = rollPolicy(c, rnd); a.type === 'play' ? (play(c, a.index) || discard(c, [a.index])) : discard(c, a.indexes);
       }
       if (c.winner == null && !c.pending) endTurn(c);
-      score[i] += c.winner != null ? (c.winner === seat ? 1 : 0) : 1 / (1 + Math.exp(-(evaluate(c, seat)) / HARD.T));
+      score[i] += c.winner != null ? (c.winner === seat ? 1 : 0) : 1 / (1 + Math.exp(-(evaluate(c, seat, WH)) / HARD.T));
     });
   }
   // Difícil (críticos 2, 26/10): no descartar si hay algo para jugar que no sea malo; armar trampas un poco más
-  if (AIW.mcDiscard || AIW.mcTrap) { const hasPlay = moves.some((m) => m.type === 'play'); const p = g.players[seat];
-    moves.forEach((m, i) => { if (m.type === 'discard' && hasPlay) score[i] -= HARD.R * AIW.mcDiscard; if (m.type === 'play' && m.index !== 'sleeve' && FX[p.hand[m.index]]?.k === 'trap' && !p.trap) score[i] += HARD.R * AIW.mcTrap; }); }
+  if (AIW.mcDiscard || AIW.mcTrap) { const hasPlay = moves.some((m) => m.type === 'play'); const p = g.players[seat], hoard = Math.max(p.brick, p.weapon, p.crystal) >= 25;
+    moves.forEach((m, i) => { if (m.type === 'discard' && hasPlay) score[i] -= HARD.R * AIW.mcDiscard * (hoard ? 3 : 1); if (m.type === 'play' && m.index !== 'sleeve' && FX[p.hand[m.index]]?.k === 'trap' && !p.trap) score[i] += HARD.R * AIW.mcTrap; }); }
+  // rematar con armas de sobra: rival bajo → premiar los ataques; no jugar dos "Todos producen" seguidos (críticos 4)
+  if (AIW.finish || AIW.noDoubleProd) { const p = g.players[seat], o = g.players[opSeat], life = o.castle + o.wall;
+    moves.forEach((m, i) => { if (m.type !== 'play' || m.index === 'sleeve') return; const id = p.hand[m.index];
+      if (AIW.noDoubleProd && p.statsType >= 1 && p.statsType <= 3 && ['allWeapon', 'allCrystal', 'allBrick'].includes(SPECIAL[id])) score[i] -= HARD.R * 0.5;
+      if (AIW.finish && life <= 25) { const { op } = cardVectors(g, p, o, id); const d = op[6] + op[7]; if (d > 0) score[i] += HARD.R * AIW.finish * Math.min(1, d / Math.max(1, life)); } }); }
+  // en peligro (lo que tiene el rival para pegar alcanza para matarla): premiar lo que le sube muro + castillo (críticos 2: "no se defiende")
+  if (AIW.danger) { const me = g.players[seat], o = g.players[opSeat], life = me.castle + me.wall, threat = Math.max(o.weapon, o.crystal, o.brick) * 1.2 + 4;
+    if (life <= threat) moves.forEach((m, i) => { if (m.type !== 'play') return; const c = cloneGame(g); c._rnd = rnd; if (!play(c, m.index)) return; const q = c.players[seat], gain = q.castle + q.wall - life;
+      if (gain > 0 && c.players[opSeat].castle > 0) score[i] += HARD.R * AIW.danger * Math.min(1, gain / Math.max(1, threat - life + 1)); }); }
   let b = 0; score.forEach((v, i) => { if (v > score[b]) b = i; }); return moves[b];
 }
 function aiHard(g, rnd) {
