@@ -43,6 +43,7 @@ export const HIT_FX = {
   landmine: h('explosion', 'base'),     // Mina terrestre (176), le explota al que cargó
   mirage: h('flechas', 'alto'),         // Espejismo (172): la flecha vuelve contra el que la tiró
   orco: h('asalto', 'medio'),           // acción del rey Gorrak: daño 12
+  ash: h('magia', 'medio', 'drow'),     // Ceniza (Juan 27/10): lo que el piso le frena al drow quema el muro rival
   poison: h('magia', 'base', 'drow'),   // campaña: Susurro venenoso (pierde castillo por estados en la mano)
   regla: h('asalto', 'medio'),          // campaña: equipo que pega (Guantes de albañil)
 };

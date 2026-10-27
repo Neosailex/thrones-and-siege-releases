@@ -44,7 +44,7 @@ export class AsedioRoom extends Room {
       this.sync([ev], null, !ev.deal); // con el reparto arranca el reloj del turno; si no, sigue el de la elección
     });
     this.onMessage('pass', (c) => this.act(c, () => E.passExtra(this.g)));
-    this.onMessage('discard', (c, m) => this.act(c, () => E.discard(this.g, Array.isArray(m?.indexes) ? m.indexes.map(Number) : [])));
+    this.onMessage('discard', (c, m) => this.act(c, () => E.discard(this.g, Array.isArray(m?.indexes) ? m.indexes.map(Number) : [], m?.pick && typeof m.pick === 'object' ? { card: Number(m.pick.card), res: String(m.pick.res) } : null)));
     this.onMessage('sabotage', (c, m) => this.act(c, () => E.sabotage(this.g, Number(m?.index)), true));
     this.onMessage('spyDone', (c) => this.act(c, () => E.spyDone(this.g), true));
     this.onMessage('cycle', (c, m) => { if (!this.g || this.g.winner != null || this.seatOf(c) !== this.g.turn) return; const ev = E.cycle(this.g, Number(m?.index)); if (ev) this.sync([ev], null, true); });
