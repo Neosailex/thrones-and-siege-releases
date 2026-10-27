@@ -3,7 +3,7 @@ export const RACES = {
   humano: { name: 'Humanos', passive: 'Cada turno producen +1 del recurso que menos tienen (si tienen menos de 6) y muro +1 si tienen menos de 10', cards: [62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 130, 131, 132, 168, 169, 180], favor: 'Oro' },
   enano:  { name: 'Enanos', passive: 'Las cartas de muro dan +3', cards: [72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 133, 134, 135, 170, 171, 181], favor: 'Runas' },
   elfo:   { name: 'Elfos', passive: 'Pueden cambiar 2 cartas por turno en vez de 1, las cartas de cristales cuestan 2 cristales menos (mínimo 1) y sus flechas hacen +3 de daño', cards: [82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 136, 137, 138, 172, 173, 182], favor: 'Savia' },
-  drow:   { name: 'Elfos oscuros', passive: 'Las cartas que le quitan recursos al rival quitan el doble, y ven las trampas del rival', cards: [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 139, 140, 141, 174, 175, 183], favor: 'Sombra' },
+  drow:   { name: 'Elfos oscuros', passive: 'Las cartas que le quitan recursos al rival quitan 1,5 veces más (redondeado para arriba), y ven las trampas del rival', cards: [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 139, 140, 141, 174, 175, 183], favor: 'Sombra' },
   gnomo:  { name: 'Gnomos', passive: 'Sus máquinas (Ballesta de repetición, Autómata, Catapulta gnoma, Gran máquina, Bombarda y Autómata mayor) cuestan 2 menos, y contra un muro de 25 o más sus ataques de 10 o más hacen además 4 directo al castillo', cards: [102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 142, 143, 144, 176, 177, 184], favor: 'Engranajes' },
   orco:   { name: 'Orcos', passive: 'Cada ataque de 6 o más de daño hace +1, pero las cartas de muro dan 1 menos', cards: [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 145, 146, 147, 178, 179, 185], favor: 'Sangre' },
 };
@@ -81,16 +81,16 @@ export const RACE_CARDS = {
   118: ['Chamán', 'Daño 8, cristales +2', c(0, 0, 8), s({ cr: 2 }), o({ dmg: 8 })],
   119: ['Empalizada orca', 'Muro +6', c(5), s({ wall: 6 }), Z],
   120: ['Jefe de guerra', 'Daño 18, soldados +1 y tu próximo ataque hace el doble', c(0, 16), s({ so: 1 }), o({ dmg: 18 }), { k: 'double' }],
-  121: ['Horda', 'Todos tus soldados atacan: daño igual a tus armas más 3 por soldado, +1; perdés todas las armas', c(0, 12), Z, Z, { k: 'horde' }],
+  121: ['Horda', 'Todos tus soldados atacan: daño igual a las armas que te quedan después de pagarla, más 3 por soldado, +1; perdés todas las armas', c(0, 12), Z, Z, { k: 'horde' }],
 };
 // Reyes: cada raza tiene un rey en el balcón del castillo. Carga 1 por turno propio y al completar el período actúa.
 export const KINGS = {
   humano: { name: 'Rey Aldric', period: 5, text: '+4 ladrillos, +4 armas y +4 cristales' },
-  enano:  { name: 'Rey Thorgrim', period: 4, text: 'Muro +12 y castillo +3; si tu muro ya tiene 30 o más, castillo +8 en su lugar' },
+  enano:  { name: 'Rey Thorgrim', period: 4, text: 'Muro +12 y castillo +3; si tu muro ya tiene 30 o más, castillo +5 en su lugar' },
   elfo:   { name: 'Rey Aelwyn', period: 5, text: 'Cristales +6 y levantás 1 carta extra que no se repone al jugarla (los elfos pueden juntar hasta 8)' },
   drow:   { name: 'Reina Vaelith', period: 5, text: 'Rival: −6 ladrillos, −6 armas, −10 cristales y −3 de favor' },
   gnomo:  { name: 'Rey Fizzwick', period: 5, text: 'El Inventor: crea una máquina gnoma al azar y la juega gratis en el acto' },
-  orco:   { name: 'Rey Gorrak', period: 5, text: 'Daño 12' },
+  orco:   { name: 'Rey Gorrak', period: 5, text: 'Daño 13 (12 +1 orco)' },
 };
 // Cartas neutrales que apuntan al rey (122-129)
 export const KING_CARDS = {
@@ -165,8 +165,8 @@ export const TACTIC_CARDS = {
 // Míticas (180-185): "Ataque del rey", 1 por raza, máximo 1 copia. El rey baja a pelear: 30 de daño (primero al muro); si el golpe llega al
 // castillo (rompe el muro), el rival pierde además 1 de cada unidad; si el muro aguanta, solo el daño (Juan 14/10). Con 30 rompe el muro ~59 %.
 const cm = (b, w, cr) => [0, b, 0, w, 0, cr, 0, 0, 5];
-const KA = { k: 'kingAttack', stun: 2, minCharge: 2 };
-const KA_TX = 'Ataque del rey: daño 30; si rompe el muro, el rival pierde además 1 de cada unidad. Solo con tu rey despierto y con 2 o más de carga; después queda desmayado 2 turnos';
+const KA = { k: 'kingAttack', stun: 2, minCharge: 0 }; // Juan 26/10: ya no pide 2 de carga (antes minCharge 2)
+const KA_TX = 'Ataque del rey: daño 30; si rompe el muro, el rival pierde además 1 de cada unidad. Solo con tu rey despierto; después queda desmayado 2 turnos';
 const KO = [0, 0, 0, 0, 0, 0, 30, 0]; // las unidades se pierden solo si rompe el muro (engine: kingAttack)
 export const MYTHIC_CARDS = {
   180: ['Carga de Aldric', KA_TX, cm(10, 10, 0), Z, KO, KA],

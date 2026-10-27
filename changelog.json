@@ -1,5 +1,10 @@
 [
  {
+  "version": "0.64.0",
+  "date": "2026-10-27",
+  "notes": "Balance con el informe de los 12 críticos: descartar te da +2 del recurso que menos tenés; las cartas 'tu muro −N' no se juegan sin ese muro; Thorgrim da +5 (era +8); Asalto hace 10 + 20 directo; el x2 de Sed de sangre no se suma al rey; pasiva drow x1,5; la manga cuesta +2 de cada recurso y la mítica ya no pide carga del rey; cartas de rey 2 más baratas y +1 de carga; Gorrak 13; mazos oficiales de drow, elfo y gnomo rearmados. La carta de la manga ya no vuelve al mazo (la mítica se juega una sola vez). IA Difícil que remata. Flechas explosivas para todas las razas. Campaña: varios arreglos."
+ },
+ {
   "version": "0.63.1",
   "date": "2026-10-26",
   "notes": "Las cartas que juega el rival muestran sus números reales: lo que su raza o sus efectos mejoran en verde y lo que baja en rojo (ej.: Arco de luna de un elfo, 20 +3 elfo = 23). Los costos también: verde si sale más barata, rojo si sale más cara (manga), en todas las cartas."

@@ -102,8 +102,11 @@ function draw(g, p, rnd = g._rnd) {
 }
 /* ---------- Manga ---------- */
 // Al empezar, cada jugador aparta 1 carta de su mazo en la manga (secreta; el rival solo ve que hay una). Se juega desde ahí en cualquier
-// turno propio pagando 1/3 más (redondeo hacia arriba). Pensada para la mítica (Ataque del rey), pero va cualquier carta.
+// turno propio pagando +2 de cada recurso que pida (Juan 26/10; antes 1/3 más). Pensada para la mítica (Ataque del rey), pero va cualquier carta.
 export const SLEEVE_MULT = 4 / 3;
+// Opciones de reglas para medir el paquete del informe 2 de los críticos (26/10). Los valores de acá son las reglas vigentes.
+// Juan 26/10 (informe 2): descartar da +2 del recurso más bajo, el x2 no suma al rey, drow ×1,5, manga +2 fijo, Thorgrim +5, Gorrak 13
+export const OPT = { discardGain: 2, cycles: 0, noX2King: true, drowMult: 1.5, prodFloor: 0, sleeveAdd: 2, thorgrim: 5, fizzBest: false, gorrak: 13, finalSiege: 0, siegeRamp: 0.5 };
 // (Sin fase de elección, para DEV/campaña) Elegir o cambiar la carta de la manga ya repartida: solo antes de la primera acción del jugador. Saca una copia del mazo (o de la mano, si todas están ahí).
 export function setSleeve(g, seat, id) {
   if (g.phase === 'sleeve') return chooseSleeve(g, seat, id);
@@ -193,7 +196,7 @@ function statRemove(g, p, a, keep, fx, foe = g.turn !== g.players.indexOf(p), pa
     g._gs[i] = [p.wall, p.castle];
   }
   // Venganza: todo el daño recibido durante el turno rival (cartas, efectos, rey, monedas, Horda)
-  if (hits && g.turn !== g.players.indexOf(p)) p.dmgRound = (p.dmgRound || 0) + Math.max(0, w0 - p.wall) + Math.max(0, c0 - p.castle);
+  if (hits && g.turn !== g.players.indexOf(p) && !g._kingAct) p.dmgRound = (p.dmgRound || 0) + Math.max(0, w0 - p.wall) + Math.max(0, c0 - p.castle);
   if (hits && g.hooks) fire(g, 'onDamage', { seat: g.players.indexOf(p), from: foe ? 1 - g.players.indexOf(p) : g.players.indexOf(p), wall: Math.max(0, w0 - p.wall), castle: Math.max(0, c0 - p.castle), fx });
 }
 // Pagar el costo: se descuenta tal cual (el escudo propio o la Furia rival no lo tocan)
@@ -209,7 +212,7 @@ export function costOf(p, id, sleeve = false) {
   if (p.halfId === id) for (const i of [1, 3, 5, 8]) c[i] = 0; // invento del rey gnomo: gratis ese turno
   if (p.costMod) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] = Math.max(1, c[i] + (p.costMod[i] || 0)); // campaña: regla de jefe o equipo que encarece/abarata
   if (p.hand?.includes(194)) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] += 1; // estado Pánico: todo cuesta 1 más
-  if (sleeve) for (const i of [1, 3, 5, 8]) if (c[i] > 0) c[i] = Math.ceil(c[i] * SLEEVE_MULT); // desde la manga: 1/3 más
+  if (sleeve) for (const i of [1, 3, 5, 8]) if (c[i] > 0) c[i] = OPT.sleeveAdd ? c[i] + OPT.sleeveAdd : Math.ceil(c[i] * SLEEVE_MULT); // desde la manga: 1/3 más (o un recargo fijo)
   if (p.camp) campCost(p, id, c); // campaña: Juramento, Plan de batalla, Cuerno de batalla, Talismán de hoja
   return c;
 }
@@ -224,6 +227,7 @@ export function playable(p, id, sleeve = false) {
   if (FX[id]?.camp && !campPlayable(p, id)) return false; // campaña: oro, cartas de fuera de pelea, Taller de urgencia sin Obras
   const s = stats(p), c = costOf(p, id, sleeve);
   if (c[7] && p.castle <= c[7]) return false; // pagar con castillo (orcos de campaña): no te podés matar
+  if (CARDS[id][1][6] < 0 && p.wall < -CARDS[id][1][6]) return false; // "tu muro −3" (Berserker, Sacrificio, Pacto): sin ese muro no se juega (Juan 26/10)
   if (c[8] && (p.favor || 0) < c[8]) return false;
   for (let i = 0; i < 8; i++) if (s[i] < c[i]) return false;
   return !(s[0] <= c[0] || s[2] <= c[2] || s[4] <= c[4]);
@@ -251,12 +255,12 @@ export function cardVectors(g, p, o, id) {
   // campaña: cartas con efecto que depende del estado (oro, muro, estados del rival…)
   if (special?.camp?.dyn) special.camp.dyn({ g, p, o, id, plus: !!special.plus, s, op });
   // Horda: tus armas + 3 por soldado + 1 (antes de pagar la carta); después le suman pasivas y Tambores como a cualquier ataque
-  if (special?.k === 'horde') op[6] = (p.weapon || 0) + 3 * (p.recruit || 0) + 1;
+  if (special?.k === 'horde') op[6] = Math.max(0, (p.weapon || 0) - costOf(p, id)[3]) + 3 * (p.recruit || 0) + 1; // las armas que te quedan después de pagarla (antes contaba también las del costo: críticos 2, 26/10)
   // pasivas de raza sobre los vectores
   if (p.race === 'enano' && s[6] > 0) s[6] += 3;
   if (p.race === 'orco' && s[6] > 0) s[6] = Math.max(0, s[6] - 1);
   if (p.race === 'orco' && op[6] + op[7] >= 6) { if (op[6] > 0) op[6] += 1; else op[7] += 1; }
-  if (p.race === 'drow') for (const k of [1, 3, 5]) if (op[k] > 0) op[k] = op[k] * 2;
+  if (p.race === 'drow') for (const k of [1, 3, 5]) if (op[k] > 0) op[k] = Math.ceil(op[k] * OPT.drowMult);
   // elfos, maestros arqueros (Juan 22/10: +2; 25/10: +3, elfo Difícil 47,6 → 52,2)
   if (p.race === 'elfo' && ARROW_IDS.has(id) && (op[6] > 0 || op[7] > 0)) { if (op[6] > 0) op[6] += 3; else op[7] += 3; }
   // tambores de guerra: ataques +3
@@ -275,7 +279,7 @@ export function cardVectors(g, p, o, id) {
   let siege = false; if (p.effects?.some((e) => e.e === 'siegelock') && s[6] > 0) { s[6] = 0; siege = true; }
   return { s, op, siege, pas7 };
 }
-// i = posición en la mano, o 'sleeve' para jugar la carta de la manga (cuesta 1/3 más y no se repone).
+// i = posición en la mano, o 'sleeve' para jugar la carta de la manga (cuesta +2 de cada recurso y no se repone).
 export function play(g, i) {
   const mine = glBegin(g), prev = g._glCtx;
   let ev = null; try { ev = playInner(g, i); } finally { if (!mine && g._gl) { glMark(g); g._glCtx = prev; } }
@@ -290,7 +294,7 @@ function playInner(g, i) {
   const c = costOf(p, id, fromSleeve); if (p.halfId === id) p.halfId = null;
   const before = [stats(g.players[0]), stats(g.players[1])];
   const fx = [], special = FX[id] || null;
-  p.used.push(id); p.acted = true;
+  if (!fromSleeve) p.used.push(id); p.acted = true;   // (26/10, críticos) la carta de la manga se usa una sola vez: no va al descarte (antes volvía al mazo al rebarajar y la mítica se jugaba 2 veces)
   const sp = SPECIAL[id];
   if (fromSleeve) { if (!g.dev) p.sleeve = null; fx.push('sleeve'); } // modo DEV: la carta de la manga no se gasta (para probarla muchas veces)
   else if (p.hand.length > handSize(p)) p.hand.splice(i, 1); else p.hand[i] = draw(g, p); // la carta extra del rey elfo no se repone
@@ -302,7 +306,8 @@ function playInner(g, i) {
   // trampas del rival
   let cancelled = false;
   if (o.trap) {
-    const t = o.trap, isSpell = c[5] > 0 && special?.k !== 'kingAttack' && (op.some((v) => v > 0) || ['stunKing', 'drainKing'].includes(special?.k)), isWeapon = c[3] > 0, isMelee = MELEE_IDS.has(id), isArrow = ARROW_IDS.has(id), hits = op[6] > 0 || op[7] > 0;
+    // hechizo = carta que se paga con cristales y te afecta (daño, sacarte algo o tu rey: desmayo, carga, Luto, Usurpación — críticos 2, 26/10)
+    const t = o.trap, isSpell = c[5] > 0 && special?.k !== 'kingAttack' && (op.some((v) => v > 0) || ['stunKing', 'drainKing', 'luto', 'usurp'].includes(special?.k)), isWeapon = c[3] > 0, isMelee = MELEE_IDS.has(id), isArrow = ARROW_IDS.has(id), hits = op[6] > 0 || op[7] > 0;
     let fired = false;
     if (t === 'moat' && isMelee && hits) { op[6] = Math.floor(op[6] / 2); op[7] = Math.floor(op[7] / 2); pas7 = Math.floor(pas7 / 2); fired = true; }
     if (t === 'counterspell' && isSpell) { cancelled = true; o.crystal += 5; fired = true; }
@@ -340,8 +345,10 @@ function playInner(g, i) {
     if (o.kingGuard) { o.kingGuard = false; op = op.map(() => 0); kaGuarded = true; fx.push('kingGuarded'); }
   }
   const castleBefore = o.castle;
+  // robos (Saqueadores, Diplomacia: lo que te sacan = lo que ganás): no ganás más de lo que el rival tenía (críticos 2, 26/10)
+  { const base = CARDS[id]; for (const k of [1, 3, 5]) if (base[1][k] > 0 && base[1][k] === base[2][k]) s[k] = Math.min(s[k], Math.max(0, o[KEYS[k]])); }
   statAdd(p, s);
-  statRemove(g, o, op, false, fx, undefined, pas7);
+  { const x2 = OPT.noX2King && special?.k === 'kingAttack' ? p.x2 : null; if (x2 != null) p.x2 = false; statRemove(g, o, op, false, fx, undefined, pas7); if (x2 != null) p.x2 = x2; }
   // Ataque del rey: si el golpe llegó al castillo (rompió el muro), el rival pierde además 1 de cada unidad; si el muro aguantó, solo el daño
   if (special?.k === 'kingAttack' && !kaGuarded && o.castle < castleBefore) { fx.push('kingBreak'); statRemove(g, o, [1, 0, 1, 0, 1, 0, 0, 0], false, fx); }
   if (sp === 'double') p.x2 = true; // el próximo ataque, no este
@@ -374,6 +381,7 @@ function playInner(g, i) {
     if (k === 'giveCurse') { giveCard(g, special.target === 'self' ? p : o, special.id); fx.push('curse:' + special.id); }
     if (k === 'kingAttack' && !g.dev) { p.kingStun = Math.max(p.kingStun || 0, special.stun || 2); fx.push('kingStun'); } // en DEV el rey no queda desmayado: se puede repetir el ataque // bajó a pelear: desmayado 2 turnos (mantiene la carga) // campaña: mete una maldición/estado en la mano del rival
   }
+  if (special?.kingPlus && hasKing(p)) { p.kingCharge = (p.kingCharge || 0) + special.kingPlus; fx.push('kingCharge'); } // cartas de rey: +1 de carga a tu rey (Juan 26/10)
   if (p.rage && (op[6] > 0 || op[7] > 0)) p.rage = 0; // la furia acumulada se gasta en el ataque
   if (p.camp) campAfter(g, p, o, id, special, fx, s, op, c);
   if (p.castle <= 0) p.castle = 0;
@@ -488,19 +496,21 @@ export function removeCard(g, seat, i) { const p = g.players[seat]; if (i < 0 ||
 
 // Poder del rey según la raza
 function kingAct(g, p) {
-  const pc = glCtx(g, 'rey', p.race);
-  try { return kingActInner(g, p); } finally { glRestore(g, pc); }
+  const pc = glCtx(g, 'rey', p.race), ka = g._kingAct; g._kingAct = true; // Venganza no cuenta el golpe automático del rey (críticos 2, 26/10)
+  try { return kingActInner(g, p); } finally { glRestore(g, pc); g._kingAct = ka; }
 }
+// Fizzwick elige (opción): la máquina que deja mejor la posición para él
+function fizzPick(g, p) { const seat = g.players.indexOf(p); let best = GNOME_MACHINES[0], bv = -Infinity; for (const id of GNOME_MACHINES) { const c = cloneGame(g); const q = c.players[seat]; q.hand.push(id); q.halfId = id; c.pending = null; c.inExtra = false; c._kingInvent = true; if (!play(c, q.hand.length - 1)) continue; const v = evaluate(c, seat); if (v > bv) { bv = v; best = id; } } return best; }
 function kingActInner(g, p) {
   const o = other(g, p), fx = [], before = [stats(g.players[0]), stats(g.players[1])];
   switch (p.race) {
     case 'humano': p.brick += 4; p.weapon += 4; p.crystal += 4; break;
-    case 'enano': if (p.wall >= 30) p.castle += 8; else { p.wall += 12; p.castle += 3; } break; // 30 (antes 40): con el Ataque del rey en juego el enano caía a 45 %
+    case 'enano': if (p.wall >= 30) p.castle += OPT.thorgrim; else { p.wall += 12; p.castle += 3; } break; // 30 (antes 40): con el Ataque del rey en juego el enano caía a 45 %
     case 'elfo': p.crystal += 6; if (p.hand.length < handCap(p)) { p.hand.push(draw(g, p)); fx.push('draw'); } break;
     // drow: cristales −10 (Juan 22/10, para emparejar contra el elfo); ladrillos y armas −6
     case 'drow': for (const k of ['brick', 'weapon', 'crystal']) o[k] = Math.max(0, o[k] - (k === 'crystal' ? 10 : 6)); o.favor = Math.max(0, (o.favor || 0) - 3); break;
     case 'gnomo': { // El Inventor: crea una máquina gnoma al azar y la juega gratis en el acto (no toca tu mano ni tu jugada)
-      const nid = GNOME_MACHINES[Math.floor(g._rnd() * GNOME_MACHINES.length)];
+      const nid = OPT.fizzBest ? fizzPick(g, p) : GNOME_MACHINES[Math.floor(g._rnd() * GNOME_MACHINES.length)];
       fx.push('invent:' + nid);
       const save = { inExtra: g.inExtra, extraTurn: g.extraTurn, rapidPending: g.rapidPending, rapidUsed: g.rapidUsed, cycled: g.cycled };
       p.hand.push(nid); p.halfId = nid; const pend = g.pending; g.pending = null; g.inExtra = false;
@@ -513,7 +523,7 @@ function kingActInner(g, p) {
       if (g.hooks) fire(g, 'onKingAct', { seat: g.players.indexOf(p), ev: kev, fx });
       return kev;
     }
-    case 'orco': statRemove(g, o, [0, 0, 0, 0, 0, 0, 12, 0], false, fx); break;
+    case 'orco': { const x2 = OPT.noX2King ? p.x2 : null; if (x2 != null) p.x2 = false; statRemove(g, o, [0, 0, 0, 0, 0, 0, OPT.gorrak, 0], false, fx); if (x2 != null) p.x2 = x2; break; }
   }
   if (p.castle <= 0) p.castle = 0;
   const kev = { race: p.race, fx, before, after: [stats(g.players[0]), stats(g.players[1])] };
@@ -533,7 +543,7 @@ export function devPassives(g, on) { if (!g.dev) return; for (const p of g.playe
 // Tope de mano: la base es HAND (5); se puede pasar con cartas extra hasta 6, los elfos hasta 8
 export const handCap = (p) => handSize(p) + (p.race === 'elfo' ? 3 : 1);
 // Cambiar carta: todos pueden cambiar 1 carta por turno sin perder el turno; los elfos, 2
-export const cycleMax = (p) => (p.mantle ? 99 : (p.race === 'elfo' ? 2 : 1) + (p.cycleBonus || 0)); // campaña: Brisa / Bosque que responde suman; Manto del bosque sin límite
+export const cycleMax = (p) => (p.mantle ? 99 : (p.race === 'elfo' ? 2 : 1) + (p.camp ? 0 : OPT.cycles) + (p.cycleBonus || 0)); // campaña: Brisa / Bosque que responde suman; Manto del bosque sin límite
 export const cyclesLeft = (g) => Math.max(0, cycleMax(g.players[g.turn]) - (g.cycles || 0));
 export function cycle(g, i) {
   if (g.winner != null || g.pending || g.phase === 'sleeve' || !cyclesLeft(g)) return null;
@@ -568,6 +578,7 @@ export function discard(g, idxs) {
   if (!list.length) return null;
   const p = g.players[g.turn], cards = [];
   for (const i of list) { cards.push(p.hand[i]); p.used.push(p.hand[i]); p.hand[i] = draw(g, p); } p.acted = true;
+  if (OPT.discardGain && !g.campaign) { const k = ['brick', 'weapon', 'crystal'].sort((x, y) => p[x] - p[y])[0]; p[k] += OPT.discardGain; }
   return { type: 'discard', seat: g.turn, cards };
 }
 
@@ -606,9 +617,10 @@ function endTurnInner(g) {
   if (g.players[g.turn].discardHand) campDiscardHand(g, g.players[g.turn]); // campaña: la mano se descarta al terminar el turno (salvo Guardada y maldiciones)
   g.turn = 1 - g.turn; g.turnNo++; g.cycled = false; g.cycles = 0;
   const p = g.players[g.turn], before = stats(p), both = () => [stats(g.players[0]), stats(g.players[1])], S0 = both();
+  if (OPT.finalSiege && !g.campaign && g.turnNo > OPT.finalSiege) { const pc = glCtx(g, 'efecto', 'siege'); statRemove(g, p, [0, 0, 0, 0, 0, 0, 0, Math.floor((g.turnNo - OPT.finalSiege - 1) * OPT.siegeRamp) + 1], false, [], true); glRestore(g, pc); } // asedio final (opción)
   const wd = p.wounded || 0, ub = wd & 1 ? 0 : p.builder, ur = wd & 2 ? 0 : p.recruit, um = wd & 4 ? 0 : p.mage, all = ub + ur + um, healed = woundedList(p); // unidades heridas: este turno no producen
   switch (p.statsType) {
-    case 0: p.brick += ub; p.weapon += ur; p.crystal += um; break;
+    case 0: { const f = g.campaign ? 0 : OPT.prodFloor; p.brick += Math.max(f, ub); p.weapon += Math.max(f, ur); p.crystal += Math.max(f, um); break; }
     case 1: p.brick += all; break;
     case 2: p.weapon += all; break;
     case 3: p.crystal += all; break;
@@ -727,7 +739,7 @@ const clampV = (v, cap, slope) => (v <= cap ? v : cap + (v - cap) * slope);
 export const W = { castle: 0.8, castleHi: 7.9, castleLo: 3.9, wall: 1.63, wallCap: 29, unit: 35, unitCap: 15.8, res: 0.8, resCap: 22.6, shield: 13, x2: 20, threat: 1.52, threatK: 0.46, oppW: 2.33 }; // ajustados por búsqueda automática
 export const W2 = { castle: 0.92, castleHi: 21.8, castleLo: 3.4, wall: 2.4, wallCap: 29, unit: 46.5, unitCap: 20.2, res: 0.8, resCap: 25.8, shield: 9.2, x2: 20.6, threat: 1.38, threatK: 0.7, oppW: 1.64 }; // pesos del nivel Difícil
 // Pesos de la IA sobre el rey rival (14/10, para que use Luto y los desmayos cuando el rey está por actuar). Antes: { stunNear: 9, stunTurn: false, luto: false }.
-export const AIW = { stunNear: 30, stunTurn: true, luto: true };
+export const AIW = { stunNear: 30, stunTurn: true, luto: true, lethal: true, mcDiscard: 0.03, mcTrap: 0.03 };
 // Trampas ocultas (Juan 24/10): el rival sabe que hay una, no cuál. drowSee: los drow ven las trampas sin carta (a medir).
 export const TRAPS = { hidden: true, drowSee: true };
 export function evaluate(g, seat, Wt = W) {
@@ -848,6 +860,9 @@ function aiMC(g, rnd) {
       score[i] += c.winner != null ? (c.winner === seat ? 1 : 0) : 1 / (1 + Math.exp(-(evaluate(c, seat)) / HARD.T));
     });
   }
+  // Difícil (críticos 2, 26/10): no descartar si hay algo para jugar que no sea malo; armar trampas un poco más
+  if (AIW.mcDiscard || AIW.mcTrap) { const hasPlay = moves.some((m) => m.type === 'play'); const p = g.players[seat];
+    moves.forEach((m, i) => { if (m.type === 'discard' && hasPlay) score[i] -= HARD.R * AIW.mcDiscard; if (m.type === 'play' && m.index !== 'sleeve' && FX[p.hand[m.index]]?.k === 'trap' && !p.trap) score[i] += HARD.R * AIW.mcTrap; }); }
   let b = 0; score.forEach((v, i) => { if (v > score[b]) b = i; }); return moves[b];
 }
 function aiHard(g, rnd) {
@@ -868,6 +883,8 @@ export function aiChooseLevel(g, level = 'normal', rnd = Math.random) {
   { const p = g.players[g.turn]; if (p.forceAttack) { let bi = -1, bd = 0; p.hand.forEach((id, i) => { if (!playable(p, id)) return; const { op } = cardVectors(g, p, other(g, p), id); const d = op[6] + op[7]; if (d > bd) { bd = d; bi = i; } }); if (bi >= 0) return { type: 'play', index: bi, forced: true }; } } // regla de jefe: este turno va con su mejor ataque
   if (level === 'facil') return aiChoose(g);
   g = aiBelief(g, g.turn); // la trampa rival oculta no la conoce
+  // rematar: si una jugada gana ya, esa (críticos 2, 26/10: "no remata")
+  if (AIW.lethal) for (const m of candidateMoves(g)) if (m.type === 'play') { const r = simulate(g, m, rnd); if (r && r.g.winner === g.turn) return m; }
   if (level === 'dificil' && HARD.v2) { const m = aiHard(g, rnd); if (m) return m; }
   const seat = g.turn, moves = candidateMoves(g);
   const scored = [];
