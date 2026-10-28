@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.66.2 · 2026-10-28
+
+- Gorrak: el aura roja de su ataque ahora es sutil, pegada al cuerpo como humo.
+
 ## 0.66.1 · 2026-10-28
 
 - Las 6 cartas míticas (Ataque del rey) con arte propio a pantalla completa y marco mítico. Gorrak ataca envuelto en un aura roja.

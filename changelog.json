@@ -1,5 +1,10 @@
 [
  {
+  "version": "0.66.2",
+  "date": "2026-10-28",
+  "notes": "Gorrak: el aura roja de su ataque ahora es sutil, pegada al cuerpo como humo."
+ },
+ {
   "version": "0.66.1",
   "date": "2026-10-28",
   "notes": "Las 6 cartas míticas (Ataque del rey) con arte propio a pantalla completa y marco mítico. Gorrak ataca envuelto en un aura roja."
