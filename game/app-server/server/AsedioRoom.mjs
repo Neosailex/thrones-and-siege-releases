@@ -36,7 +36,7 @@ export class AsedioRoom extends Room {
     this.state.phase = 'waiting';
     this.seats = []; // [{ sessionId, pid, name, rating, connected, lastEmote }]
     this.plays = [{}, {}];
-    this.onMessage('play', (c, m) => this.act(c, () => E.play(this.g, m?.index === 'sleeve' ? 'sleeve' : Number(m?.index)))); // index 'sleeve' = jugar la carta de la manga
+    this.onMessage('play', (c, m) => this.act(c, () => E.play(this.g, m?.index === 'sleeve' ? 'sleeve' : Number(m?.index), m?.choice && typeof m.choice === 'object' ? { give: String(m.choice.give), get: String(m.choice.get), n: Number(m.choice.n) } : null))); // index 'sleeve' = jugar la carta de la manga
     // Fase 'sleeve' (al empezar): los dos eligen su As a la vez; cuando eligió el segundo, el motor reparte (ev.deal) y arranca el primer turno
     this.onMessage('sleeve', (c, m) => {
       const g = this.g; if (!g || g.winner != null || g.phase !== 'sleeve') return; const seat = this.seatOf(c); if (seat < 0) return;

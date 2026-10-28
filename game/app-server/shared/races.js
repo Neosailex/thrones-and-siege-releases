@@ -3,13 +3,13 @@ export const RACES = {
   humano: { name: 'Humanos', passive: 'Cada turno producen +1 del recurso que menos tienen (si tienen menos de 6) y muro +1 si tienen menos de 10', cards: [62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 130, 131, 132, 168, 169, 180], favor: 'Oro' },
   enano:  { name: 'Enanos', passive: 'Las cartas de muro dan +2', cards: [72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 133, 134, 135, 170, 171, 181], favor: 'Runas' },
   elfo:   { name: 'Elfos', passive: 'Pueden cambiar 2 cartas por turno en vez de 1, las cartas de cristales cuestan 2 cristales menos (mínimo 1) y sus flechas hacen +3 de daño', cards: [82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 136, 137, 138, 172, 173, 182], favor: 'Savia' },
-  drow:   { name: 'Elfos oscuros', passive: 'Las cartas que le quitan recursos al rival quitan 1,5 veces más (redondeado para arriba), y ven las trampas del rival. Ceniza: lo que el piso del rival no deja quemar le pega al muro (1,5 por cada uno; sin muro se pierde)', cards: [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 139, 140, 141, 174, 175, 183], favor: 'Sombra' },
+  drow:   { name: 'Elfos oscuros', passive: 'Las cartas que le quitan recursos al rival quitan 1,5 veces más (redondeado para arriba), y ven las trampas del rival. Ceniza: lo que el piso del rival no deja quemar le pega al muro (1,5 por cada uno; sin muro se pierde)', cards: [92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 139, 140, 141, 174, 175, 183, 188], favor: 'Sombra' },
   gnomo:  { name: 'Gnomos', passive: 'Sus máquinas (Ballesta de repetición, Autómata, Catapulta gnoma, Gran máquina, Bombarda y Autómata mayor) cuestan 2 menos, y contra un muro de 25 o más sus ataques de 10 o más hacen además 4 directo al castillo', cards: [102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 142, 143, 144, 176, 177, 184], favor: 'Engranajes' },
   orco:   { name: 'Orcos', passive: 'Cada ataque de 6 o más de daño hace +1, pero las cartas de muro dan 1 menos', cards: [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 145, 146, 147, 178, 179, 185], favor: 'Sangre' },
 };
 export const raceOf = (id) => Object.keys(RACES).find((k) => RACES[k].cards.includes(id)) || null;
-export const RARE_RACE = new Set([70, 80, 90, 100, 110, 120]);
-export const LEGENDARY = new Set([71, 81, 91, 101, 111, 121]);
+export const RARE_RACE = new Set([70, 80, 91, 100, 110, 120, 188]); // Juan 28/10: el elfo cambia (Reloj de arena rara, Arco de luna legendaria); Golpe de sombra (188) rara drow
+export const LEGENDARY = new Set([71, 81, 90, 101, 111, 121]);
 const Z = [0, 0, 0, 0, 0, 0, 0, 0];
 const c = (b = 0, w = 0, cr = 0) => [0, b, 0, w, 0, cr, 0, 0];   // costo: ladrillos, armas, cristales
 const s = ({ b = 0, w = 0, cr = 0, bu = 0, so = 0, ma = 0, wall = 0, castle = 0 } = {}) => [bu, b, so, w, ma, cr, wall, castle];
@@ -59,6 +59,7 @@ export const RACE_CARDS = {
   98: ['Maldición', 'Rival −1 de cada unidad', c(0, 0, 17), Z, o({ bu: 1, so: 1, ma: 1 })],
   99: ['Incursión', 'Daño 13 y armas +4', c(0, 11), s({ w: 4 }), o({ dmg: 13 })],
   100: ['Reina araña', 'Rival −8 de cada recurso y daño 12', c(0, 0, 18), Z, o({ b: 8, w: 8, cr: 8, dmg: 12 })],
+  188: ['Golpe de sombra', '10 directo al castillo rival; 22 si al rival le quedan menos de 15 recursos (ladrillos + armas + cristales)', [0, 0, 0, 14, 0, 0, 0, 0, 2], Z, Z, { k: 'cond' }], // Juan 28/10: el remate del drow (rara, 1 copia)
   101: ['Traición real', 'Rival −12 de cada recurso, −1 de cada unidad y no produce el próximo turno', c(0, 0, 22), Z, o({ b: 12, w: 12, cr: 12, bu: 1, so: 1, ma: 1 }), { k: 'block' }],
   // Gnomos: máquinas e inventos
   102: ['Engranaje', 'Muro +5, armas +2', c(0, 4), s({ wall: 5, w: 2 }), Z],
@@ -80,7 +81,7 @@ export const RACE_CARDS = {
   117: ['Jabalíes', 'Daño 7 y rival −2 cristales', c(0, 6), Z, o({ dmg: 7, cr: 2 })],
   118: ['Chamán', 'Daño 8, cristales +2', c(0, 0, 8), s({ cr: 2 }), o({ dmg: 8 })],
   119: ['Empalizada orca', 'Muro +6', c(5), s({ wall: 6 }), Z],
-  120: ['Jefe de guerra', 'Daño 18, soldados +1 y tu próximo ataque al muro hace el doble', c(0, 16), s({ so: 1 }), o({ dmg: 18 }), { k: 'double' }],
+  120: ['Jefe de guerra', 'Daño 18, soldados +1 y tu próximo ataque normal hace el doble (no el directo)', c(0, 16), s({ so: 1 }), o({ dmg: 18 }), { k: 'double' }],
   121: ['Horda', 'Todos tus soldados atacan: daño igual a las armas que te quedan después de pagarla, más 3 por soldado, +1; perdés todas las armas', c(0, 12), Z, Z, { k: 'horde' }],
 };
 // Reyes: cada raza tiene un rey en el balcón del castillo. Carga 1 por turno propio y al completar el período actúa.
@@ -88,7 +89,7 @@ export const KINGS = {
   humano: { name: 'Rey Aldric', period: 5, text: '+4 ladrillos, +4 armas y +4 cristales' },
   enano:  { name: 'Rey Thorgrim', period: 4, text: 'Muro +12 y castillo +3; si tu muro ya tiene 30 o más, castillo +5 en su lugar' },
   elfo:   { name: 'Rey Aelwyn', period: 5, text: 'Cristales +6 y levantás 1 carta extra que no se repone al jugarla (los elfos pueden juntar hasta 8)' },
-  drow:   { name: 'Reina Vaelith', period: 5, text: 'Rival: −6 ladrillos, −6 armas, −10 cristales y −3 de favor' },
+  drow:   { name: 'Reina Vaelith', period: 5, text: 'Rival: −6 ladrillos, −6 armas, −10 cristales y −3 de su recurso de raza' },
   gnomo:  { name: 'Rey Fizzwick', period: 5, text: 'El Inventor: crea una máquina gnoma al azar y la juega gratis en el acto' },
   orco:   { name: 'Rey Gorrak', period: 5, text: 'Daño 13 (12 +1 orco)' },
 };
@@ -160,6 +161,8 @@ export const TACTIC_CARDS = {
   178: ['Frenesí', 'Daño 12; 18 si tu muro está por debajo de 10', c(0, 9), Z, Z, { k: 'cond' }],
   179: ['Tambores de guerra', '3 turnos: tus ataques hacen +4', cf(3, 5), Z, Z, { k: 'effect', e: 'drums', turns: 3 }],
   // Trampas ocultas (Juan 24/10): la única forma neutral de ver la trampa rival. Nombre provisorio (S06 lo puede cambiar)
+  // Trueque (Juan 28/10, consenso de los críticos): Rápida, máximo 2 copias. Cambia hasta 6 entre los recursos comunes; cuesta 2 del que entregás
+  187: ['Trueque', 'Cambiás 1 a 1 hasta 6 entre ladrillos, armas y cristales; cuesta 2 del recurso que entregás. Ese turno no podés jugar tu As', c(0, 0, 0), Z, Z, { k: 'trade' }],
   186: ['Ojo del vigía', 'Ves la trampa del rival (queda a la vista hasta que salte) y cristales +2', c(0, 0, 3), s({ cr: 2 }), Z, { k: 'revealTrap' }],
 };
 // Míticas (180-185): "Ataque del rey", 1 por raza, máximo 1 copia. El rey baja a pelear: 30 de daño (primero al muro); si el golpe llega al

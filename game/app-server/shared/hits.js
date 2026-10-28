@@ -16,7 +16,7 @@ export const HITS = {
   48: h('asalto', 'medio'), 49: h('magia', 'medio'), 50: h('asalto', 'alto'), 56: h('rayo', 'alto'), 60: h('asalto', 'medio'),
   // de raza
   76: h('asalto', 'base'), 83: h('flechas', 'alto'), 84: h('flechas', 'alto'), 88: h('magia', 'medio', 'elfo'), 90: h('flechas', 'alto'),
-  93: h('asalto', 'medio'), 99: h('asalto', 'medio'), 100: h('magia', 'base', 'drow'),
+  93: h('asalto', 'medio'), 99: h('asalto', 'medio'), 100: h('magia', 'base', 'drow'), 188: h('magia', 'alto', 'drow'),
   103: h('flechas', 'medio'), 107: h('piedra', 'alto'), 108: h('explosion', 'alto'), 110: h('piedra', 'alto'), 111: h('explosion', 'alto'),
   112: h('asalto', 'medio'), 114: h('asalto', 'medio'), 115: h('asalto', 'base'), 117: h('asalto', 'base'), 118: h('magia', 'medio', 'orco'), 120: h('asalto', 'medio'), 121: h('asalto', 'base'),
   // de rey, favor y tácticas

@@ -6,7 +6,7 @@
 import * as E from './engine.js';
 import { CARDS, NAMES } from './cards.js';
 
-const COND_MAIN = { 121: ['o', 6], 157: ['o', 6], 158: ['s', 6], 159: ['o', 6], 160: ['s', 5], 161: ['s', 7], 162: ['o', 6], 173: ['s', 5], 174: ['o', 6], 178: ['o', 6] };
+const COND_MAIN = { 188: ['o', 7], 121: ['o', 6], 157: ['o', 6], 158: ['s', 6], 159: ['o', 6], 160: ['s', 5], 161: ['s', 7], 162: ['o', 6], 173: ['s', 5], 174: ['o', 6], 178: ['o', 6] };
 // (Juan 25/10) de dónde sale cada número: base de la carta → + pasiva de tu raza → + efectos (Tambores). desgloseOf devuelve
 // los tres vectores; partes(D, 's'|'op', k) = { base, partes: [[+n, 'orco'], …], total } (vacío si no cambia).
 const RAZA_CORTA = { orco: 'orco', enano: 'enano', drow: 'drow', elfo: 'elfo', gnomo: 'gnomo', humano: 'humano' };
@@ -25,13 +25,13 @@ export function desgloseTxt(D, lado, k) { const P = partes(D, lado, k); if (!P |
 export function realOf(V, SEATRACE, id, sleeve = false, opt = {}) { // opt.desglose: el número muestra de dónde sale ("8 +1 orco = 9"); la auditoría usa el formato corto // sleeve: costo desde la manga (1/3 más, sale de E.costOf)
   if (!V || !V.me || !V.op) return null;
   const race = (SEATRACE && SEATRACE[V.seat]) || null, me = { ...V.me, race }, op = { ...V.op, race: (SEATRACE && SEATRACE[1 - V.seat]) || null };
-  let c, vec; try { c = E.costOf(me, id, sleeve); vec = E.cardVectors({ cycled: V.cycled }, me, op, id); } catch { return null; }
+  let c, vec; try { c = E.costOf(me, id, sleeve); vec = E.cardVectors({ cycled: V.cycled }, me, op, id, sleeve); } catch { return null; }
   const [, s0, o0] = CARDS[id], { s, op: o } = vec; let tx = NAMES[id][1];
   const D = opt.desglose ? desgloseOf({ cycled: V.cycled }, me, op, id) : null;
   const conDesglose = (lado, k, v0, v) => { const P = D && partes(D, lado, k); return P && P.partes.length && P.base === v0 && P.total === v ? `${v0}<span class="rvd"> ${P.partes.map(([n, l]) => `${n > 0 ? '+' : '−'}${Math.abs(n)} ${l}`).join(' ')} =</span> ${v}` : null; };
   const cm = COND_MAIN[id];
   // pasiva gnoma (máquinas de asedio): daño directo extra que el texto de la carta no menciona
-  const extra = o[7] > 0 && !o0[7] ? ` y <b class="rv up" title="Pasiva gnoma: contra un muro de 25 o más">${o[7]} directo al castillo</b>` : '';
+  const extra = o[7] > 0 && !o0[7] && COND_MAIN[id]?.[1] !== 7 ? ` y <b class="rv up" title="Pasiva gnoma: contra un muro de 25 o más">${o[7]} directo al castillo</b>` : '';
   if (cm) { const v = (cm[0] === 'o' ? o : s)[cm[1]], P = D && partes(D, cm[0] === 'o' ? 'op' : 's', cm[1]); tx += `${extra} <b class="rv">(ahora ${P && P.partes.length ? desgloseTxt(D, cm[0] === 'o' ? 'op' : 's', cm[1]) : v})</b>`; }
   else {
     const toks = [];
