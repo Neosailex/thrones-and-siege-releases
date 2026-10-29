@@ -13,6 +13,14 @@ const TURN_MS = 45000, PENDING_MS = 20000, SLEEVE_MS = 20000, RECONNECT_S = 40, 
 const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', CODE_LEN = 5, PRIV_WAIT_MS = 15 * 60000; // sala privada: código sin letras que se confunden (I/1, O/0); se cierra si nadie entra en 15 min
 const newCode = () => Array.from({ length: CODE_LEN }, () => CODE_ABC[Math.floor(Math.random() * CODE_ABC.length)]).join('');
 const clean = cleanName; // nombres válidos (abuso.mjs)
+const REMATCH_WAIT_MS = 10 * 60000; // sala de amigos: después del final se espera la revancha hasta 10 min
+// raza, mazo (validado en el servidor) y carta de la manga (tiene que estar en el mazo) que manda el cliente
+function pickDeck(o = {}) {
+  const race = RACES[o.race] ? o.race : null;
+  const deck = padDeck(Array.isArray(o.deck) && !validateDeck(o.deck, race) ? o.deck.map(Number) : (race ? STYLE_DECKS[race].equilibrado.deck : PRESETS.equilibrado.deck));
+  const sleeve = Number.isInteger(o.sleeve) && CARDS[o.sleeve] && deck[o.sleeve - 1] > 0 ? o.sleeve : null;
+  return { race, deck, sleeve };
+}
 
 export class AsedioRoom extends Room {
   maxClients = 2;
@@ -50,6 +58,22 @@ export class AsedioRoom extends Room {
     this.onMessage('cycle', (c, m) => { if (!this.g || this.g.winner != null || this.seatOf(c) !== this.g.turn) return; const ev = E.cycle(this.g, Number(m?.index)); if (ev) this.sync([ev], null, true); });
     // el cliente pide el estado completo (al recargar la página en plena partida)
     this.onMessage('resync', (c) => { const seat = this.seatOf(c); if (seat < 0 || !this.g) return; c.send('start', { ...this.info(seat), resumed: true }); this.sync([], seat); });
+    // Revancha (Juan 28/10, solo sala de amigos): al terminar, uno la pide y el otro la acepta (o la pide también);
+    // los dos eligen raza, mazo y As de nuevo y, cuando eligió el segundo, arranca otra partida en la misma sala.
+    this.onMessage('rematch', (c) => {
+      const seat = this.seatOf(c); if (!this.priv || this.state.phase !== 'over' || seat < 0 || this.seats.length < 2 || this.seats.some((x) => x.gone)) return;
+      this.seats[seat].again = true; this.broadcast('rematch', { seat });
+      if (this.seats.every((x) => x.again)) { this.state.phase = 'rematch'; for (const x of this.seats) x.newDeck = null; this.broadcast('rematchGo', {}); }
+    });
+    this.onMessage('rematchDeck', (c, m) => {
+      const seat = this.seatOf(c); if (this.state.phase !== 'rematch' || seat < 0) return;
+      this.seats[seat].newDeck = pickDeck(m || {}); this.broadcast('rematchReady', { seat });
+      if (this.seats.every((x) => x.newDeck)) {
+        for (const x of this.seats) { Object.assign(x, x.newDeck); x.newDeck = null; x.again = false; }
+        this.closeTimer?.clear(); this.finished = false; this.plays = [{}, {}]; this.start();
+      }
+    });
+    if (process.env.ASEDIO_TEST === '1') this.onMessage('__testWin', (c) => { const s = this.seatOf(c); if (this.g && this.g.winner == null && s >= 0) { this.g.winner = s; this.sync([]); this.finish(s, 'normal'); } }); // solo pruebas: terminar la partida ya
     this.onMessage('emote', (c, m) => {
       const seat = this.seatOf(c), s = this.seats[seat]; if (!s) return;
       const i = Number(m?.i); if (!(i >= 0 && i < EMOTES)) return;
@@ -65,9 +89,7 @@ export class AsedioRoom extends Room {
     const p = DB.auth(o.pid, o.ptoken, name);
     if (!p) throw new Error('Identidad inválida');
     if (this.seats.some((s) => s.pid === p.id)) throw new Error('Ya estás en esta sala');
-    const race = RACES[o.race] ? o.race : null;
-    const deck = padDeck(Array.isArray(o.deck) && !validateDeck(o.deck, race) ? o.deck.map(Number) : (race ? STYLE_DECKS[race].equilibrado.deck : PRESETS.equilibrado.deck)); // mazo validado en el servidor
-    const sleeve = Number.isInteger(o.sleeve) && CARDS[o.sleeve] && deck[o.sleeve - 1] > 0 ? o.sleeve : null; // carta de la manga elegida en el cliente (tiene que estar en el mazo)
+    const { race, deck, sleeve } = pickDeck(o);
     this.ips ??= {}; this.ips[client.sessionId] = client.auth?.ip || '?'; takeSeat(this.ips[client.sessionId]); // por sessionId: sigue igual tras reconectar
     this.seats.push({ sessionId: client.sessionId, pid: p.id, pub: p.pub || DB.pubOf(p.id), name, rating: p.rating, connected: true, deck, race, sleeve });
     if (this.seats.length === 2) this.start();
@@ -146,7 +168,7 @@ export class AsedioRoom extends Room {
     let ratings = null;
     if (!this.priv) try { ratings = DB.recordMatch({ ids: this.seats.map((s) => s.pid), winner, reason, turns: this.g?.turnNo ?? 0, plays: this.plays, races: this.seats.map((s) => s.race) }); } catch (e) { console.error('No se pudo guardar la partida', e); }
     this.broadcast('over', { winner, reason, ratings });
-    this.clock.setTimeout(() => this.disconnect(), 30000);
+    this.closeTimer = this.clock.setTimeout(() => this.disconnect(), this.priv && reason !== 'abandon' ? REMATCH_WAIT_MS : 30000);
   }
 
   // Se cortó la conexión sin salir: se le guarda el lugar un rato.
@@ -173,6 +195,9 @@ export class AsedioRoom extends Room {
     if (this.state.phase === 'playing' && this.g && this.g.winner == null && seat >= 0) {
       this.g.winner = 1 - seat;
       this.finish(1 - seat, 'abandon');
+    } else if (this.priv && seat >= 0 && (this.state.phase === 'over' || this.state.phase === 'rematch')) { // se fue después del final: no hay revancha
+      this.state.phase = 'over'; this.seats[seat].gone = true; this.broadcast('rematchOff', { seat });
+      if (this.clients.length === 0) this.disconnect();
     }
   }
 }

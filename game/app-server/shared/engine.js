@@ -541,7 +541,7 @@ function kingActInner(g, p) {
       fx.push('invent:' + nid);
       const save = { inExtra: g.inExtra, extraTurn: g.extraTurn, rapidPending: g.rapidPending, rapidUsed: g.rapidUsed, cycled: g.cycled };
       p.hand.push(nid); p.halfId = nid; const pend = g.pending; g.pending = null; g.inExtra = false;
-      const ki = g._kingInvent, x2 = OPT.noX2King ? p.x2 : null; if (x2 != null) p.x2 = false; g._kingInvent = true; const ev = play(g, p.hand.length - 1); g._kingInvent = ki; if (x2 != null) p.x2 = x2; // el x2 no se aplica a la máquina del rey (críticos 4) // el invento cuenta como golpe del rey
+      const ki = g._kingInvent, x2 = OPT.noX2King ? p.x2 : null; if (x2 != null) p.x2 = false; g._kingInvent = true; const kaV = g._kingAct; g._kingAct = false; const ev = play(g, p.hand.length - 1); g._kingAct = kaV; g._kingInvent = ki; /* (Juan 28/10) Venganza SÍ cuenta lo que pega la máquina de Fizzwick (es una carta), no el golpe automático de los otros reyes */ if (x2 != null) p.x2 = x2; // el x2 no se aplica a la máquina del rey (críticos 4) // el invento cuenta como golpe del rey
       if (!ev) { p.hand.pop(); p.halfId = null; }
       if (p.hand.length > handSize(p) && p.hand.includes(nid) && !ev) p.hand.splice(p.hand.lastIndexOf(nid), 1);
       Object.assign(g, save); g.pending = pend || g.pending; p.halfId = null;
