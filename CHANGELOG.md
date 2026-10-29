@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.68.1 · 2026-10-29
+
+- Avisos de confirmación con el estilo del juego (rendirse, abandonar la run). Menú de Jugar con un amigo con todos los botones iguales y bien en el celular.
+
 ## 0.68.0 · 2026-10-29
 
 - Ahora, mi rey: tu rey hace su animación al actuar. Enano: Thorgrim cura el castillo solo hasta 70. El rey muestra bien cada cuánto actúa (Trono robado). Campaña: Cuartel, Gremio y Torre dan las unidades al arrancar.
