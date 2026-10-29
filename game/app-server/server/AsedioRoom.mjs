@@ -97,7 +97,7 @@ export class AsedioRoom extends Room {
 
   seatOf(client) { return this.seats.findIndex((s) => s.sessionId === client.sessionId); }
   clientOf(seat) { return this.clients.find((c) => c.sessionId === this.seats[seat]?.sessionId); }
-  info(seat) { return { seat, pubs: this.seats.map((s) => s.pub), names: this.seats.map((s) => s.name), ratings: this.seats.map((s) => s.rating), races: this.seats.map((s) => s.race) }; }
+  info(seat) { return { seat, pubs: this.seats.map((s) => s.pub), names: this.seats.map((s) => s.name), ratings: this.seats.map((s) => s.rating), races: this.seats.map((s) => s.race), priv: this.priv }; }
 
   start() {
     this.lock();

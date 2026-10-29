@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.67.1 · 2026-10-29
+
+- Jugar con un amigo: las salas con código van siempre al servidor público (a algunos les decía que el código no existía).
+
 ## 0.67.0 · 2026-10-29
 
 - Revancha en las partidas con código: al terminar, pedís la revancha, tu amigo la acepta, eligen raza y mazo y arranca otra partida en la misma sala. La mítica en la manga se ve bien (dibujo, nombre y costo; el texto, en la vista previa). Venganza cuenta el daño de la máquina del rey gnomo.

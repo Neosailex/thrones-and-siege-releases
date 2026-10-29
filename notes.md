@@ -1,1 +1,1 @@
-Revancha en las partidas con código: al terminar, pedís la revancha, tu amigo la acepta, eligen raza y mazo y arranca otra partida en la misma sala. La mítica en la manga se ve bien (dibujo, nombre y costo; el texto, en la vista previa). Venganza cuenta el daño de la máquina del rey gnomo.
+Jugar con un amigo: las salas con código van siempre al servidor público (a algunos les decía que el código no existía).
