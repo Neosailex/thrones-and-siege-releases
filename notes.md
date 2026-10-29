@@ -1,1 +1,1 @@
-Jugar con un amigo: las salas con código van siempre al servidor público (a algunos les decía que el código no existía).
+Ahora, mi rey: tu rey hace su animación al actuar. Enano: Thorgrim cura el castillo solo hasta 70. El rey muestra bien cada cuánto actúa (Trono robado). Campaña: Cuartel, Gremio y Torre dan las unidades al arrancar.

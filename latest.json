@@ -1,9 +1,9 @@
 {
- "version": "0.67.1",
+ "version": "0.68.0",
  "minShell": 1,
- "notes": "Jugar con un amigo: las salas con código van siempre al servidor público (a algunos les decía que el código no existía).",
- "date": "2026-10-29T02:36:16.461Z",
- "size": 112795193,
+ "notes": "Ahora, mi rey: tu rey hace su animación al actuar. Enano: Thorgrim cura el castillo solo hasta 70. El rey muestra bien cada cuánto actúa (Trono robado). Campaña: Cuartel, Gremio y Torre dan las unidades al arrancar.",
+ "date": "2026-10-29T20:07:25.883Z",
+ "size": 112796990,
  "files": {
   "app/anim/dragon/v4/ala.webp": "c0ada761b2803296d150a4890779e472b457c7f7",
   "app/anim/dragon/v4/alza.webp": "eeee423b047b7d520f333b724d101ee0adcb2956",
@@ -973,7 +973,7 @@
   "app/assets/cinzel-latin-ext-900-normal-BlZZvP7K.woff": "d9e879f2dda436ff203d67fea2551db268c4d98b",
   "app/assets/cinzel-latin-ext-900-normal-CWXxiu5r.woff2": "82d1d12d57ddb405521425e1c9be6655b031ebf9",
   "app/assets/index-B8klXo6e.css": "1878e3c89759e3330c2bf6f38a9cdca1bb4e60a8",
-  "app/assets/index-Bv0I6vkA.js": "031a45de32c048202d93af4a3ac2bf4c47a929f9",
+  "app/assets/index-C9AeHFSx.js": "a92258205b135f891b58ea6d44240f7d0ce0d0ea",
   "app/audio/m/calma_a.m4a": "3860c0b11d25809840c03d567806a317de47903e",
   "app/audio/m/calma_a.ogg": "a858c341c63d902fbb6f9d88fd5f33dfb7ad5a01",
   "app/audio/m/calma_b.m4a": "6af2ee3029cea39ccc81be122fca5e1c94e38d38",
@@ -1463,7 +1463,7 @@
   "app/icons/icon-192.png": "4d946a6bf410145e3a624d85e22cc0df76356ed7",
   "app/icons/icon-32.png": "b3d6a73a48b86de55b13aa360cc0de75274fb3ae",
   "app/icons/icon-512.png": "4469b2107344fad9f913b4c8e6bc06177020eb5e",
-  "app/index.html": "e019e2f4efdb8e5bbc19c2d262a7ae8a709000f1",
+  "app/index.html": "3f94b7840443adc4c2f559acf8deddf46e70049c",
   "app/launcher/index.html": "e5b4409bdc8bf9626b0accfc7d26b54d7b39f858",
   "app/ui2/bandeja_mano.webp": "6b7d3b400cdfb910362a5867a0b061c80c82ede7",
   "app/ui2/barra_marco.webp": "ab5ed5800abe89986247207411b2d4635d8b69c8",
@@ -1626,7 +1626,7 @@
   "app/ui2/textura_piedra.webp": "d83160a20fd1532fac07729797b9a775981a0381",
   "app/ui2/ventana_marco.webp": "3426f5664a07510917dc6b9d3f06625117b9add8",
   "app/ui2/ventana_marco_chico.webp": "868e5d3d71e18614d881b5604ba36d90e4c04ff4",
-  "app/version.json": "034f0252a8ed3353fcf78ce3863b0af5d0cff873",
+  "app/version.json": "e32c3b790554e3db8df72b38c69e63e951dda2fc",
   "app-server/package.json": "29d143c64c007820d4ae5ebc368f35258483d620",
   "app-server/server/AsedioRoom.mjs": "3fd336af55831a3ef3e8cb2d83b552f11a745524",
   "app-server/server/abuso.mjs": "43622ba102f43dd55cbff5d1d906d5dd40a9faf2",
@@ -1638,9 +1638,9 @@
   "app-server/shared/campaign.js": "0842985fad71517b64fb121d8285d1258831bc4e",
   "app-server/shared/cards.js": "867e4c9981334eaaaa771c1bcbebc844b4b54e13",
   "app-server/shared/cardtext.js": "76502b295c16a36b0b7dc423b1d80296816eda14",
-  "app-server/shared/engine.js": "4a8b1f554ccba57675a484186c7be673125007d7",
+  "app-server/shared/engine.js": "9dfeb2f4c484cd4b481444cf51486fc44245d9bb",
   "app-server/shared/hits.js": "9f429d193c0d595616e5e6139e66c34a358a1215",
-  "app-server/shared/races.js": "bac7ca63001278910ef1e23cc9c4f5e6df723b26"
+  "app-server/shared/races.js": "f19b250522da054d94ca3250bdc8957739bfa22c"
  },
  "sizes": {
   "app/anim/dragon/v4/ala.webp": 9946,
@@ -2611,7 +2611,7 @@
   "app/assets/cinzel-latin-ext-900-normal-BlZZvP7K.woff": 9536,
   "app/assets/cinzel-latin-ext-900-normal-CWXxiu5r.woff2": 8056,
   "app/assets/index-B8klXo6e.css": 92218,
-  "app/assets/index-Bv0I6vkA.js": 1296190,
+  "app/assets/index-C9AeHFSx.js": 1297387,
   "app/audio/m/calma_a.m4a": 2852806,
   "app/audio/m/calma_a.ogg": 2701658,
   "app/audio/m/calma_b.m4a": 3794947,
@@ -3276,8 +3276,8 @@
   "app-server/shared/campaign.js": 26777,
   "app-server/shared/cards.js": 32785,
   "app-server/shared/cardtext.js": 5248,
-  "app-server/shared/engine.js": 90406,
+  "app-server/shared/engine.js": 90971,
   "app-server/shared/hits.js": 5610,
-  "app-server/shared/races.js": 19177
+  "app-server/shared/races.js": 19212
  }
 }

@@ -87,7 +87,7 @@ export const RACE_CARDS = {
 // Reyes: cada raza tiene un rey en el balcón del castillo. Carga 1 por turno propio y al completar el período actúa.
 export const KINGS = {
   humano: { name: 'Rey Aldric', period: 5, text: '+4 ladrillos, +4 armas y +4 cristales' },
-  enano:  { name: 'Rey Thorgrim', period: 4, text: 'Muro +12 y castillo +3; si tu muro ya tiene 30 o más, castillo +5 en su lugar' },
+  enano:  { name: 'Rey Thorgrim', period: 4, text: 'Muro +12 y castillo +3; si tu muro ya tiene 30 o más, castillo +5 en su lugar. El castillo lo cura solo hasta 70' },
   elfo:   { name: 'Rey Aelwyn', period: 5, text: 'Cristales +6 y levantás 1 carta extra que no se repone al jugarla (los elfos pueden juntar hasta 8)' },
   drow:   { name: 'Reina Vaelith', period: 5, text: 'Rival: −6 ladrillos, −6 armas, −10 cristales y −3 de su recurso de raza' },
   gnomo:  { name: 'Rey Fizzwick', period: 5, text: 'El Inventor: crea una máquina gnoma al azar y la juega gratis en el acto' },

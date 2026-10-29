@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.68.0 · 2026-10-29
+
+- Ahora, mi rey: tu rey hace su animación al actuar. Enano: Thorgrim cura el castillo solo hasta 70. El rey muestra bien cada cuánto actúa (Trono robado). Campaña: Cuartel, Gremio y Torre dan las unidades al arrancar.
+
 ## 0.67.1 · 2026-10-29
 
 - Jugar con un amigo: las salas con código van siempre al servidor público (a algunos les decía que el código no existía).

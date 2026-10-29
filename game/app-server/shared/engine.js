@@ -107,7 +107,7 @@ export const SLEEVE_MULT = 4 / 3;
 // Opciones de reglas para medir el paquete del informe 2 de los críticos (26/10). Los valores de acá son las reglas vigentes.
 // Juan 26/10 (informe 2): descartar da +2 del recurso más bajo, el x2 no suma al rey, drow ×1,5, manga +2 fijo, Thorgrim +5, Gorrak 13
 // Juan 27/10 (paquete "para llegar a 8"): descartar +3 del recurso de la carta, piso al robo, mítica sin el rey del turno y 1 unidad, manga +1, Sed de sangre solo al muro, Puerta la mitad
-export const OPT = { discardGain: 3, cycles: 0, noX2King: true, drowMult: 1.5, prodFloor: 0, sleeveAdd: 1, thorgrim: 5, fizzBest: false, gorrak: 13, finalSiege: 0, siegeRamp: 0.5, pesteNoDrow: false, pesteNoUnits: false, woundedMin: 1, guardNoMythic: true, gateCap: 0, sleeveLegend: 1, discardPick: true, stealFloor: true, mythicNoKingTurn: true, mythicOneUnit: true, x2Wall: true, gateHalf: true, ash: 3 / 2, sleeveTier: true }; // Juan 27/10 (informe 4): herida produce 1, Guardia real no frena la mítica, legendarias +1 desde la manga
+export const OPT = { discardGain: 3, cycles: 0, noX2King: true, drowMult: 1.5, prodFloor: 0, sleeveAdd: 1, thorgrim: 5, fizzBest: false, gorrak: 13, finalSiege: 0, siegeRamp: 0.5, pesteNoDrow: false, pesteNoUnits: false, woundedMin: 1, guardNoMythic: true, gateCap: 0, sleeveLegend: 1, discardPick: true, stealFloor: true, mythicNoKingTurn: true, mythicOneUnit: true, x2Wall: true, gateHalf: true, ash: 3 / 2, sleeveTier: true, thorgrimCap: 70 }; // Juan 27/10 (informe 4): herida produce 1, Guardia real no frena la mítica, legendarias +1 desde la manga
 // (Sin fase de elección, para DEV/campaña) Elegir o cambiar la carta de la manga ya repartida: solo antes de la primera acción del jugador. Saca una copia del mazo (o de la mano, si todas están ahí).
 export function setSleeve(g, seat, id) {
   if (g.phase === 'sleeve') return chooseSleeve(g, seat, id);
@@ -391,7 +391,7 @@ function playInner(g, i) {
     if (k === 'revealTrap') { if (o.trap) { o.trapSeen = true; fx.push('trapReveal:' + o.trap); } else fx.push('trapReveal:none'); }
     if (k === 'effect') { const tgt = special.onOpp ? o : p; tgt.effects.push({ e: special.e, turns: special.turns + (special.e === 'drums' || special.e === 'siegelock' ? 1 : 0), from: seat }); fx.push('effectSet'); }
     if (k === 'usurp') { if (o.kingGuard) { o.kingGuard = false; fx.push('kingGuarded'); } else { const take = Math.min(2, o.kingCharge || 0); o.kingCharge -= take; p.kingCharge += take; fx.push('kingDrain'); } }
-    if (k === 'kingNow') { if (hasKing(p)) { p.kingCharge = 0; const ka = kingAct(g, p); fx.push('kingNow'); if (ka.fx) fx.push(...ka.fx); if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); if (k2.fx) fx.push(...k2.fx); } } } // Doble corona también cuenta acá
+    if (k === 'kingNow') { if (hasKing(p)) { p.kingCharge = 0; const ka = kingAct(g, p); fx.push('kingNow'); if (ka.fx) fx.push(...ka.fx); const kn = { ...ka, fx: [...(ka.fx || [])] }; if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); if (k2.fx) fx.push(...k2.fx); kn.after = k2.after; kn.fx = kn.fx.concat(k2.fx || [], ['double']); if (k2.played) kn.played2 = k2.played; } g._kingNowEv = kn; } } /* kingNow en el evento: la pantalla muestra la acción del rey como cuando actúa solo (Juan 29/10) */ // Doble corona también cuenta acá
     if (k === 'kingDouble') { p.kingDouble = true; fx.push('kingDouble'); }
     if (k === 'luto') { fx.push('luto'); if (o.kingGuard) { o.kingGuard = false; fx.push('kingGuarded'); } else { o.luto = true; o.kingStun = Math.max(o.kingStun, 1); fx.push('kingStun'); } }
     if (k === 'stunKing' || k === 'drainKing') {
@@ -415,6 +415,7 @@ function playInner(g, i) {
   if (RAPID.has(id) && (g.rapidUsed || 0) < 1) { g.rapidUsed = (g.rapidUsed || 0) + 1; g.rapidPending = true; fx.push('rapid'); }
   devClamp(g);
   const ev = { type: 'play', seat, card: id, fx, before, after: [stats(g.players[0]), stats(g.players[1])], sleeve: fromSleeve };
+  if (g._kingNowEv) { ev.kingNow = g._kingNowEv; g._kingNowEv = null; }
   if (special?.k === 'trap') ev.trapSeen = !!p.trapSeen; // eventsFor: si la trampa queda oculta, el rival no ve qué carta fue
   glMark(g);
   if (g.hooks) { fire(g, 'onCardPlayed', { seat, id, ev, fx, attack: op[6] > 0 || op[7] > 0, dmg: op[6] + op[7] }); glMark(g, 'efecto', 'regla'); ev.after = [stats(g.players[0]), stats(g.players[1])]; }
@@ -532,7 +533,7 @@ function kingActInner(g, p) {
   const o = other(g, p), fx = [], before = [stats(g.players[0]), stats(g.players[1])];
   switch (p.race) {
     case 'humano': p.brick += 4; p.weapon += 4; p.crystal += 4; break;
-    case 'enano': if (p.wall >= 30) p.castle += OPT.thorgrim; else { p.wall += 12; p.castle += 3; } break; // 30 (antes 40): con el Ataque del rey en juego el enano caía a 45 %
+    case 'enano': { const heal = (n) => { if (!OPT.thorgrimCap || g.campaign) p.castle += n; else if (p.castle < OPT.thorgrimCap) p.castle = Math.min(OPT.thorgrimCap, p.castle + n); }; if (p.wall >= 30) heal(OPT.thorgrim); else { p.wall += 12; heal(3); } break; } // Juan 29/10: cura castillo solo hasta 70 // 30 (antes 40): con el Ataque del rey en juego el enano caía a 45 %
     case 'elfo': p.crystal += 6; if (p.hand.length < handCap(p)) { p.hand.push(draw(g, p)); fx.push('draw'); } break;
     // drow: cristales −10 (Juan 22/10, para emparejar contra el elfo); ladrillos y armas −6
     case 'drow': { let ab = 0; for (const k of ['brick', 'weapon', 'crystal']) { const want = k === 'crystal' ? 10 : 6, nv = Math.max(Math.min(o[k], resFloor(g, o, k)), o[k] - want); ab += Math.max(0, want - (o[k] - nv) - Math.max(0, want - o[k])); o[k] = nv; } ashHit(g, o, ab, fx); } o.favor = Math.max(0, (o.favor || 0) - 3); break;
