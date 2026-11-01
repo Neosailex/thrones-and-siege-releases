@@ -14,6 +14,9 @@ export const HITS = {
   1: h('piedra', 'medio'), 2: h('flechas', 'alto'), 3: h('piedra', 'alto'), 4: h('asalto', 'base'), 6: h('flechas', 'medio'), 7: h('asalto', 'base'), 8: h('flechas', 'alto'),
   16: h('rayo', 'alto'), 17: h('rayo', 'alto'), 37: h('piedra', 'alto'), 38: h('piedra', 'medio'), 39: h('asalto', 'base'), 46: h('fuego', 'alto'), 47: h('asalto', 'medio'),
   48: h('asalto', 'medio'), 49: h('magia', 'medio'), 50: h('asalto', 'alto'), 56: h('rayo', 'alto'), 60: h('asalto', 'medio'),
+  // acciones de bicho de campaña (S03 01/11, enemigos.md)
+  300: h('asalto', 'medio'), 303: h('asalto', 'medio'), 305: h('asalto', 'base'), 307: h('asalto', 'medio'), 309: h('asalto', 'base'), 311: h('asalto', 'base'),
+  314: h('asalto', 'medio'), 315: h('asalto', 'alto'), 316: h('magia', 'medio', 'drow'),
   // de raza
   76: h('asalto', 'base'), 83: h('flechas', 'alto'), 84: h('flechas', 'alto'), 88: h('magia', 'medio', 'elfo'), 90: h('flechas', 'alto'),
   93: h('asalto', 'medio'), 99: h('asalto', 'medio'), 100: h('magia', 'base', 'drow'), 188: h('magia', 'alto', 'drow'),

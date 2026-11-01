@@ -1,1 +1,1 @@
-Avisos de confirmación con el estilo del juego (rendirse, abandonar la run). Menú de Jugar con un amigo con todos los botones iguales y bien en el celular.
+Menú: cada opción tiene su propio sector (sin ventanas encimadas) y el menú cae de arriba al volver. Flechas rectas con cola de cometa del color de la raza. Campaña: enemigos del reino humano (bestias, constructos y campamentos), listas por nivel y avisos de huida.

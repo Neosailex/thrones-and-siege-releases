@@ -24,6 +24,27 @@ export const CAMPAIGN_CARDS = {
   // Botín de rey (200-201): Aldric
   200: ['Corona de Aldric', 'Castillo +10 y +3 de cada recurso', c(8), s({ castle: 10, b: 3, w: 3, cr: 3 }), Z, { k: 'loot', king: 'humano' }],
   201: ['Tesorería real', 'Ladrillos +6, armas +6, cristales +6', c(0, 0, 4), s({ b: 6, w: 6, cr: 6 }), Z, { k: 'loot', king: 'humano' }],
+  // Estados nuevos (S03 01/11, enemigos.md): Red (sin ataques un turno) y Herida (basura hasta fin de pelea)
+  202: ['Red', 'Estado: mientras esté en tu mano no podés jugar ataques; desaparece al terminar tu turno', Z, Z, Z, { k: 'state' }],
+  203: ['Herida', 'Maldición de pelea: no se juega ni se descarta; ocupa un lugar en tu mano y se va al terminar la pelea', Z, Z, Z, { k: 'curse', battle: true }],
+  // Acciones de bicho (300-316): costo 0, las juegan los enemigos con patrón (bestias, construcciones, campamentos). intent = lo que muestra la intención
+  300: ['Puñalada', 'Daño 5', Z, Z, o({ dmg: 5 }), { k: 'bug' }],
+  301: ['Bomba de humo', 'Te mete Humo (no ves su intención): está por huir', Z, Z, Z, { k: 'bug', give: 195, intent: 'Prepara la huida (bomba de humo)', kind: 'effect' }],
+  302: ['Rezo', 'No ataca: desde ahora sus ataques pegan +1 cada turno', Z, Z, Z, { k: 'bug', intent: 'Reza (desde ahora pega +1 por turno)', kind: 'effect' }],
+  303: ['Daga ritual', 'Daño 4', Z, Z, o({ dmg: 4 }), { k: 'bug' }],
+  304: ['Susurro', 'Te mete Miedo (tus ataques hacen 1 menos)', Z, Z, Z, { k: 'bug', give: 192, intent: 'Susurra: te mete Miedo', kind: 'curse' }],
+  305: ['Mordisco', 'Daño 4', Z, Z, o({ dmg: 4 }), { k: 'bug' }],
+  306: ['Chillido', 'Te mete Miedo', Z, Z, Z, { k: 'bug', give: 192, intent: 'Chilla: te mete Miedo', kind: 'curse' }],
+  307: ['Látigo', 'Daño 6 y te mete Miedo', Z, Z, o({ dmg: 6 }), { k: 'bug', give: 192 }],
+  308: ['Red de los negreros', 'Te mete Red: tu próximo turno no podés jugar ataques', Z, Z, Z, { k: 'bug', give: 202, intent: 'Tira la red: tu próximo turno sin ataques', kind: 'curse' }],
+  309: ['Mordida', 'Daño 9', Z, Z, o({ dmg: 9 }), { k: 'bug' }],
+  310: ['Cava', 'Su próximo golpe saltea tu muro', Z, Z, Z, { k: 'bug', then: 311, intent: 'Cava: su próximo golpe va directo a tu castillo', kind: 'effect' }],
+  311: ['Emerge', '7 directo al castillo', Z, Z, o({ direct: 7 }), { k: 'bug' }],
+  312: ['Se entierra', 'Muro +8 hasta su próximo turno', Z, Z, Z, { k: 'bug', tempWall: 8, intent: 'Se entierra: muro +8 hasta su turno', kind: 'wall' }],
+  313: ['Rugido', 'Sus ataques +3 (toda la pelea)', Z, Z, Z, { k: 'bug', atkUp: 3, intent: 'Ruge: sus ataques +3', kind: 'effect' }],
+  314: ['Garrotazo', 'Daño 12', Z, Z, o({ dmg: 12 }), { k: 'bug' }],
+  315: ['Aplastar', 'Daño 7 y te mete Brecha', Z, Z, o({ dmg: 7 }), { k: 'bug', give: 193 }],
+  316: ['Página', 'Daño 3, una vez más por cada turno que pasa (1, 2, 3… golpes)', Z, Z, o({ dmg: 3 }), { k: 'bug', pages: true }],
 };
 export const CURSE_IDS = [190, 191, 192];
 export const STATE_IDS = [193, 194, 195];

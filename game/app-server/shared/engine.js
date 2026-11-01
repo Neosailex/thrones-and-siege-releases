@@ -128,13 +128,14 @@ export function aiSleevePick(counts) {
 export const isCurse = (id) => FX[id]?.k === 'curse';
 export const isState = (id) => FX[id]?.k === 'state';
 const stuck = (id) => isCurse(id) || isState(id);
+export const NET_ID = 202, WOUND_ID = 203; // estados de campaña nuevos (S03 01/11): Red y Herida
 function validate(p) {
   p.builder = p.builder <= 0 ? 1 : p.builder; p.recruit = p.recruit <= 0 ? 1 : p.recruit; p.mage = p.mage <= 0 ? 1 : p.mage;
   p.brick = Math.max(0, p.brick); p.weapon = Math.max(0, p.weapon); p.crystal = Math.max(0, p.crystal);
   if (p.wall < 0) { p.castle += p.wall; p.wall = 0; }
   if (p.castle <= 0) p.castle = 0;
   if (p.capCastle != null && p.castle > p.capCastle) p.castle = p.capCastle;
-  if (p.capWall != null && p.wall > p.capWall) p.wall = p.capWall;
+  if (p.capWall != null && p.wall > p.capWall + (p.tempWall || 0)) p.wall = p.capWall + (p.tempWall || 0); // (el muro de bicho de "se entierra" no cuenta para el tope)
 }
 function statAdd(p, a) { KEYS.forEach((k, i) => { p[k] += a[i]; }); validate(p); }
 /* ---------- Golpes (S04, 20/10): detalle de cada cambio de muro y castillo, en orden, para animar la destrucción y la reconstrucción ----------
@@ -193,6 +194,7 @@ function statRemove(g, p, a, keep, fx, foe = g.turn !== g.players.indexOf(p), pa
       if (p.wallFloor != null && p.wall - dw < p.wallFloor) { dw = Math.max(0, p.wall - p.wallFloor); fx.push('camp:runes'); }
       if (p.castleShield && (dc > 0 || dw > p.wall)) { dc = 0; dw = Math.min(dw, p.wall); p.castleShield = false; fx.push('camp:hide'); }
     }
+    if (p.minionHp > 0 && dw > 0) { const t = Math.min(dw, p.minionHp); p.minionHp -= t; dw -= t; fx.push('minion:' + t); if (p.minionHp <= 0) { p.minionHp = 0; p.atkPlus = (p.atkPlus || 0) + (p.minionRage || 0); fx.push('rule:minionDown'); } } // secuaz: tus ataques le pegan primero
     p.wall -= dw; p.castle -= dc; glDw = dw; glDc = dc; if (!OPT.x2Wall) pas7 *= m;
   } else {
     if (o.x2 && (OPT.x2Wall ? a[6] > 0 : hits) && !keep) o.x2 = false;
@@ -247,7 +249,8 @@ export function playable(p, id, sleeve = false) {
   if (FX[id]?.k === 'trade' && !RES3.some((k) => (p[k] || 0) >= 3)) return false; // Trueque: algo para entregar (2 de costo + 1)
   if (sleeve && p.tradeTurn) return false; // turno con Trueque: no se juega el As
   if (stuck(id) || !kingAttackOk(p, id)) return false;
-  if (FX[id]?.camp && !campPlayable(p, id)) return false; // campaña: oro, cartas de fuera de pelea, Taller de urgencia sin Obras
+  if (FX[id]?.camp && !campPlayable(p, id)) return false;
+  if (p.hand?.includes(NET_ID) && (CARDS[id][2][6] > 0 || CARDS[id][2][7] > 0 || FX[id]?.k === 'horde')) return false; // estado Red: este turno no jugás ataques // campaña: oro, cartas de fuera de pelea, Taller de urgencia sin Obras
   const s = stats(p), c = costOf(p, id, sleeve);
   if (c[7] && p.castle <= c[7]) return false; // pagar con castillo (orcos de campaña): no te podés matar
   if (CARDS[id][1][6] < 0 && p.wall < -CARDS[id][1][6]) return false; // "tu muro −3" (Berserker, Sacrificio, Pacto): sin ese muro no se juega (Juan 26/10)
@@ -297,7 +300,7 @@ export function cardVectors(g, p, o, id, sleeve = false) {
     if (p.rage) { if (op[6] > 0) op[6] += p.rage; else op[7] += p.rage; }
     if (p.lowCastleBonus && p.castle < p.lowCastleBonus.below) { if (op[6] > 0) op[6] += p.lowCastleBonus.amount; else op[7] += p.lowCastleBonus.amount; }
     if (p.hand?.includes(192)) { if (op[6] > 0) op[6] = Math.max(0, op[6] - 1); else op[7] = Math.max(0, op[7] - 1); }
-    if (p.camp) { const b = campAtkBonus(p); if (b) { if (op[6] > 0) op[6] += b; else op[7] += b; } } // Furia de sangre, Estandarte, Tambor de huesos
+    { const b = (p.camp ? campAtkBonus(p) : 0) + (p.atkPlus || 0) + (p.minionHp > 0 ? p.minionAtk || 0 : 0); if (b) { if (op[6] > 0) op[6] += b; else op[7] += b; } } /* atkPlus y secuaz también desde la vista (realOf: la carta muestra el daño real) */ // Furia de sangre, Estandarte, Tambor de huesos; enemigos: ritual, enjambre, furia, secuaz
   }
   if (s[6] > 0 && p.hand?.includes(193)) s[6] = Math.floor(s[6] / 2);
   // asedio prolongado sobre mí: no puedo subir el muro
@@ -405,6 +408,13 @@ function playInner(g, i) {
       if (coin.self) statAdd(p, coin.self); if (coin.selfCost) payCost(p, coin.selfCost); if (coin.selfDmg) { const d = coin.selfDmg.slice(); d[6] = Math.min(d[6], Math.max(0, p.wall)); statAdd(p, d.map((v) => -v)); } // "tu muro −10": pérdida propia (no la frena tu escudo ni la dobla la Furia rival)
     }
     if (k === 'giveCurse') { giveCard(g, special.target === 'self' ? p : o, special.id); fx.push('curse:' + special.id); }
+    if (k === 'bug') { // acción de bicho (campaña, enemigos.md): efectos además del daño del vector
+      if (special.give) { giveCard(g, o, special.give); fx.push('curse:' + special.give); }
+      if (special.atkUp) { p.atkPlus = (p.atkPlus || 0) + special.atkUp; fx.push('rule:atkUp'); }
+      if (special.tempWall) { p.tempWall = (p.tempWall || 0) + special.tempWall; p.wall += special.tempWall; fx.push('rule:burrowWall'); }
+      if (special.pages) { const n = Math.max(1, p.pageHits || 1); for (let h = 1; h < n; h++) { const pc = glCtx(g, 'normal', id); statRemove(g, o, [0, 0, 0, 0, 0, 0, op[6], 0], false, fx); glRestore(g, pc); } fx.push('pages:' + n); }
+    }
+    if ((p.pattern || p.weights) && special?.k === 'bug') bugAdvance(g, p);
     if (k === 'kingAttack' && isGuestKing(p, id)) fx.push('guestKing:' + raceOf(id)); // rey invitado: tu rey no se desmaya (Juan 27/10)
     else if (k === 'kingAttack' && !g.dev) { p.kingStun = Math.max(p.kingStun || 0, special.stun || 2); fx.push('kingStun'); } // en DEV el rey no queda desmayado: se puede repetir el ataque // bajó a pelear: desmayado 2 turnos (mantiene la carga) // campaña: mete una maldición/estado en la mano del rival
   }
@@ -434,6 +444,10 @@ function campPlays(p) { const n = p.plays || 1, b = Math.floor(n); if (n === b) 
 export const campKw = (id, k) => !!FX[id]?.camp?.kw?.includes(k);
 const owns = (p, id) => [p.deck, p.hand, p.used, p.burned || []].some((l) => l.includes(id) || l.includes(id + PLUS));
 function campSeat(p, c) {
+  // (S03 01/11, docs/campaña/enemigos.md) cuerpos de bicho: noProd (no produce: bestias y construcciones), pattern/weights (acciones de bicho
+  // en orden fijo o con pesos), minion (secuaz: segundo muro con vida propia, efecto mientras vive y al caer)
+  if (c.noProd) p.noProd = true; if (c.atk) p.atkPlus = (p.atkPlus || 0) + c.atk; /* atk: +N a todos sus ataques (para afinar enemigos) */ if (c.pattern) { p.pattern = c.pattern.slice(); p.patternLoop = c.patternLoop || 0; } if (c.weights) p.weights = { ...c.weights };
+  if (c.minion) { p.minionHp = c.minion.hp; p.minionMax = c.minion.hp; p.minionAtk = c.minion.atk || 0; p.minionHeal = c.minion.heal || 0; p.minionRage = c.minion.rage || 0; p.minionName = c.minion.name || 'Secuaz'; }
   p.camp = true; p.plays = c.plays || 1; p.discardHand = !!c.discardHand;
   p.gold = c.gold || 0; p.goldStart = p.gold; p.maxCastle = c.maxCastle ?? p.castle; p.kills = c.kills || 0;
   p.grow = { ...(c.grow || {}) }; p.grown = {}; p.burned = []; p.works = (c.works || []).map((id) => ({ id, age: 0 }));
@@ -514,7 +528,7 @@ function campTurnStart(g, p, o, log) {
   const mult = 1 + (p.workBoost || 0); p.workBoost = 0;
   for (const w of p.works.slice()) { const fx = []; FX[w.id]?.camp?.work?.tick?.({ ...campCtx(g, p, o, w.id, fx), w, mult }); w.age++; log.push('work:' + w.id); }
 }
-function campView(p) { return { gold: p.gold || 0, plays: p.plays || 1, works: (p.works || []).map((w) => ({ id: w.id, age: w.age })), workMax: WORK_MAX, burned: (p.burned || []).slice(), grown: { ...(p.grown || {}) }, discardHand: !!p.discardHand, turnPlays: p.turnPlays || 0 }; }
+function campView(p) { return { ...(p.minionMax ? { minion: { name: p.minionName, hp: p.minionHp, max: p.minionMax } } : {}), ...(p.atkPlus ? { atkPlus: p.atkPlus } : {}), ...(p.minionMax ? { minionHp: p.minionHp, minionAtk: p.minionAtk || 0 } : {}), ...(p.tempWall ? { tempWall: p.tempWall } : {}), ...(p.pageHits ? { pageHits: p.pageHits } : {}), ...(p.noProd ? { noProd: true } : {}), gold: p.gold || 0, plays: p.plays || 1, works: (p.works || []).map((w) => ({ id: w.id, age: w.age })), workMax: WORK_MAX, burned: (p.burned || []).slice(), grown: { ...(p.grown || {}) }, discardHand: !!p.discardHand, turnPlays: p.turnPlays || 0 }; }
 function campClone(p) { return { works: (p.works || []).map((w) => ({ ...w })), burned: (p.burned || []).slice(), grown: { ...(p.grown || {}) } }; }
 function campValue(p) { let v = 0; for (const w of p.works || []) v += FX[w.id]?.camp?.work?.value ?? 6; if (p.halfNext) v += 5; if (p.castleShield) v += 4; if (p.wallFloor != null) v += 4; return v; }
 // Campaña: meter una carta (maldición/estado) en la mano de un jugador; si la mano está llena, igual entra (la mano se agranda)
@@ -679,7 +693,7 @@ function endTurnInner(g) {
   const p = g.players[g.turn], before = stats(p), both = () => [stats(g.players[0]), stats(g.players[1])], S0 = both();
   if (OPT.finalSiege && !g.campaign && g.turnNo > OPT.finalSiege) { const pc = glCtx(g, 'efecto', 'siege'); statRemove(g, p, [0, 0, 0, 0, 0, 0, 0, Math.floor((g.turnNo - OPT.finalSiege - 1) * OPT.siegeRamp) + 1], false, [], true); glRestore(g, pc); } // asedio final (opción)
   const wd = p.wounded || 0, wm = Math.min(OPT.woundedMin, 1e9), ub = wd & 1 ? wm : p.builder, ur = wd & 2 ? wm : p.recruit, um = wd & 4 ? wm : p.mage, all = ub + ur + um, healed = woundedList(p); // unidades heridas: este turno no producen
-  switch (p.statsType) {
+  if (!p.noProd) switch (p.statsType) {
     case 0: { const f = g.campaign ? 0 : OPT.prodFloor; p.brick += Math.max(f, ub); p.weapon += Math.max(f, ur); p.crystal += Math.max(f, um); break; }
     case 1: p.brick += all; break;
     case 2: p.weapon += all; break;
@@ -687,7 +701,8 @@ function endTurnInner(g) {
     case 5: p.brick += ub; p.weapon += ur; p.crystal += um * 2; break;
   }
   p.wounded = 0; // ya no produjeron este turno: el que viene vuelven
-  if (g.campaign?.baseProd && p.statsType !== 4) { const bp = g.campaign.baseProd; p.brick += bp; p.weapon += bp; p.crystal += bp; } // campaña: producción base además de las unidades (con 1 unidad la economía no alcanza)
+  if (p.tempWall) { p.wall = Math.max(0, p.wall - p.tempWall); p.tempWall = 0; } // campaña: muro de bicho (se entierra) dura hasta su próximo turno
+  if (g.campaign?.baseProd && p.statsType !== 4 && !p.noProd) { const bp = g.campaign.baseProd; p.brick += bp; p.weapon += bp; p.crystal += bp; } // campaña: producción base además de las unidades (con 1 unidad la economía no alcanza)
   if (p.race) p.favor = Math.min(FAVOR_MAX, (p.favor || 0) + 1);
   p.lastDamage = p.dmgRound; p.dmgRound = 0; const S1 = both();
   // efectos duraderos: actúan al inicio del turno de su dueño (o del afectado, si están sobre él)
@@ -955,6 +970,7 @@ export function aiChooseLevel(g, level = 'normal', rnd = Math.random) {
   // campaña: si hay una intención anunciada para este turno y la carta sigue en la mano y se puede pagar, la cumple
   if (g.intent && g.intent.seat === g.turn) { const it = g.intent; g.intent = null; if (it.turnNo === g.turnNo && it.type === 'play') { const p = g.players[g.turn], i = p.hand.indexOf(it.card); if (i >= 0 && playable(p, it.card)) return { type: 'play', index: i, intent: true }; } }
   { const p = g.players[g.turn]; if (p.forceAttack) { let bi = -1, bd = 0; p.hand.forEach((id, i) => { if (!playable(p, id)) return; const { op } = cardVectors(g, p, other(g, p), id); const d = op[6] + op[7]; if (d > bd) { bd = d; bi = i; } }); if (bi >= 0) return { type: 'play', index: bi, forced: true }; } } // regla de jefe: este turno va con su mejor ataque
+  { const p = g.players[g.turn]; if ((p.pattern || p.weights) && g.campaign) return bugChoose(g); } // bichos de campaña: su acción del patrón
   if (level === 'facil') return aiChoose(g);
   g = aiBelief(g, g.turn); // la trampa rival oculta no la conoce
   // rematar: si una jugada gana ya, esa (críticos 2, 26/10: "no remata")
@@ -1020,4 +1036,22 @@ export function tradePlan(p) {
     for (let aj = 0; aj < 3; aj++) { if (aj === bj || p[R[aj]] - 2 - n < c[1 + 2 * aj]) continue; const q = { ...p, [R[aj]]: p[R[aj]] - 2 - n, [R[bj]]: p[R[bj]] + n }; if (!playable(q, id)) continue; const v = c[1] + c[3] + c[5]; if (!best || v > best.v) best = { a: R[aj], b: R[bj], n, v, id }; }
   }
   return best;
+}
+
+/* ---------- Bichos de campaña (S03 01/11, docs/campaña/enemigos.md): acciones de costo 0 con patrón ---------- */
+// p.pattern = [ids] (orden fijo, vuelve a empezar) o p.weights = { id: peso } (al azar). La próxima acción queda elegida en p.rs.next
+// apenas juega la anterior (así la intención y la jugada real coinciden). Una acción con `then` obliga la siguiente (cava → emerge).
+export function bugNext(g, p) {
+  if (p.rs.next != null) return p.rs.next;
+  let id;
+  if (p.rs.then != null) { id = p.rs.then; p.rs.then = null; }
+  else if (p.pattern) { const i = p.rs.pi || 0, L = p.pattern.length, lp = Math.min(p.patternLoop || 0, L - 1); id = p.pattern[i < L ? i : lp + ((i - lp) % (L - lp))]; } // patternLoop: desde qué acción repite (Sectarios: rezan una sola vez)
+  else { const ent = Object.entries(p.weights), tot = ent.reduce((a, [, w]) => a + w, 0); let q = g._rnd() * tot; id = +ent[ent.length - 1][0]; for (const [k, w] of ent) { if ((q -= w) < 0) { id = +k; break; } } }
+  p.rs.next = id; return id;
+}
+function bugAdvance(g, p) { const done = p.rs.next; p.rs.next = null; if (p.pattern) p.rs.pi = (p.rs.pi || 0) + 1; if (done != null && FX[done]?.then) p.rs.then = FX[done].then; bugNext(g, p); }
+function bugChoose(g) {
+  const p = g.players[g.turn], id = bugNext(g, p); let i = p.hand.indexOf(id);
+  if (i < 0) { i = p.hand.findIndex((h) => !stuck(h)); if (i < 0) { p.hand.push(id); i = p.hand.length - 1; } else p.hand[i] = id; }
+  return { type: 'play', index: i };
 }
