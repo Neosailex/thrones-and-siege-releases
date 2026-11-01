@@ -73,6 +73,7 @@ export class AsedioRoom extends Room {
         this.closeTimer?.clear(); this.finished = false; this.plays = [{}, {}]; this.start();
       }
     });
+    if (process.env.ASEDIO_TEST === '1') this.onMessage('__testSet', (c, m) => { const s = this.seatOf(c), p = this.g?.players[s]; if (!p) return; if (m.hand) p.hand[m.hand[0]] = m.hand[1]; Object.assign(p, m.set || {}); if (m.op) Object.assign(this.g.players[1 - s], m.op); this.sync([]); }); // solo pruebas: poner una carta en la mano / valores
     if (process.env.ASEDIO_TEST === '1') this.onMessage('__testWin', (c) => { const s = this.seatOf(c); if (this.g && this.g.winner == null && s >= 0) { this.g.winner = s; this.sync([]); this.finish(s, 'normal'); } }); // solo pruebas: terminar la partida ya
     this.onMessage('emote', (c, m) => {
       const seat = this.seatOf(c), s = this.seats[seat]; if (!s) return;
@@ -166,8 +167,9 @@ export class AsedioRoom extends Room {
     this.timer?.clear();
     this.state.phase = 'over';
     let ratings = null;
+    if (this.priv && (winner === 0 || winner === 1)) { this.score ??= [0, 0]; this.score[winner]++; } // (Juan 01/11) marcador entre amigos, a lo largo de las revanchas
     if (!this.priv) try { ratings = DB.recordMatch({ ids: this.seats.map((s) => s.pid), winner, reason, turns: this.g?.turnNo ?? 0, plays: this.plays, races: this.seats.map((s) => s.race) }); } catch (e) { console.error('No se pudo guardar la partida', e); }
-    this.broadcast('over', { winner, reason, ratings });
+    this.broadcast('over', { winner, reason, ratings, ...(this.priv ? { score: this.score || [0, 0] } : {}) });
     this.closeTimer = this.clock.setTimeout(() => this.disconnect(), this.priv && reason !== 'abandon' ? REMATCH_WAIT_MS : 30000);
   }
 
