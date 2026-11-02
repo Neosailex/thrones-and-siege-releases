@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.70.1 · 2026-11-02
+
+- Asedio final desde el turno 35 (antes 25): solo apura las partidas realmente largas.
+
 ## 0.70.0 · 2026-11-01
 
 - Online: cada uno se ve a la izquierda. Contador de turnos, temporizador visible (también contra la CPU: si se acaba, juega la CPU por vos) y botón de pausa. Con amigos: marcador de victorias a lo largo de las revanchas. Las trampas dicen qué hicieron. Asedio final: desde el turno 25 las cartas cuestan cada vez menos.
