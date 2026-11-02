@@ -1,1 +1,1 @@
-Asedio final desde el turno 35 (antes 25): solo apura las partidas realmente largas.
+Barra de arriba nueva: la foto y el nombre de cada jugador a cada lado y el turno, el contador y el tiempo al medio; Ayuda, Velocidad, Registro, Ajustes y Salir pasan al menú de Pausa. El botón Descartar va en la repisa, entre la mano y la pila de descarte.
