@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.71.1 · 2026-11-02
+
+- Barra de arriba: las fotos de los jugadores con el marco redondo, más grandes y en cada punta; Pausa y Sonido al medio, junto al turno.
+
 ## 0.71.0 · 2026-11-02
 
 - Barra de arriba nueva: la foto y el nombre de cada jugador a cada lado y el turno, el contador y el tiempo al medio; Ayuda, Velocidad, Registro, Ajustes y Salir pasan al menú de Pausa. El botón Descartar va en la repisa, entre la mano y la pila de descarte.
