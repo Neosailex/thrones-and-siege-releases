@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.72.0 · 2026-11-03
+
+- Menú de inicio más simple: Un jugador (Campaña, Contra la CPU, Aprender), Multijugador (Online, Con un amigo, Ranking, Mi perfil), Mazos y Opciones.
+
 ## 0.71.1 · 2026-11-02
 
 - Barra de arriba: las fotos de los jugadores con el marco redondo, más grandes y en cada punta; Pausa y Sonido al medio, junto al turno.

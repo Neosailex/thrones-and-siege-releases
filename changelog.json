@@ -1,5 +1,10 @@
 [
  {
+  "version": "0.72.0",
+  "date": "2026-11-03",
+  "notes": "Menú de inicio más simple: Un jugador (Campaña, Contra la CPU, Aprender), Multijugador (Online, Con un amigo, Ranking, Mi perfil), Mazos y Opciones."
+ },
+ {
   "version": "0.71.1",
   "date": "2026-11-02",
   "notes": "Barra de arriba: las fotos de los jugadores con el marco redondo, más grandes y en cada punta; Pausa y Sonido al medio, junto al turno."

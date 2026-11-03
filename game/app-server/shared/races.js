@@ -128,8 +128,8 @@ export const FAVOR_CARDS = {
 };
 // Trampas (saltan en el turno rival), efectos duraderos (actúan al inicio de tus turnos), condicionales y cartas de rey (148-179)
 export const TACTIC_CARDS = {
-  148: ['Foso', 'Trampa: el próximo ataque cuerpo a cuerpo del rival (Ariete, Túnel, Asalto…) hace la mitad de daño', c(8), Z, Z, { k: 'trap', t: 'moat' }],
-  149: ['Contrahechizo', 'Trampa: anula el próximo hechizo rival que te afecte (daño, quitarte algo o tu rey) y te da 5 cristales', c(0, 0, 10), Z, Z, { k: 'trap', t: 'counterspell' }],
+  148: ['Foso', 'Trampa: la próxima carta Cuerpo a cuerpo del rival (Ariete, Túnel, Asalto…) hace la mitad de daño', c(8), Z, Z, { k: 'trap', t: 'moat' }],
+  149: ['Contrahechizo', 'Trampa: anula la próxima carta Hechizo del rival que te afecte (daño, quitarte algo o tu rey) y te da 5 cristales', c(0, 0, 10), Z, Z, { k: 'trap', t: 'counterspell' }],
   150: ['Emboscada en el camino', 'Trampa: si el rival juega una carta que cuesta armas, recibe daño 6', c(0, 9), Z, Z, { k: 'trap', t: 'ambush' }],
   151: ['Red de espías', 'Trampa: cuando el rival juegue una carta que cueste 10 o más, ganás 8 cristales y ves su mano al empezar tu turno', c(0, 0, 6), Z, Z, { k: 'trap', t: 'spynet' }],
   152: ['Lluvia de piedras', '3 turnos: daño 5 al rival por turno', c(0, 14), Z, Z, { k: 'effect', e: 'rain', turns: 3 }],
@@ -152,11 +152,11 @@ export const TACTIC_CARDS = {
   169: ['Edicto de obras', '4 turnos: +1 constructor cada 2 turnos', cf(3, 3), Z, Z, { k: 'effect', e: 'edict', turns: 4 }],
   170: ['Puerta de hierro', 'Trampa: anula el próximo daño directo al castillo', c(7), Z, Z, { k: 'trap', t: 'irongate' }],
   171: ['Minas profundas', '3 turnos: +3 ladrillos y muro +1 por turno', cf(3, 4), Z, Z, { k: 'effect', e: 'mines', turns: 3 }],
-  172: ['Espejismo', 'Trampa: la próxima flecha del rival (Flechazo, Ballesta, Arqueros…) vuelve contra él', c(0, 0, 8), Z, Z, { k: 'trap', t: 'mirage' }],
+  172: ['Espejismo', 'Trampa: la próxima carta Flecha del rival (Flechazo, Ballesta, Arqueros…) vuelve contra él', c(0, 0, 8), Z, Z, { k: 'trap', t: 'mirage' }],
   173: ['Canto antiguo', 'Cristales +5; +12 en vez de +5 si cambiaste una carta este turno', c(0, 0, 5), Z, Z, { k: 'cond' }],
   174: ['Pacto de sangre', 'Daño 8; 16 si el rey rival está desmayado', cf(2, 0, 6), Z, Z, { k: 'cond' }],
   175: ['Susurros', '3 turnos: el rival pierde 5 cristales (3 ×1,5 drow) y vos ganás 1 por turno', c(0, 0, 8), Z, Z, { k: 'effect', e: 'whispers', turns: 3 }],
-  176: ['Mina terrestre', 'Trampa: si el rival ataca cuerpo a cuerpo, recibe daño 10', cf(2, 0, 6), Z, Z, { k: 'trap', t: 'landmine' }],
+  176: ['Mina terrestre', 'Trampa: si el rival juega una carta Cuerpo a cuerpo, recibe daño 10', cf(2, 0, 6), Z, Z, { k: 'trap', t: 'landmine' }],
   177: ['Taller nocturno', '3 turnos: +3 armas por turno', c(6), Z, Z, { k: 'effect', e: 'nightshop', turns: 3 }],
   178: ['Frenesí', 'Daño 12; 18 si tu muro está por debajo de 10', c(0, 9), Z, Z, { k: 'cond' }],
   179: ['Tambores de guerra', '3 turnos: tus ataques hacen +4', cf(3, 5), Z, Z, { k: 'effect', e: 'drums', turns: 3 }],

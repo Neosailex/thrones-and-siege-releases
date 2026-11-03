@@ -395,7 +395,7 @@ function playInner(g, i) {
     if (k === 'revealTrap') { if (o.trap) { o.trapSeen = true; fx.push('trapReveal:' + o.trap); } else fx.push('trapReveal:none'); }
     if (k === 'effect') { const tgt = special.onOpp ? o : p; tgt.effects.push({ e: special.e, turns: special.turns + (special.e === 'drums' || special.e === 'siegelock' ? 1 : 0), from: seat }); fx.push('effectSet'); }
     if (k === 'usurp') { if (o.kingGuard) { o.kingGuard = false; fx.push('kingGuarded'); } else { const take = Math.min(2, o.kingCharge || 0); o.kingCharge -= take; p.kingCharge += take; fx.push('kingDrain'); } }
-    if (k === 'kingNow') { if (hasKing(p)) { p.kingCharge = 0; const ka = kingAct(g, p); fx.push('kingNow'); if (ka.fx) fx.push(...ka.fx); const kn = { ...ka, fx: [...(ka.fx || [])] }; if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); if (k2.fx) fx.push(...k2.fx); kn.after = k2.after; kn.fx = kn.fx.concat(k2.fx || [], ['double']); if (k2.played) kn.played2 = k2.played; } g._kingNowEv = kn; } } /* kingNow en el evento: la pantalla muestra la acción del rey como cuando actúa solo (Juan 29/10) */ // Doble corona también cuenta acá
+    if (k === 'kingNow') { if (hasKing(p)) { p.kingCharge = 0; const ka = kingAct(g, p); fx.push('kingNow'); if (ka.fx) fx.push(...ka.fx); const kn = { ...ka, fx: [...(ka.fx || [])] }; if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); if (k2.fx) fx.push(...k2.fx); kn.mid = k2.before; kn.fx2 = k2.fx || []; kn.after = k2.after; kn.fx = kn.fx.concat(k2.fx || [], ['double']); if (k2.played) kn.played2 = k2.played; } g._kingNowEv = kn; } } /* kingNow en el evento: la pantalla muestra la acción del rey como cuando actúa solo (Juan 29/10) */ // Doble corona también cuenta acá
     if (k === 'kingDouble') { p.kingDouble = true; fx.push('kingDouble'); }
     if (k === 'luto') { fx.push('luto'); if (o.kingGuard) { o.kingGuard = false; fx.push('kingGuarded'); } else { o.luto = true; o.kingStun = Math.max(o.kingStun, 1); fx.push('kingStun'); } }
     if (k === 'stunKing' || k === 'drainKing') {
@@ -736,7 +736,7 @@ function endTurnInner(g) {
   if (hasKing(p)) {
     const per = kingPeriod(p);
     if (p.stunTurn) { /* desmayado: no carga */ }
-    else { if (p.kingCharge >= per) { p.kingCharge = 0; king = kingAct(g, p); if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); king.after = k2.after; king.fx = king.fx.concat(k2.fx, ['double']); if (k2.played) king.played2 = k2.played; } } else { p.kingCharge++; if (p.kingCharge >= per) { p.kingCharge = 0; king = kingAct(g, p); if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); king.after = k2.after; king.fx = king.fx.concat(k2.fx, ['double']); if (k2.played) king.played2 = k2.played; } } } }
+    else { if (p.kingCharge >= per) { p.kingCharge = 0; king = kingAct(g, p); if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); king.mid = k2.before; king.fx2 = k2.fx || []; king.after = k2.after; king.fx = king.fx.concat(k2.fx, ['double']); if (k2.played) king.played2 = k2.played; } } else { p.kingCharge++; if (p.kingCharge >= per) { p.kingCharge = 0; king = kingAct(g, p); if (p.kingDouble) { p.kingDouble = false; const k2 = kingAct(g, p); king.mid = k2.before; king.fx2 = k2.fx || []; king.after = k2.after; king.fx = king.fx.concat(k2.fx, ['double']); if (k2.played) king.played2 = k2.played; } } } }
   }
   if (king) p.kingAuto = true; // este turno no se juega la mítica (Juan 27/10)
   if (p.spyNext) { p.spyNext = false; g.pending = { type: 'spy', seat: g.turn, free: true }; } // Red de espías: mirar no gasta el turno
@@ -787,7 +787,7 @@ export const aiSabotagePick = (rnd = Math.random) => Math.floor(rnd() * HAND);
 
 // Vista de la partida para un asiento: oculta la mano rival salvo que un Espía o Sabotaje propio la revele.
 export function viewFor(g, seat) {
-  const pub = (p, mine) => ({ race: p.race || null, siegeCut: p.siegeCut || 0, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, kingAuto: !!p.kingAuto, ...(p.devKA ? { devKA: true } : {}), favor: p.favor || 0, trap: p.trap && (mine || p.trapSeen) ? p.trap : p.trap ? 'oculta' : null, hasTrap: !!p.trap, trapSeen: !!(p.trap && p.trapSeen), effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, stunTurn: !!p.stunTurn, kingPeriod: hasKing(p) ? kingPeriod(p) : 0, handSize: handSize(p), noKing: !!p.noKing, rage: p.rage || 0, sleeve: p.sleeve != null, sleeveReady: !!(p.sleeve != null && playableSleeve(p)) /* el rival ve que podés pagar tu As, no cuál es (críticos) */, sleeveDone: p.sleeveDone !== false, acted: !!p.acted, wounded: woundedList(p), ...(p.possessed ? { possessed: true } : {}), ...(p.camp ? campView(p) : {}) });
+  const pub = (p, mine) => ({ race: p.race || null, siegeCut: p.siegeCut || 0, handCount: p.hand.length, builder: p.builder, brick: p.brick, recruit: p.recruit, weapon: p.weapon, mage: p.mage, crystal: p.crystal, wall: p.wall, castle: p.castle, noDamage: p.noDamage, x2: p.x2, statsType: p.statsType, deckCount: p.deck.length, usedCount: p.used.length, kingCharge: p.kingCharge, kingStun: p.kingStun, kingGuard: p.kingGuard, kingAuto: !!p.kingAuto, tradeTurn: !!p.tradeTurn, ...(p.devKA ? { devKA: true } : {}), favor: p.favor || 0, trap: p.trap && (mine || p.trapSeen) ? p.trap : p.trap ? 'oculta' : null, hasTrap: !!p.trap, trapSeen: !!(p.trap && p.trapSeen), effects: (p.effects || []).map((e) => ({ e: e.e, turns: e.turns, from: e.from })), lastDamage: p.lastDamage || 0, kingDouble: !!p.kingDouble, halfId: p.halfId || null, luto: !!p.luto, stunTurn: !!p.stunTurn, kingPeriod: hasKing(p) ? kingPeriod(p) : 0, handSize: handSize(p), noKing: !!p.noKing, rage: p.rage || 0, sleeve: p.sleeve != null, sleeveReady: !!(p.sleeve != null && playableSleeve(p)) /* el rival ve que podés pagar tu As, no cuál es (críticos) */, sleeveDone: p.sleeveDone !== false, acted: !!p.acted, wounded: woundedList(p), ...(p.possessed ? { possessed: true } : {}), ...(p.camp ? campView(p) : {}) });
   const me = g.players[seat], op = g.players[1 - seat];
   const reveal = g.pending && g.pending.seat === seat;
   return { seat, phase: g.phase || 'play', turn: g.turn, ...(g.campaign ? { playsLeft: g.turn === seat ? Math.max(0, g.playsLeft ?? 1) + (g.extraTurn > 0 ? g.extraTurn : 0) + (g.rapidPending ? 1 : 0) : 0 } : {}), winner: g.winner, pending: g.pending, turnNo: g.turnNo, campaign: g.campaign || null, intent: g.intent && g.intent.seat !== seat ? g.intent : null, cycled: g.cycled, cyclesLeft: g.turn === seat ? cyclesLeft(g) : 0, inExtra: !!g.inExtra, extraLeft: g.inExtra ? g.extraTurn + 1 : 0, rapid: !!g.rapidMode, races: [g.players[0].race, g.players[1].race], me: { ...pub(me, true), hand: me.hand.slice(), sleeveChoices: g.phase === 'sleeve' ? sleeveChoices(me) : null, sleeveCard: me.sleeve, sleevePlayable: g.turn === seat && playableSleeve(me), sleeveCost: me.sleeve != null ? costOf(me, me.sleeve, true) : null }, op: { ...pub(op, false), hand: reveal ? op.hand.slice() : null } };
@@ -1056,4 +1056,15 @@ function bugChoose(g) {
   const p = g.players[g.turn], id = bugNext(g, p); let i = p.hand.indexOf(id);
   if (i < 0) { i = p.hand.findIndex((h) => !stuck(h)); if (i < 0) { p.hand.push(id); i = p.hand.length - 1; } else p.hand[i] = id; }
   return { type: 'play', index: i };
+}
+
+// Etiquetas de la carta (críticos 4-5): las mismas condiciones que usan las trampas, para mostrarlas en la carta y en el registro.
+// flecha (Espejismo), cuerpo (Foso y Mina), hechizo (Contrahechizo), maquina (máquinas gnomas). Una carta puede tener varias.
+export function cardTags(id) {
+  const t = [], [c, , o] = CARDS[id] || [[], [], []], k = FX[id]?.k;
+  if (ARROW_IDS.has(id)) t.push('flecha');
+  if (MELEE_IDS.has(id)) t.push('cuerpo');
+  if (c[5] > 0 && k !== 'kingAttack' && (o.some((v) => v > 0) || ['stunKing', 'drainKing', 'luto', 'usurp'].includes(k))) t.push('hechizo');
+  if (GNOME_MACHINES.includes(id)) t.push('maquina');
+  return t;
 }

@@ -1,1 +1,1 @@
-Barra de arriba: las fotos de los jugadores con el marco redondo, más grandes y en cada punta; Pausa y Sonido al medio, junto al turno.
+Menú de inicio más simple: Un jugador (Campaña, Contra la CPU, Aprender), Multijugador (Online, Con un amigo, Ranking, Mi perfil), Mazos y Opciones.
