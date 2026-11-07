@@ -1,5 +1,10 @@
 [
  {
+  "version": "0.74.0",
+  "date": "2026-11-07",
+  "notes": "Nuevo en Multijugador: Mismo dispositivo. Dos jugadores en la misma pantalla; en cada turno el que juega da vuelta su mano (el otro no mira), el As se elige por turnos y el tiempo arranca recién al dar vuelta la mano."
+ },
+ {
   "version": "0.73.1",
   "date": "2026-11-07",
   "notes": "Campaña: aldea nueva en isométrico. Las parcelas desaparecen al construir, cada edificio en su lugar con su tamaño real, la aldea pasa de madera a piedra y a mármol, la puerta de la muralla sobre la avenida, banderines de nivel que flamean, humo de chimeneas y fuego en las fraguas, zoom y paneo con la rueda o con el dedo. Aldeanos humanos (campesino, campesina, guardia y mercader) que caminan por las calles y entran y salen de los edificios. Favor de raza con columna de luz del color de la raza."
