@@ -128,7 +128,7 @@ export function aiSleevePick(counts) {
 export const isCurse = (id) => FX[id]?.k === 'curse';
 export const isState = (id) => FX[id]?.k === 'state';
 const stuck = (id) => isCurse(id) || isState(id);
-export const NET_ID = 202, WOUND_ID = 203; // estados de campaña nuevos (S03 01/11): Red y Herida
+export const NET_ID = 202, WOUND_ID = 203, BURN_ID = 204, VULN_ID = 205, CONFUSE_ID = 206; // estados de campaña nuevos (S03 01/11): Red y Herida
 function validate(p) {
   p.builder = p.builder <= 0 ? 1 : p.builder; p.recruit = p.recruit <= 0 ? 1 : p.recruit; p.mage = p.mage <= 0 ? 1 : p.mage;
   p.brick = Math.max(0, p.brick); p.weapon = Math.max(0, p.weapon); p.crystal = Math.max(0, p.crystal);
@@ -180,6 +180,7 @@ export function ashHit(g, p, blocked, fx) {
 function statRemove(g, p, a, keep, fx, foe = g.turn !== g.players.indexOf(p), pas7 = 0) {
   glMark(g); // lo que venía antes, con su contexto
   let ashB = 0;
+  if (foe && p.immuneLeft > 0 && a.slice(0, 6).some((v) => v > 0)) { a = a.slice(); for (let i = 0; i < 6; i++) if (a[i] > 0) a[i] = 0; p.immuneLeft--; fx.push('rule:immune'); } // Esfera rúnica: ignora tus primeros N efectos
   if (foe && OPT.stealFloor && !g.campaign && (a[1] > 0 || a[3] > 0 || a[5] > 0)) { a = a.slice(); for (const i of [1, 3, 5]) if (a[i] > 0) { const m = Math.min(a[i], stealable(g, p, KEYS[i])); if (other(g, p).race === 'drow') ashB += Math.min(a[i], Math.max(0, p[KEYS[i]])) - m; /* solo lo que frenó el piso, no lo que no había */ a[i] = m; } }
   let glDw = 0, glDc = 0;
   for (const [i, k] of [[0, 'builder'], [2, 'recruit'], [4, 'mage']]) if (a[i] > 0) { if (p[k] - a[i] < 1) { p.wounded = (p.wounded || 0) | WOUND[k]; fx.push('wound:' + k); } else fx.push('kill:' + k); }
@@ -194,6 +195,11 @@ function statRemove(g, p, a, keep, fx, foe = g.turn !== g.players.indexOf(p), pa
       if (p.wallFloor != null && p.wall - dw < p.wallFloor) { dw = Math.max(0, p.wall - p.wallFloor); fx.push('camp:runes'); }
       if (p.castleShield && (dc > 0 || dw > p.wall)) { dc = 0; dw = Math.min(dw, p.wall); p.castleShield = false; fx.push('camp:hide'); }
     }
+    if (p.hand?.includes(VULN_ID) && hits) { dw = Math.ceil(dw * 1.5); dc = Math.ceil(dc * 1.5); fx.push('camp:vuln'); } // Vulnerable: +50 % de daño
+    if (p.intangible && hits && foe) { const t = dw + dc; dc = t > 0 ? 0 : dc; dw = t > 0 ? 1 : dw; fx.push('rule:intangible'); } // intangible: cada golpe le hace 1
+    if (p.guardHalf && hits && foe) { dw = Math.ceil(dw / 2); dc = Math.ceil(dc / 2); fx.push('rule:guardHalf'); } // Guardián en modo muralla
+    if (p.flyLeft > 0 && hits && foe) { dw = Math.ceil(dw / 2); dc = Math.ceil(dc / 2); p.flyLeft--; fx.push(p.flyLeft ? 'rule:fly' : 'rule:flyDown'); } // vuelo: mitad de daño hasta que le pegás N veces
+    if (p.thorns > 0 && hits && foe) { const q = other(g, p); q.wall -= p.thorns; if (q.wall < 0) { q.castle += q.wall; q.wall = 0; } fx.push('rule:thorns'); } // espinas: tu ataque te lastima el muro
     if (p.minionHp > 0 && dw > 0) { const t = Math.min(dw, p.minionHp); p.minionHp -= t; dw -= t; fx.push('minion:' + t); if (p.minionHp <= 0) { p.minionHp = 0; p.atkPlus = (p.atkPlus || 0) + (p.minionRage || 0); fx.push('rule:minionDown'); } } // secuaz: tus ataques le pegan primero
     p.wall -= dw; p.castle -= dc; glDw = dw; glDc = dc; if (!OPT.x2Wall) pas7 *= m;
   } else {
@@ -230,6 +236,7 @@ export function costOf(p, id, sleeve = false) {
   if (p.halfId === id) for (const i of [1, 3, 5, 8]) c[i] = 0; // invento del rey gnomo: gratis ese turno
   if (p.costMod) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] = Math.max(1, c[i] + (p.costMod[i] || 0)); // campaña: regla de jefe o equipo que encarece/abarata
   if (p.hand?.includes(194)) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] += 1; // estado Pánico: todo cuesta 1 más
+  if (p.hand?.includes(CONFUSE_ID)) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] = Math.max(0, c[i] + ((id * 7 + (p.confSeed || 0)) % 5) - 2); // estado Confusión: cada carta cuesta de −2 a +2 al azar (fijo en el turno)
   if (sleeve && OPT.sleeveTier) { // Juan 27/10: recargo de la manga por rareza: mítica +2 de cada recurso, legendaria +1, rara +1 solo en el recurso más caro ("+0,5"), común 0
     const add = MYTHIC.has(id) ? 2 : LEGENDARY.has(id) ? 1 : 0; if (add) { for (const i of [1, 3, 5, 8]) if (c[i] > 0) c[i] += add; }
     else if (RARE.has(id) || RARE_RACE.has(id)) { let m = -1; for (const i of [1, 3, 5, 8]) if (c[i] > 0 && (m < 0 || c[i] > c[m])) m = i; if (m >= 0) c[m] += 1; }
@@ -301,7 +308,7 @@ export function cardVectors(g, p, o, id, sleeve = false) {
     if (p.rage) { if (op[6] > 0) op[6] += p.rage; else op[7] += p.rage; }
     if (p.lowCastleBonus && p.castle < p.lowCastleBonus.below) { if (op[6] > 0) op[6] += p.lowCastleBonus.amount; else op[7] += p.lowCastleBonus.amount; }
     if (p.hand?.includes(192)) { if (op[6] > 0) op[6] = Math.max(0, op[6] - 1); else op[7] = Math.max(0, op[7] - 1); }
-    { const b = (p.camp ? campAtkBonus(p) : 0) + (p.atkPlus || 0) + (p.minionHp > 0 ? p.minionAtk || 0 : 0); if (b) { if (op[6] > 0) op[6] += b; else op[7] += b; } } /* atkPlus y secuaz también desde la vista (realOf: la carta muestra el daño real) */ // Furia de sangre, Estandarte, Tambor de huesos; enemigos: ritual, enjambre, furia, secuaz
+    { const b = (p.camp ? campAtkBonus(p) : 0) + (p.atkPlus || 0) + (p.minionHp > 0 ? p.minionAtk || 0 : 0); if (b) { if (op[6] > 0) op[6] += b; else op[7] += b; } if (p.atkMul > 1) { op[6] *= p.atkMul; op[7] *= p.atkMul; } } /* atkPlus y secuaz también desde la vista (realOf: la carta muestra el daño real) */ // Furia de sangre, Estandarte, Tambor de huesos; enemigos: ritual, enjambre, furia, secuaz
   }
   if (s[6] > 0 && p.hand?.includes(193)) s[6] = Math.floor(s[6] / 2);
   // asedio prolongado sobre mí: no puedo subir el muro
@@ -331,7 +338,7 @@ function playInner(g, i) {
   const tipo0 = g._kingInvent || special?.k === 'kingAttack' ? 'rey' : 'normal'; glMark(g); if (g._gl) g._glCtx = { tipo: tipo0, origen: id };
   // moneda: se tira antes, así el extra de daño es parte del mismo ataque (escudo, Furia, trampas, pasivas)
   let coin = null;
-  if (special?.k === 'coin') { const win = g._rnd() < (special.p ?? 0.5); coin = (win ? special.heads : special.tails) || null; fx.push(win ? 'coinHeads' : 'coinTails'); if (coin?.opp) for (let k = 0; k < 8; k++) op[k] += coin.opp[k]; }
+  if (special?.k === 'coin') { const win = g.devCoin != null ? !!g.devCoin : g._rnd() < (special.p ?? 0.5);   /* devCoin: el campo de prueba fuerza cara/cruz */ coin = (win ? special.heads : special.tails) || null; fx.push(win ? 'coinHeads' : 'coinTails'); if (coin?.opp) for (let k = 0; k < 8; k++) op[k] += coin.opp[k]; }
   // trampas del rival
   let cancelled = false;
   if (o.trap) {
@@ -412,8 +419,11 @@ function playInner(g, i) {
     if (k === 'bug') { // acción de bicho (campaña, enemigos.md): efectos además del daño del vector
       if (special.give) { giveCard(g, o, special.give); fx.push('curse:' + special.give); }
       if (special.atkUp) { p.atkPlus = (p.atkPlus || 0) + special.atkUp; fx.push('rule:atkUp'); }
+      if (special.selfDestruct) { p.castle = 0; fx.push('rule:selfDestruct'); } // Polvorín: explota y se va (ganás la pelea si aguantaste)
+      if (special.wallUp) { p.wall += special.wallUp; validate(p); fx.push('rule:wallUp'); }
+      if (special.acid) { const x = Math.min(Math.max(0, o.wall), op[6]); if (x > 0) { o.wall -= x; fx.push('rule:acid'); } } // ácido (Lodos): le pega otra vez lo mismo a tu muro
       if (special.tempWall) { p.tempWall = (p.tempWall || 0) + special.tempWall; p.wall += special.tempWall; fx.push('rule:burrowWall'); }
-      if (special.pages) { const n = Math.max(1, p.pageHits || 1); for (let h = 1; h < n; h++) { const pc = glCtx(g, 'normal', id); statRemove(g, o, [0, 0, 0, 0, 0, 0, op[6], 0], false, fx); glRestore(g, pc); } fx.push('pages:' + n); }
+      if (special.pages || special.hits > 1) { const n = special.pages ? Math.max(1, p.pageHits || 1) : special.hits; for (let h = 1; h < n; h++) { const pc = glCtx(g, 'normal', id); statRemove(g, o, [0, 0, 0, 0, 0, 0, op[6], 0], false, fx); glRestore(g, pc); } fx.push((special.pages ? 'pages:' : 'hits:') + n); }
     }
     if ((p.pattern || p.weights) && special?.k === 'bug') bugAdvance(g, p);
     if (k === 'kingAttack' && isGuestKing(p, id)) fx.push('guestKing:' + raceOf(id)); // rey invitado: tu rey no se desmaya (Juan 27/10)
@@ -448,6 +458,7 @@ function campSeat(p, c) {
   // (S03 01/11, docs/campaña/enemigos.md) cuerpos de bicho: noProd (no produce: bestias y construcciones), pattern/weights (acciones de bicho
   // en orden fijo o con pesos), minion (secuaz: segundo muro con vida propia, efecto mientras vive y al caer)
   if (c.noProd) p.noProd = true; if (c.atk) p.atkPlus = (p.atkPlus || 0) + c.atk; /* atk: +N a todos sus ataques (para afinar enemigos) */ if (c.pattern) { p.pattern = c.pattern.slice(); p.patternLoop = c.patternLoop || 0; } if (c.weights) p.weights = { ...c.weights };
+  if (c.fly) p.flyLeft = c.fly; if (c.immune) p.immuneLeft = c.immune; if (c.thorns) p.thorns = c.thorns; // vuelo (mitad de daño N golpes), inmune a N efectos, espinas
   if (c.minion) { p.minionHp = c.minion.hp; p.minionMax = c.minion.hp; p.minionAtk = c.minion.atk || 0; p.minionHeal = c.minion.heal || 0; p.minionRage = c.minion.rage || 0; p.minionName = c.minion.name || 'Secuaz'; }
   p.camp = true; p.plays = c.plays || 1; p.discardHand = !!c.discardHand;
   p.gold = c.gold || 0; p.goldStart = p.gold; p.maxCastle = c.maxCastle ?? p.castle; p.kills = c.kills || 0;
@@ -516,6 +527,7 @@ function campAfter(g, p, o, id, special, fx, s, op, c) {
 }
 function campBeforeEnd(g, q, fx) { // Susurro venenoso: el que termina su turno con estados en la mano pierde castillo
   const src = other(g, q), n = q.hand.filter(isState).length;
+  { const nb = q.hand.filter((id) => id === BURN_ID).length; if (nb) { const pc = glCtx(g, 'efecto', 'burn'); statRemove(g, q, [0, 0, 0, 0, 0, 0, 0, 3 * nb], false, fx, true); glRestore(g, pc); fx.push('camp:burn'); } } // Quemadura: −3 castillo si te queda en la mano
   if (src.poison && n) { const pc = glCtx(g, 'efecto', 'poison'); statRemove(g, q, [0, 0, 0, 0, 0, 0, 0, src.poison * n], false, fx, true); glRestore(g, pc); fx.push('camp:poison'); }
 }
 function campDiscardHand(g, p) {
@@ -529,7 +541,7 @@ function campTurnStart(g, p, o, log) {
   const mult = 1 + (p.workBoost || 0); p.workBoost = 0;
   for (const w of p.works.slice()) { const fx = []; FX[w.id]?.camp?.work?.tick?.({ ...campCtx(g, p, o, w.id, fx), w, mult }); w.age++; log.push('work:' + w.id); }
 }
-function campView(p) { return { ...(p.minionMax ? { minion: { name: p.minionName, hp: p.minionHp, max: p.minionMax } } : {}), ...(p.atkPlus ? { atkPlus: p.atkPlus } : {}), ...(p.minionMax ? { minionHp: p.minionHp, minionAtk: p.minionAtk || 0 } : {}), ...(p.tempWall ? { tempWall: p.tempWall } : {}), ...(p.pageHits ? { pageHits: p.pageHits } : {}), ...(p.noProd ? { noProd: true } : {}), gold: p.gold || 0, plays: p.plays || 1, works: (p.works || []).map((w) => ({ id: w.id, age: w.age })), workMax: WORK_MAX, burned: (p.burned || []).slice(), grown: { ...(p.grown || {}) }, discardHand: !!p.discardHand, turnPlays: p.turnPlays || 0 }; }
+function campView(p) { return { ...(p.minionMax ? { minion: { name: p.minionName, hp: p.minionHp, max: p.minionMax } } : {}), ...(p.atkPlus ? { atkPlus: p.atkPlus } : {}), ...(p.minionMax ? { minionHp: p.minionHp, minionAtk: p.minionAtk || 0 } : {}), ...(p.tempWall ? { tempWall: p.tempWall } : {}), ...(p.pageHits ? { pageHits: p.pageHits } : {}), ...(p.noProd ? { noProd: true } : {}), ...(p.flyLeft ? { flyLeft: p.flyLeft } : {}), ...(p.immuneLeft ? { immuneLeft: p.immuneLeft } : {}), ...(p.thorns ? { thorns: p.thorns } : {}), ...(p.rs?.asleep ? { asleep: p.rs.asleep } : {}), ...(p.rs?.mode ? { mode: p.rs.mode } : {}), ...(p.atkMul > 1 ? { atkMul: p.atkMul } : {}), ...(p.intangible ? { intangible: true } : {}), gold: p.gold || 0, plays: p.plays || 1, works: (p.works || []).map((w) => ({ id: w.id, age: w.age })), workMax: WORK_MAX, burned: (p.burned || []).slice(), grown: { ...(p.grown || {}) }, discardHand: !!p.discardHand, turnPlays: p.turnPlays || 0 }; }
 function campClone(p) { return { works: (p.works || []).map((w) => ({ ...w })), burned: (p.burned || []).slice(), grown: { ...(p.grown || {}) } }; }
 function campValue(p) { let v = 0; for (const w of p.works || []) v += FX[w.id]?.camp?.work?.value ?? 6; if (p.halfNext) v += 5; if (p.castleShield) v += 4; if (p.wallFloor != null) v += 4; return v; }
 // Campaña: meter una carta (maldición/estado) en la mano de un jugador; si la mano está llena, igual entra (la mano se agranda)
@@ -833,6 +845,7 @@ export function evaluate(g, seat, Wt = W) {
     let v = 0;
     v += p.castle * W.castle + (p.castle >= 70 && !g.campaign?.noWin100 ? (p.castle - 70) * W.castleHi : 0) + (p.castle <= 15 ? -(15 - p.castle) * W.castleLo : 0) + (p.castle < 10 ? -(10 - p.castle) * W.castleLo : 0); // castillo en un dígito: curarlo antes que el muro (críticos 5)
     v += clampV(p.wall, W.wallCap, 0.35) * W.wall;
+    if (p.minionHp > 0) v += p.minionHp * W.wall * 0.8; // campaña: el secuaz es un segundo muro (si no, la IA no le pega)
     for (const u of ['builder', 'recruit', 'mage']) v += clampV(p[u], W.unitCap, 0.5) * W.unit;
     for (const r of ['brick', 'weapon', 'crystal']) v += clampV(p[r], W.resCap, 0.3) * W.res;
     if (p.noDamage) v += W.shield;
@@ -878,7 +891,7 @@ function candidateMoves(g) {
   // descartes candidatos: la carta más difícil de pagar, y los duplicados
   const cost = (id) => { const [c] = CARDS[id]; return Math.max((c[1] - p.brick) / p.builder, (c[3] - p.weapon) / p.recruit, (c[5] - p.crystal) / p.mage, 0); };
   const order = p.hand.map((id, i) => [i, stuck(id) ? -1e9 : cost(id) + (p.hand.indexOf(id) !== i ? 3 : 0)]).sort((a, b) => b[1] - a[1]);
-  if (order[0][1] <= -1e9) return moves; // toda la mano son maldiciones/estados: solo se puede jugar (nada) → pasa
+  if (!order.length || order[0][1] <= -1e9) return moves; // toda la mano son maldiciones/estados: solo se puede jugar (nada) → pasa
   moves.push({ type: 'discard', indexes: [order[0][0]] });
   if (!moves.some((m) => m.type === 'play')) moves.push({ type: 'discard', indexes: order.slice(0, 3).filter((o) => o[1] > 2).map((o) => o[0]).concat(order[0][0]).slice(0, 3) });
   return moves;

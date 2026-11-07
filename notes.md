@@ -1,1 +1,1 @@
-Menú de inicio más simple: Un jugador (Campaña, Contra la CPU, Aprender), Multijugador (Online, Con un amigo, Ranking, Mi perfil), Mazos y Opciones.
+Menú nuevo estilo Frozen Throne: logo pintado, el castillo de protagonista, tablero de botones colgado de cadenas y Salir aparte; el botón que tocás se pone dorado. Animaciones nuevas: Dragón del cielo, Pedrada, Destello, Grito, Rabia, Ira del clan, Rayo cortesano y Ritual oscuro.

@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.73.0 · 2026-11-07
+
+- Menú nuevo estilo Frozen Throne: logo pintado, el castillo de protagonista, tablero de botones colgado de cadenas y Salir aparte; el botón que tocás se pone dorado. Animaciones nuevas: Dragón del cielo, Pedrada, Destello, Grito, Rabia, Ira del clan, Rayo cortesano y Ritual oscuro.
+
 ## 0.72.0 · 2026-11-03
 
 - Menú de inicio más simple: Un jugador (Campaña, Contra la CPU, Aprender), Multijugador (Online, Con un amigo, Ranking, Mi perfil), Mazos y Opciones.
