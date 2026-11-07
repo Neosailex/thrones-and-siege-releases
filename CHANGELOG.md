@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.73.1 · 2026-11-07
+
+- Campaña: aldea nueva en isométrico. Las parcelas desaparecen al construir, cada edificio en su lugar con su tamaño real, la aldea pasa de madera a piedra y a mármol, la puerta de la muralla sobre la avenida, banderines de nivel que flamean, humo de chimeneas y fuego en las fraguas, zoom y paneo con la rueda o con el dedo. Aldeanos humanos (campesino, campesina, guardia y mercader) que caminan por las calles y entran y salen de los edificios. Favor de raza con columna de luz del color de la raza.
+
 ## 0.73.0 · 2026-11-07
 
 - Menú nuevo estilo Frozen Throne: logo pintado, el castillo de protagonista, tablero de botones colgado de cadenas y Salir aparte; el botón que tocás se pone dorado. Animaciones nuevas: Dragón del cielo, Pedrada, Destello, Grito, Rabia, Ira del clan, Rayo cortesano y Ritual oscuro.
