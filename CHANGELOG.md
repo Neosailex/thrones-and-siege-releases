@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.74.1 · 2026-11-08
+
+- Mismo dispositivo: las cartas giran al dar vuelta la mano y la mano se tapa antes del cambio de turno. Campaña: reinos enano y orco jugables y enemigos más fuertes cerca de la Grieta.
+
 ## 0.74.0 · 2026-11-07
 
 - Nuevo en Multijugador: Mismo dispositivo. Dos jugadores en la misma pantalla; en cada turno el que juega da vuelta su mano (el otro no mira), el As se elige por turnos y el tiempo arranca recién al dar vuelta la mano.
