@@ -16,12 +16,25 @@ export const CAMPAIGN = { baseProd: 2, plays: 2, discardHand: true };
 // ~10 de la raza/simples + 5 neutrales. Pensado para 1 unidad de cada y recursos base 8 (ver PLAYER_START).
 export const STARTER_DECKS = {
   humano: deckOf({ 2: 2, 6: 2, 8: 1, 37: 1, 60: 1, 54: 1, 34: 2, 36: 1, 30: 1, 62: 1, 63: 1, 64: 1 }),
+  // (S03 08/11) enano: 10 básicas + las ★ de runas (Grabar piedra x2, Chispa rúnica x2, Martillazo)
+  enano: deckOf({ 2: 3, 6: 1, 36: 2, 34: 1, 37: 1, 30: 1, 54: 1, 400: 2, 401: 2, 402: 1 }),
+  // orco: 10 básicas + las ★ de Furia (Tajo sangriento x2, Rugido, Embestida x2)
+  orco: deckOf({ 2: 3, 6: 1, 36: 2, 34: 1, 37: 1, 30: 1, 54: 1, 420: 2, 421: 1, 422: 2 }),
+  // elfo: 10 básicas + las ★ de Flechas (Arco corto x2, Ojo de águila, Puntería x2)
+  elfo: deckOf({ 2: 3, 6: 1, 36: 2, 34: 1, 37: 1, 30: 1, 54: 1, 441: 2, 442: 1, 443: 2 }),
+  // gnomo: 10 básicas + las ★ de Caldera (Válvula x2, Prototipo x2, Remiendo)
+  gnomo: deckOf({ 2: 3, 6: 1, 36: 2, 34: 1, 37: 1, 30: 1, 54: 1, 460: 2, 461: 2, 462: 1 }),
+  // drow: 10 básicas + las ★ de Veneno (Daga envenenada x2, Pacto oscuro x2, Niebla)
+  drow: deckOf({ 2: 3, 6: 1, 36: 2, 34: 1, 37: 1, 30: 1, 54: 1, 480: 2, 481: 2, 482: 1 }),
 };
 // Mazo de referencia a mitad de run (solo para medir el balance de Lor/Rey: el inicial + 5 recompensas típicas)
 // (25/10) con las cartas nuevas de campaña: el inicial + Arqueros, Catedral, Estandarte del reino, Mercenarios, Veterano, Reconstrucción mayor; ~60 de oro a esta altura
 export const MIDRUN_DECKS = { humano: deckOf({ 2: 2, 6: 2, 8: 2, 37: 1, 60: 1, 54: 1, 34: 2, 36: 1, 30: 1, 62: 1, 63: 1, 64: 1, 68: 1, 216: 1, 210: 1, 270: 1, 277: 1 }) };
 export const MIDRUN_GOLD = 60;
 // Estado base del jugador al empezar la campaña (la aldea lo sube). castle/wall se pisan con lo que arrastra la run.
+// (S03 08/11) razas jugables de campaña (docs/campaña/razas.md §1): el humano juega como en el PvP; las demás, con su mecánica propia
+// humanPassive: el sostén del humano (recurso más bajo +1, muro +1 con menos de 10) — sin él el orco ganaba 0-2 % de las runs (el humano sin su pasiva, 2 %)
+export const CAMP_RACE = { enano: { noPassive: true }, orco: { noPassive: true, fury: true, humanPassive: true }, elfo: { noPassive: true, aim: true, humanPassive: true }, gnomo: { noPassive: true, boiler: true }, drow: { noPassive: true, pact: true, humanPassive: true } };
 export const PLAYER_START = { hand: 3, res: { builder: 1, recruit: 1, mage: 1, brick: 8, weapon: 8, crystal: 8, wall: 15, castle: 30 } };
 
 /* ---------- reglas de jefe / equipo (datos) → hooks del motor ---------- */
@@ -50,7 +63,68 @@ export const RULES = {
   // Su rey actúa más seguido (Thorgrim cada 3): se pasa por kingPeriod en el asiento, acá solo texto
   kingPeriod: { text: (r) => `Su rey actúa cada ${r.period} turnos`, onBattleStart(g, me, r) { g.players[me].kingPeriod = r.period; } },
   // Equipo del jugador: +N de una unidad / muro / castillo al empezar cada pelea (Yelmo del constructor, cabra enana…)
-  startStat: { text: (r) => `Al empezar cada pelea: ${r.stat} +${r.amount}`, onBattleStart(g, me, r) { g.players[me][r.stat] += r.amount; } },
+  // (S03 08/11) también negativo (contras de artefactos): no baja de 0 (unidades: de 1)
+  startStat: { text: (r) => `Al empezar cada pelea: ${r.stat} ${r.amount < 0 ? '' : '+'}${r.amount}`, onBattleStart(g, me, r) { const p = g.players[me], min = ['builder', 'recruit', 'mage'].includes(r.stat) ? 1 : 0; p[r.stat] = Math.max(Math.min(min, p[r.stat] || 0), (p[r.stat] || 0) + r.amount); } },
+  /* ---- contras de los artefactos (S03 08/11, docs/campaña/razas.md §3a; el cliente las pasa en contraRules) ---- */
+  // Espada de Aldric: la primera vez que tenés favor en la pelea, perdés 1
+  favorTax: { text: (r) => `−${r.amount || 1} de favor por pelea`, onTurnStart(g, me, r, info) { const p = g.players[me]; if (info.seat !== me || p.rs.favTax || !(p.favor > 0)) return; p.rs.favTax = true; p.favor = Math.max(0, p.favor - (r.amount || 1)); return true; } },
+  // Martillo de Thorgrim: tus ataques −1 en tu primer turno
+  weakStart: { text: (r) => `Tus ataques −${r.amount || 1} el primer turno`, onBattleStart(g, me, r) { const p = g.players[me]; p.atkPlus = (p.atkPlus || 0) - (r.amount || 1); p.rs.wsT = g.turn === me ? 1 : 2; p.rs.wsN = 0; },
+    onTurnStart(g, me, r, info) { const p = g.players[me]; if (info.seat !== me || !p.rs.wsT) return; if (++p.rs.wsN < p.rs.wsT) return; p.atkPlus = (p.atkPlus || 0) + (r.amount || 1); p.rs.wsT = 0; } },
+  // Cabra enana: come 1 ladrillo por turno
+  eatRes: { text: (r) => `Cada ${r.every > 1 ? r.every + ' turnos' : 'turno'} se come ${r.amount} de ${{ brick: 'ladrillos', weapon: 'armas', crystal: 'cristales' }[r.res]}`, onTurnStart(g, me, r, info) { const p = g.players[me]; if (info.seat !== me) return; p.rs['eat' + r.res] = (p.rs['eat' + r.res] || 0) + 1; if (p.rs['eat' + r.res] % (r.every || 1)) return; p[r.res] = Math.max(0, p[r.res] - r.amount); return true; } },
+  // Cuervo mensajero: mano −1 el primer turno (la carta vuelve al mazo)
+  handMinusFirst: { text: () => 'Mano −1 el primer turno', onBattleStart(g, me) { const p = g.players[me]; if (p.hand.length > 1) p.deck.splice(Math.floor(g._rnd() * (p.deck.length + 1)), 0, p.hand.pop()); } },
+  // Anillo de carga: cuando tu rey actúa, su efecto es 1 menor
+  kingWeak: { text: (r) => `Cuando tu rey actúa, su efecto es ${r.amount || 1} menor`, onBattleStart(g, me, r) { g.players[me].kingWeak = r.amount || 1; } },
+  // Corona rota: cuando tu rey actúa, perdés 3 de vida
+  kingPain: { text: (r) => `Cuando tu rey actúa, perdés ${r.amount} de vida`, onKingAct(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.castle = Math.max(0, p.castle - r.amount); if (p.castle <= 0 && g.winner == null) g.winner = 1 - me; return true; } },
+  // Engranaje eterno: cada Obra cuesta +1 · Cuerno de batalla: la primera carta del rival también es gratis · Talismán: tus Rápidas no roban · Frasco: los estados del rival a vos también duran más
+  workTax: { text: (r) => `Cada Obra cuesta +${r.amount || 1}`, onBattleStart(g, me, r) { g.players[me].workTax = r.amount || 1; } },
+  foeFirstFree: { text: () => 'La primera carta del rival también es gratis', onBattleStart(g, me) { g.players[1 - me].firstFree = true; } },
+  rapidNoDraw: { text: () => 'Tus Rápidas no roban carta', onBattleStart(g, me) { g.players[me].rapidNoDraw = true; } },
+  statesBack: { text: () => 'Los estados del rival a vos también duran un turno más', onBattleStart(g, me) { g.players[me].poisonVial = true; } },
+  /* ---- Veneno del drow (S03 08/11) ---- */
+  venomStartFoe: { text: (r) => `El rival arranca con ${r.n} de veneno`, onBattleStart(g, me, r) { const o = g.players[1 - me]; o.venom = (o.venom || 0) + r.n; } },
+  firstPactX2: { text: () => 'Tu primer pacto de cada pelea vale doble', onBattleStart(g, me) { g.players[me].firstPactX2 = true; } },
+  colmilloArana: { name: 'Colmillo de araña', rar: 'comun', race: 'drow', quita: 'Tus ataques −1', text: () => 'Cada ataque tuyo le pone 1 de veneno al rival', onBattleStart(g, me) { const p = g.players[me]; p.atkVenom = 1; p.atkPlus = (p.atkPlus || 0) - 1; } },
+  veloSombra: { name: 'Velo de sombra', rar: 'comun', race: 'drow', quita: 'Cada pelea te mete un Miedo en el mazo', text: () => 'Tu primer pacto de cada pelea no gasta jugada', onBattleStart(g, me) { const p = g.players[me]; p.freePact = true; p.deck.splice(Math.floor(g._rnd() * (p.deck.length + 1)), 0, 192); } },
+  telarana: { name: 'Telaraña', rar: 'raro', race: 'drow', quita: 'Tu veneno baja 2 por turno', text: () => 'El rival envenenado no se cura', onBattleStart(g, me) { const p = g.players[me]; p.webNoHeal = true; p.venomDecay = 2; } },
+  frascoSombra: { name: 'Frasco de sombra', rar: 'raro', race: 'drow', quita: 'Vida máxima −5', contra: [{ k: 'hpMax', v: -5 }], text: () => 'Tu veneno no baja la primera vez', onBattleStart(g, me) { g.players[me].venomHold = true; } },
+  pactoEterno: { name: 'Pacto eterno', rar: 'jefe', race: 'drow', quita: 'Cada pelea arrancás con 2 Miedos en el mazo', text: () => 'Cada pacto vale doble', onBattleStart(g, me) { const p = g.players[me]; p.pactMul = 2; for (let i = 0; i < 2; i++) p.deck.splice(Math.floor(g._rnd() * (p.deck.length + 1)), 0, 192); } },
+  /* ---- Caldera del gnomo (S03 08/11) ---- */
+  inventStart: { text: (r) => `Tus Inventos arrancan +${r.n}`, onBattleStart(g, me, r) { const p = g.players[me]; p.invBonus = (p.invBonus || 0) + r.n; } },
+  freeValve: { text: () => 'La primera vez que la caldera explota no te hace daño', onBattleStart(g, me) { g.players[me].safeValve = true; } },
+  valvulaSeguridad: { name: 'Válvula de seguridad', rar: 'comun', race: 'gnomo', quita: 'La caldera aguanta 2 menos', text: () => 'La primera vez que la caldera explota no te hace daño', onBattleStart(g, me) { const p = g.players[me]; p.safeValve = true; p.boilerMaxMod = (p.boilerMaxMod || 0) - 2; } },
+  engrasador: { name: 'Engrasador', rar: 'comun', race: 'gnomo', quita: 'Tus cartas de muro suman 1 de presión más', text: () => 'Tus Inventos arrancan +1', onBattleStart(g, me) { const p = g.players[me]; p.invBonus = (p.invBonus || 0) + 1; p.wallPress = 1; } },
+  engranajeMaestro: { name: 'Engranaje maestro', rar: 'raro', race: 'gnomo', quita: '−2 ladrillos por turno', text: () => 'Tus Inventos mejoran el doble', onBattleStart(g, me) { g.players[me].invDouble = true; }, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.brick = Math.max(0, p.brick - 2); return true; } },
+  manometroLaton: { name: 'Manómetro de latón', rar: 'raro', race: 'gnomo', quita: 'La caldera explota en 9', text: () => 'Liberar la caldera da 25 % más', onBattleStart(g, me) { const p = g.players[me]; p.releaseMul = 1.25; p.boilerMaxMod = (p.boilerMaxMod || 0) - 2; } },
+  calderaInestable: { name: 'Caldera inestable', rar: 'jefe', race: 'gnomo', quita: 'La explosión te hace 20', text: () => 'La caldera aguanta 4 más y liberarla da 50 % más', onBattleStart(g, me) { const p = g.players[me]; p.boilerMaxMod = (p.boilerMaxMod || 0) + 4; p.releaseMul = 1.5; p.boomDmg = 20; } },
+  /* ---- Flechas del elfo (S03 08/11) ---- */
+  aimStart: { text: (r) => `Arrancás con Puntería +${r.n}`, onBattleStart(g, me, r) { const p = g.players[me]; p.aim = (p.aim || 0) + r.n; } },
+  arrowEachTurn: { text: (r) => `Te da ${r.n} Flecha al empezar cada turno tuyo`, onBattleStart(g, me, r) { const p = g.players[me]; p.arrowTurn = (p.arrowTurn || 0) + r.n; } },
+  carcaj: { name: 'Carcaj', rar: 'comun', race: 'elfo', quita: 'El Ojo de águila ve 1 carta menos', text: () => 'Puntería +1 al empezar cada pelea', onBattleStart(g, me) { const p = g.players[me]; p.aim = (p.aim || 0) + 1; p.eyeMod = (p.eyeMod || 0) - 1; } },
+  plumaAguila: { name: 'Pluma de águila', rar: 'comun', race: 'elfo', quita: '−1 cristal por turno', text: () => 'El Ojo de águila ve 1 carta más', onBattleStart(g, me) { g.players[me].eyeMod = (g.players[me].eyeMod || 0) + 1; }, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.crystal = Math.max(0, p.crystal - 1); return true; } },
+  arcoLuna: { name: 'Arco de la luna', rar: 'raro', race: 'elfo', quita: 'Tus cartas de muro dan 2 menos', text: () => 'Te da 1 Flecha al empezar cada turno tuyo', onBattleStart(g, me) { const p = g.players[me]; p.arrowTurn = (p.arrowTurn || 0) + 1; p.wallMinus = (p.wallMinus || 0) + 2; } },
+  cuerdaElfica: { name: 'Cuerda élfica', rar: 'raro', race: 'elfo', hand: -1, quita: 'Tu mano es 1 menos', text: () => 'Tus Flechas hacen +2', onBattleStart(g, me) { g.players[me].arrowPlus = (g.players[me].arrowPlus || 0) + 2; } },
+  cuerdaPlata: { name: 'Cuerda de plata', rar: 'jefe', race: 'elfo', quita: 'Máximo 4 Flechas por turno', text: () => 'Tus Flechas hacen el doble', onBattleStart(g, me) { const p = g.players[me]; p.arrowMul = 2; p.arrowCap = 4; } },
+  /* ---- Furia del orco (S03 08/11) ---- */
+  furyStart: { text: (r) => `Arrancás con ${r.n} de Furia`, onBattleStart(g, me, r, info) { const p = g.players[me]; p.fury = Math.min(10, (p.fury || 0) + r.n); info.fx?.push('fury:' + p.fury); } },
+  frenzyPlus: { text: (r) => `El Frenesí dura ${r.n} turno${r.n > 1 ? 's' : ''} más`, onBattleStart(g, me, r) { const p = g.players[me]; p.frenzyBonus = (p.frenzyBonus || 0) + r.n; } },
+  collarColmillos: { name: 'Collar de colmillos', rar: 'comun', race: 'orco', quita: 'El Frenesí dura 1 turno', text: () => '+1 de Furia extra cada vez que te pegan', onBattleStart(g, me) { const p = g.players[me]; p.furyRecv = 1; p.frenzyTurns = 1; } },
+  pinturaGuerra: { name: 'Pintura de guerra', rar: 'comun', race: 'orco', quita: 'Muro −4 al empezar cada pelea', text: () => 'Arrancás cada pelea con 3 de Furia', onBattleStart(g, me, r, info) { RULES.furyStart.onBattleStart(g, me, { n: 3 }, info); const p = g.players[me]; p.wall = Math.max(0, p.wall - 4); } },
+  tamborSangre: { name: 'Tambor de sangre', rar: 'raro', race: 'orco', quita: 'Vida máxima −5', contra: [{ k: 'hpMax', v: -5 }], text: () => 'Tus cartas de sangre cuestan 1 de vida menos', onBattleStart(g, me) { g.players[me].bloodLess = 1; } },
+  trofeoCampeon: { name: 'Trofeo del campeón', rar: 'raro', race: 'orco', quita: 'Si en tu turno no pegás, la Furia baja 2', text: () => 'Al entrar en Frenesí curás 5', onBattleStart(g, me) { const p = g.players[me]; p.frenzyHeal = 5; p.furyDecay = 2; } },
+  ojosRojos: { name: 'Ojos rojos', rar: 'jefe', race: 'orco', quita: 'No te podés curar', text: () => 'El Frenesí no termina', onBattleStart(g, me) { const p = g.players[me]; p.frenzyForever = true; p.noHeal = true; } },
+  /* ---- runas del enano (S03 08/11) ---- */
+  runeStart: { text: (r) => `Arrancás con ${r.n || 1} runa de ${r.t} grabada`, onBattleStart(g, me, r, info) { const p = g.players[me]; p.runes ||= []; for (let i = 0; i < (r.n || 1); i++) if (p.runes.length < E.runeSlots(p)) { p.runes.push(r.t); info.fx?.push('rune:grabar:' + r.t); } } },
+  runeSlot: { text: (r) => `+${r.amount || 1} ranura de runa`, onBattleStart(g, me, r) { const p = g.players[me]; p.runeSlots = E.runeSlots(p) + (r.amount || 1); } },
+  // equipo de raza del enano (§3c)
+  piedraAfilar: { name: 'Piedra de afilar', rar: 'comun', race: 'enano', quita: 'Tus runas de Piedra dan 1 menos', text: () => 'Tus runas de Fuego hacen +1', onBattleStart(g, me) { g.players[me].runeMod = { ...(g.players[me].runeMod || {}), fuego: 1, piedra: -1 }; } },
+  cuencoRunas: { name: 'Cuenco de runas', rar: 'comun', race: 'enano', quita: 'Ladrillos −2 al empezar cada pelea', text: () => 'Arrancás cada pelea con una runa de Piedra grabada', onBattleStart(g, me, r, info) { RULES.runeStart.onBattleStart(g, me, { t: 'piedra' }, info); const p = g.players[me]; p.brick = Math.max(0, p.brick - 2); } },
+  cincelRunico: { name: 'Cincel rúnico', rar: 'raro', race: 'enano', quita: 'Romper una runa da x2 en vez de x3', text: () => 'Tenés una 4.ª ranura de runa', onBattleStart(g, me) { const p = g.players[me]; p.runeSlots = E.runeSlots(p) + 1; p.breakMul = 2; } },
+  yunqueEcos: { name: 'Yunque de ecos', rar: 'raro', race: 'enano', quita: 'Muro −5 al empezar cada pelea', text: () => 'La primera runa que rompés en cada pelea se vuelve a grabar', onBattleStart(g, me) { const p = g.players[me]; p.echoBreak = true; p.wall = Math.max(0, p.wall - 5); } },
+  coronaBasalto: { name: 'Corona de basalto', rar: 'jefe', race: 'enano', quita: 'No podés romper runas', text: () => 'Tus runas actúan dos veces', onBattleStart(g, me) { const p = g.players[me]; p.runeTimes = 2; p.noBreak = true; } },
   // Equipo: el rey arranca con carga (Anillo de carga)
   startCharge: { text: (r) => `Tu rey arranca con ${r.amount} de carga`, onBattleStart(g, me, r) { g.players[me].kingCharge += r.amount; } },
   // Equipo: el primer ataque rival de la pelea falla (Capa de sombras)
@@ -218,13 +292,14 @@ export function grietaSetup(race, freed = []) {
   return { rules: freed.map((r) => GRIETA_ALLIES[r]).filter(Boolean), mythics: freed.filter((r) => r !== race).map((r) => MYTHIC_OF[r]).filter(Boolean) };
 }
 // Equipo nuevo (cartas.md §5): ids de regla → se pasan en player.rules como { k: 'wallGloves' } etc. EQUIP_RULES lista los 15 con nombre y rareza.
-export const EQUIP_RULES = ['wallGloves', 'goldBag', 'warHorn', 'leafTalisman', 'eternalGear', 'bloodCup', 'forestMantle', 'poisonVial', 'treasurerBag', 'runicAnvil', 'warCrown', 'stolenThrone', 'demonChalice', 'cartographer', 'watcherEye'];
+export const EQUIP_RULES = ['colmilloArana', 'veloSombra', 'telarana', 'frascoSombra', 'pactoEterno', 'valvulaSeguridad', 'engrasador', 'engranajeMaestro', 'manometroLaton', 'calderaInestable', 'carcaj', 'plumaAguila', 'arcoLuna', 'cuerdaElfica', 'cuerdaPlata', 'collarColmillos', 'pinturaGuerra', 'tamborSangre', 'trofeoCampeon', 'ojosRojos', 'piedraAfilar', 'cuencoRunas', 'cincelRunico', 'yunqueEcos', 'coronaBasalto', 'wallGloves', 'goldBag', 'warHorn', 'leafTalisman', 'eternalGear', 'bloodCup', 'forestMantle', 'poisonVial', 'treasurerBag', 'runicAnvil', 'warCrown', 'stolenThrone', 'demonChalice', 'cartographer', 'watcherEye'];
 export const ruleText = (r) => RULES[r.k]?.text(r) ?? r.k;
 export function ruleHooks(rules = []) {
   const h = {};
   for (const name of ['onBattleStart', 'onTurnStart', 'onCardPlayed', 'onDamage', 'onKingAct']) {
     const rs = rules.filter((r) => typeof RULES[r.k]?.[name] === 'function'); if (!rs.length) continue;
-    h[name] = (g, me, info) => { for (const r of rs) RULES[r.k][name](g, me, r, info); };
+    // r.eq = id del artefacto (lo pone el cliente): cuando actúa, fx 'eq:<id>' (al empezar la pelea siempre; en los otros, si el hook devuelve true)
+    h[name] = (g, me, info) => { for (const r of rs) { const done = RULES[r.k][name](g, me, r, info); if (r.eq && (done || name === 'onBattleStart') && info.fx && !info.fx.includes('eq:' + r.eq)) info.fx.push('eq:' + r.eq); } };
   }
   return h;
 }
@@ -238,7 +313,7 @@ const U = (bu, so, ma, b, w, cr, wall, castle) => ({ builder: bu, recruit: so, m
 // costo 0; la intención las muestra), capWall (empalizada con tope bajo; 0 = sin muro). minion: secuaz con vida propia (segundo muro).
 const BUG = { race: null, king: false, ai: 'facil', hand: 2, plays: 1, noProd: true, deck: deckOf({ 300: 1 }) }; // base de los bichos (el mazo real lo arma `actions`)
 const bug = (o) => ({ ...BUG, ...o, deck: deckOf(Object.fromEntries([...new Set([...(o.pattern || []), ...Object.keys(o.weights || {}).map(Number)])].map((id) => [id, 3]))) });
-const SACERDOTISA = { name: 'Torre de la Sacerdotisa', hp: 10, heal: 1, atk: 1, rage: 2 }; // (doc: vida 18, cura 3: la pelea no terminaba, 40 % cortadas)
+const SACERDOTISA = { name: 'Torre de la Sacerdotisa', hp: 10, heal: 1, atk: 1, rage: 1 }; // (doc: vida 18, cura 3: la pelea no terminaba, 40 % cortadas)
 export const ENEMIES = {
   humano: {
     // (25/10, campaña con 2 jugadas por turno) plays = jugadas por turno del enemigo (1,5 = una y dos alternadas). Antes → ahora en docs/campaña/cartas.md
@@ -253,26 +328,26 @@ export const ENEMIES = {
         pattern: [305, 305, 306], rules: [{ k: 'swarm', every: 3, amount: 2 }, { k: 'curlOnce', amount: 4 }] }),
     ],
     t2: [
-      { name: 'Guarnición del valle', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 2, atk: 0, res: U(1, 3, 1, 6, 10, 4, 20, 55),
+      { name: 'Guarnición del valle', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 1.5, atk: 0, res: U(1, 3, 1, 6, 10, 4, 12, 40),
         deck: deckOf({ 197: 4, 2: 3, 6: 3, 8: 1, 34: 1, 36: 1, 11: 1 }), rules: [] },
       bug({ name: 'Negreros', tier: 2, kind: 'campamento', atk: 0, res: U(1, 2, 1, 0, 8, 0, 10, 60), capWall: 15,
         pattern: [307, 307, 308], rules: [] }),
-      bug({ name: 'Gusano de túnel', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 65), capWall: 0,
+      bug({ name: 'Gusano de túnel', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 55), capWall: 0,
         weights: { 309: 50, 310: 25, 312: 25 }, rules: [{ k: 'burrow' }] }),
-      { name: 'Compañía Gris', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 2, atk: 0, res: U(1, 3, 1, 6, 10, 4, 10, 28),
-        deck: deckOf({ 197: 5, 2: 3, 6: 3, 8: 2 }), minion: SACERDOTISA, rules: [{ k: 'minion', ...SACERDOTISA }] },
+      { name: 'Compañía Gris', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 1.5, atk: 0, res: U(1, 3, 1, 6, 10, 4, 6, 24),
+        deck: deckOf({ 197: 4, 2: 3, 6: 3, 8: 1, 36: 2 }), minion: SACERDOTISA, rules: [{ k: 'minion', ...SACERDOTISA }] },
     ],
     t3: [
       { name: 'Fortaleza de caballeros', tier: 3, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 2, atk: 1, res: U(1, 3, 1, 6, 12, 4, 30, 70),
         deck: deckOf({ 198: 4, 8: 3, 37: 2, 6: 3, 34: 1, 36: 1, 60: 1 }), rules: [{ k: 'bigHit', every: 2 }] },
-      bug({ name: 'Ogro de las canteras', tier: 3, kind: 'campamento', res: U(1, 1, 1, 0, 0, 0, 0, 45), capWall: 0,
+      bug({ name: 'Ogro de las canteras', tier: 3, kind: 'campamento', res: U(1, 1, 1, 0, 0, 0, 0, 38), capWall: 0,
         pattern: [313, 314, 314, 315], rules: [{ k: 'buildRage', amount: 2 }] }),
       bug({ name: 'Libro maldito', tier: 3, kind: 'constructo', rare: true, res: U(1, 1, 1, 0, 0, 0, 10, 55), capWall: 10,
         pattern: [316], rules: [{ k: 'pages' }, { k: 'woundOnHit', id: 203 }] }),
     ],
-    lor: { name: 'Lor Edmund, el Recaudador', tier: 4, kind: 'castillo', race: 'humano', king: false, ai: 'normal', hand: 3, plays: 1.5, res: U(2, 1, 2, 8, 8, 6, 25, 72),
+    lor: { name: 'Lor Edmund, el Recaudador', tier: 4, kind: 'castillo', race: 'humano', king: false, ai: 'normal', hand: 3, plays: 1.5, res: U(2, 1, 2, 8, 8, 6, 20, 62),
       deck: deckOf({ 8: 2, 37: 2, 50: 1, 60: 2, 6: 2, 199: 2, 69: 2, 36: 1, 11: 1 }), rules: [{ k: 'tithe', every: 4, amount: 2, min: 2 }] },
-    rey: { name: 'Rey Aldric', tier: 5, kind: 'castillo', race: 'humano', king: true, ai: 'dificil', hand: 4, plays: 1.5, atk: 1, res: U(2, 2, 2, 6, 6, 6, 20, 50),
+    rey: { name: 'Rey Aldric', tier: 5, kind: 'castillo', race: 'humano', king: true, ai: 'dificil', hand: 4, plays: 1.5, atk: 1, res: U(2, 2, 2, 6, 6, 6, 15, 45),
       deck: deckOf({ 8: 2, 37: 1, 50: 1, 60: 1, 6: 2, 2: 2, 62: 1, 63: 1, 66: 1, 36: 1, 11: 1, 68: 1, 69: 1 }), rules: [{ k: 'startRes', amount: 2 }, possessRule('humano', 0.5)] }, // con la fase poseída arranca con +2 (antes +8)
   },
 };
@@ -323,7 +398,7 @@ ENEMIES.orco = {
     { name: 'Guarnición de colmillos', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 2, atk: 0, res: U(1, 3, 1, 4, 8, 2, 10, 40),
       deck: deckOf({ 197: 4, 2: 3, 6: 3, 8: 1, 36: 2 }), rules: [] },
     bug({ name: 'Jabalí de guerra', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 50), capWall: 0, pattern: [339, 339, 340], rules: [] }),
-    bug({ name: 'Negreros de la estepa', tier: 2, kind: 'campamento', atk: 0, res: U(1, 2, 1, 0, 8, 0, 10, 55), capWall: 15, pattern: [341, 341, 308], rules: [] }),
+    bug({ name: 'Negreros de la estepa', tier: 2, kind: 'campamento', atk: 0, res: U(1, 2, 1, 0, 8, 0, 10, 55), capWall: 15, pattern: [341, 343, 308], rules: [] }), // (S03 09/11) un solo Látigo por vuelta y hasta 2 Miedos: con 3 Miedos el turno quedaba muerto
     bug({ name: 'Tótem de guerra', tier: 2, kind: 'campamento', atk: 0, res: U(1, 2, 1, 0, 6, 0, 5, 40), capWall: 10, minion: TOTEM, pattern: [343], rules: [{ k: 'minion', ...TOTEM }] }),
   ],
   t3: [
@@ -333,7 +408,7 @@ ENEMIES.orco = {
   ],
   lor: { name: 'Lor Ugrak, el Rabioso', tier: 4, kind: 'castillo', race: 'orco', king: false, ai: 'normal', hand: 3, plays: 1.5, res: U(1, 2, 1, 6, 10, 4, 15, 60),
     deck: deckOf({ 112: 2, 114: 2, 115: 2, 117: 2, 145: 2, 119: 2, 8: 2, 6: 2, 36: 1 }), rules: [{ k: 'enrage', amount: 1 }] },
-  rey: { name: 'Rey Gorrak', tier: 5, kind: 'castillo', race: 'orco', king: true, ai: 'dificil', hand: 4, plays: 1.5, res: U(2, 2, 2, 6, 8, 6, 15, 55),
+  rey: { name: 'Rey Gorrak', tier: 5, kind: 'castillo', race: 'orco', king: true, ai: 'dificil', hand: 4, plays: 1.5, res: U(2, 2, 2, 6, 8, 6, 15, 48),
     deck: deckOf({ 112: 2, 114: 2, 117: 2, 145: 2, 147: 1, 119: 2, 178: 1, 8: 2, 6: 2, 36: 1 }), rules: [{ k: 'lowCastleBonus', below: 25, amount: 2 }, possessRule('orco', 0.5)] },
 };
 // Bosque de Aelwyn (S03 04/11): cartas, magia, naturaleza
@@ -348,7 +423,7 @@ ENEMIES.elfo = {
     { name: 'Guarnición del claro', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 2, res: U(1, 3, 2, 4, 6, 4, 10, 35),
       deck: deckOf({ 197: 4, 2: 3, 6: 2, 19: 1, 36: 2 }), rules: [{ k: 'costUp', res: 5, amount: 1 }] },
     bug({ name: 'Planta carnívora', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 50), capWall: 40, pattern: [352], rules: [{ k: 'malleable', start: 1 }] }),
-    bug({ name: 'Ent corrompido', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 65), capWall: 0, pattern: [354, 354, 353], rules: [{ k: 'regenCastle', amount: 3 }] }),
+    bug({ name: 'Ent corrompido', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 60), capWall: 0, pattern: [354, 354, 353], rules: [{ k: 'regenCastle', amount: 2 }] }), // (S03 09/11) 65/3 por turno → 60/2: era la T2 elfa que más mataba
     bug({ name: 'Ilusionista', tier: 2, kind: 'campamento', atk: 0, res: U(1, 1, 2, 0, 0, 6, 5, 45), capWall: 10, pattern: [359, 355, 359], rules: [] }),
   ],
   t3: [
@@ -380,13 +455,14 @@ ENEMIES.gnomo = {
     bug({ name: 'Autómata de bronce', tier: 3, kind: 'constructo', atk: 0, res: U(1, 1, 1, 0, 0, 0, 10, 55), capWall: 10, minion: ORBES, pattern: [363, 363, 369], rules: [{ k: 'minion', ...ORBES }, { k: 'stasis' }] }),
     bug({ name: 'Reloj del tiempo', tier: 3, kind: 'constructo', atk: 0, res: U(1, 1, 1, 0, 0, 0, 10, 55), capWall: 10, pattern: [372], rules: [{ k: 'timeEater', every: 8, atk: 2 }] }),
   ],
-  lor: { name: 'Lor Tinkle, el Trampero', tier: 4, kind: 'castillo', race: 'gnomo', king: false, ai: 'normal', hand: 3, plays: 1.5, atk: 1, res: U(2, 2, 1, 8, 8, 4, 15, 55),
-    deck: deckOf({ 102: 2, 103: 2, 107: 2, 108: 2, 109: 2, 2: 2, 6: 2, 36: 1 }), rules: [{ k: 'startTrap', trap: 'moat' }, { k: 'trapEvery', every: 4, traps: ['moat', 'ambush', 'counterspell', 'landmine'] }] },
+  // (S03 09/11) Tinkle mataba más que Fizzwick (46 a 33): castillo 55 → 45, sin +1 de ataque, trampa nueva cada 5 turnos (era 4)
+  lor: { name: 'Lor Tinkle, el Trampero', tier: 4, kind: 'castillo', race: 'gnomo', king: false, ai: 'normal', hand: 3, plays: 1.5, atk: 0, res: U(2, 2, 1, 8, 8, 4, 15, 45),
+    deck: deckOf({ 102: 2, 103: 2, 107: 2, 108: 2, 109: 2, 2: 2, 6: 2, 36: 1 }), rules: [{ k: 'startTrap', trap: 'moat' }, { k: 'trapEvery', every: 5, traps: ['moat', 'ambush', 'counterspell', 'landmine'] }] },
   rey: { name: 'Rey Fizzwick', tier: 5, kind: 'castillo', race: 'gnomo', king: true, ai: 'dificil', hand: 4, plays: 1.5, atk: 2, res: U(2, 2, 2, 6, 6, 6, 15, 50),
     deck: deckOf({ 102: 2, 103: 2, 107: 2, 108: 2, 109: 2, 2: 2, 6: 2, 36: 1, 105: 1 }), rules: [possessRule('gnomo', 0.5)] },
 };
 // Cavernas de Vaelith (S03 04/11): control, maldiciones, sombra
-const SOMBRAS = { name: 'Sombras', hp: 15, heal: 0, atk: 3, rage: 0 }, ANTORCHAS = { name: 'Antorchas', hp: 16, heal: 0, atk: 2, rage: 0 };
+const SOMBRAS = { name: 'Sombras', hp: 15, heal: 0, atk: 3, rage: 0 }, ANTORCHAS = { name: 'Antorchas', hp: 12, heal: 0, atk: 1, rage: 0 };
 ENEMIES.drow = {
   t1: [
     bug({ name: 'Arañas de la caverna', tier: 1, kind: 'bestia', atk: 1, res: U(1, 1, 1, 0, 0, 0, 0, 40), capWall: 0, pattern: [373, 373, 374], rules: [{ k: 'swarm', every: 3, amount: 1 }] }),
@@ -395,18 +471,19 @@ ENEMIES.drow = {
     bug({ name: 'Ladrones de favor', tier: 1, kind: 'campamento', atk: 1, res: U(1, 2, 1, 0, 6, 4, 5, 30), capWall: 10, pattern: [300, 300, 300, 301], rules: [{ k: 'steal', amount: 1, res: 'favor' }, { k: 'steal', amount: 1 }, { k: 'flee', turn: 5 }] }),
   ],
   t2: [
-    { name: 'Guarnición del abismo', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 2, atk: 0, res: U(1, 2, 2, 4, 6, 6, 10, 25),
+    // (S03 09/11) las T2 drow mataban más que Lor y Reina: Guarnición y Coleccionista 1,5 jugadas, Elegida 60 → 50 y sin +1, Antorchas 16/+2 → 12/+1
+    { name: 'Guarnición del abismo', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 1.5, atk: 0, res: U(1, 2, 2, 4, 6, 6, 10, 25),
       deck: deckOf({ 197: 3, 196: 2, 2: 3, 6: 2, 92: 1, 36: 2 }), rules: [{ k: 'curseEvery', every: 3, id: 194 }] },
-    bug({ name: 'Elegida', tier: 2, kind: 'campamento', atk: 1, res: U(1, 1, 1, 0, 0, 0, 0, 60), capWall: 0, pattern: [384, 385, 386], patternLoop: 1, rules: [{ k: 'hex', id: 384 }] }),
+    bug({ name: 'Elegida', tier: 2, kind: 'campamento', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 50), capWall: 0, pattern: [384, 385, 386], patternLoop: 1, rules: [{ k: 'hex', id: 384 }] }),
     bug({ name: 'Masa de telaraña', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 55), capWall: 30, weights: { 377: 25, 378: 45, 379: 30 }, rules: [{ k: 'reactive' }, { k: 'runCurse', id: 377, curse: 190 }] }),
-    { name: 'Coleccionista', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 2, res: U(1, 2, 1, 4, 6, 4, 10, 35),
-      deck: deckOf({ 196: 4, 197: 3, 2: 2, 6: 2, 36: 2 }), minion: ANTORCHAS, rules: [{ k: 'minion', ...ANTORCHAS }, { k: 'curseEvery', every: 4, ids: [192, 194, 193] }] },
+    { name: 'Coleccionista', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 1.5, res: U(1, 2, 1, 4, 6, 4, 10, 35),
+      deck: deckOf({ 196: 4, 197: 3, 2: 2, 6: 2, 36: 2 }), minion: ANTORCHAS, rules: [{ k: 'minion', ...ANTORCHAS }, { k: 'curseEvery', every: 5, ids: [192, 194, 193] }] },
   ],
   t3: [
     bug({ name: 'Némesis', tier: 3, kind: 'bestia', atk: 2, res: U(1, 1, 1, 0, 0, 0, 0, 75), capWall: 0, pattern: [380, 381], rules: [{ k: 'intangibleEvery', id: 380 }] }),
     bug({ name: 'Domadora', tier: 3, kind: 'campamento', atk: 1, res: U(1, 1, 1, 0, 0, 0, 5, 70), capWall: 10, pattern: [382, 383, 383, 383], rules: [{ k: 'daggers', id: 382, hp: 14, turns: 3, dmg: 24 }] }),
   ],
-  lor: { name: 'Lor Zhar, el Maldito', tier: 4, kind: 'castillo', race: 'drow', king: false, ai: 'normal', hand: 3, plays: 1.5, atk: 1, res: U(1, 2, 2, 6, 6, 8, 15, 55),
+  lor: { name: 'Lor Zhar, el Maldito', tier: 4, kind: 'castillo', race: 'drow', king: false, ai: 'normal', hand: 3, plays: 1.5, atk: 1, res: U(1, 2, 2, 6, 6, 8, 15, 62), /* (S03 09/11) 55 → 62: con las T2 más blandas, el Lor tiene que ser el escalón */
     deck: deckOf({ 92: 1, 93: 2, 94: 1, 99: 2, 140: 2, 197: 2, 2: 2, 6: 2, 36: 1 }), rules: [{ k: 'curseEvery', every: 2, id: 194 }] },
   rey: { name: 'Reina Vaelith', tier: 5, kind: 'castillo', race: 'drow', king: true, ai: 'dificil', hand: 4, plays: 1.5, atk: 2, res: U(2, 2, 2, 6, 6, 6, 15, 50),
     deck: deckOf({ 92: 2, 93: 2, 99: 2, 100: 1, 140: 2, 141: 1, 174: 1, 2: 2, 6: 2, 36: 1 }), rules: [possessRule('drow', 0.5)] },
@@ -457,6 +534,14 @@ export function makeBattle(player, enemy, { starter = 0, rnd = Math.random } = {
   g.enemy = { name: enemy.name, tier: enemy.tier, ai: enemy.ai, kind: enemy.kind || 'castillo', rules: er.map((r) => ({ ...r, text: ruleText(r) })) };
   for (const id of player.startStates || []) E.giveCard(g, g.players[0], id); // estados que trae de la pelea anterior (esporas → Vulnerable)
   if (enemy.pattern || enemy.weights) E.bugNext(g, g.players[1]); /* la primera acción queda elegida (la intención y la jugada coinciden) */
+  if (CAMP_RACE[g.players[0].race]?.noPassive) g.players[0].noPassive = true;
+  if (CAMP_RACE[g.players[0].race]?.noKing) g.players[0].noKing = true;
+  if (CAMP_RACE[g.players[0].race]?.humanPassive) g.players[0].basePassive = true; // sostén de la campaña: recurso más bajo +1 y muro +1 (como el humano)
+  if (CAMP_RACE[g.players[0].race]?.aim) g.players[0].aimOn = true;
+  if (CAMP_RACE[g.players[0].race]?.pact) g.players[0].pactOn = true;
+  if (g.players[0].venomStart) E.campVenom(g.players[1], g.players[0].venomStart); // Madre araña (Crece)
+  if (CAMP_RACE[g.players[0].race]?.boiler) { g.players[0].boilerOn = true; g.players[0].pressure ||= 0; }
+  if (CAMP_RACE[g.players[0].race]?.fury) { g.players[0].furyOn = true; g.players[0].fury ||= 0; } // el orco de campaña juega a la Furia (antes de las reglas de equipo: Pintura de guerra la sube) // (S03 08/11) el enano de campaña juega a las runas: sin la pasiva del PvP (muro +2)
   g.rules = [pr, er];
   return g;
 }
@@ -517,7 +602,8 @@ export function battleResult(g, seat = 0) {
   const gained = pp.gold - (p.goldStart || 0), gold = (p.goldStart || 0) + Math.round(gained * (gained > 0 ? mul : 1));
   const curses = (g.players[1 - seat]?.rs?.rcs || '').split(',').filter(Boolean).map(Number); /* Masa de telaraña / retorcida: maldiciones que quedan en el mazo de la run (S10: addCurse) */
   const fled = !!g.fled, carry = g.winner === seat && (g.rules?.[1 - seat] || []).some((r) => r.k === 'spores') ? [205] : []; // esporas: la próxima pelea empezás con Vulnerable (player.startStates) // el enemigo huyó (Saqueadores): ganás, pero el cliente no da oro de recompensa
-  return { win: g.winner === seat, fled, noGold: fled, carry, curses, castle: p.castle, wall: p.wall, gold, goldGained: gold - (p.goldStart || 0), grown, works: (p.works || []).map((w) => w.id), burned: (p.burned || []).slice(), kills: g.winner === seat ? 1 : 0 };
+  const heal = g.winner === seat && !p.noHeal ? (p.furyOn ? Math.round((p.bloodPaid || 0) * E.FURY_CFG.bloodBack) + E.FURY_CFG.healWin : 0) + (p.pactOn ? E.VENOM_CFG.healWin : 0) : 0; /* (S03 08/11) orco, Sangre caliente: al ganar recuperás la vida que pagaste con cartas de sangre */
+  return { win: g.winner === seat, fled, noGold: fled, carry, curses, castle: Math.min(p.maxCastle || 999, p.castle + heal), ...(heal ? { healed: heal } : {}), wall: p.wall, gold, goldGained: gold - (p.goldStart || 0), grown, works: (p.works || []).map((w) => w.id), burned: (p.burned || []).slice(), kills: g.winner === seat ? 1 : 0 };
 }
 // Para S10: la versión + de una carta (fogata, eventos, dorada) y sus datos de recompensa
 export { CAMP_INFO, CAMP_IDS, PLUS, plusOf, baseOf, isPlus, hasPlus } from './campaign-cards.js';

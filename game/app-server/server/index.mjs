@@ -10,6 +10,8 @@ import { AsedioRoom } from './AsedioRoom.mjs';
 import * as DB from './db.mjs';
 import { ENG } from './version.mjs';
 import * as DIARIO from './diario.mjs';
+import * as NUBE from './nube.mjs';
+import * as CUENTA from './cuenta.mjs';
 
 // Último instalador de Windows (Releases del repo público). Se consulta a GitHub como mucho 1 vez cada 15 min;
 // si falla, se manda a la página de la última versión.
@@ -43,6 +45,7 @@ const cacheHeaders = (r, file, st) => {
 const serve = (dir) => express.static(dir, { lastModified: false, setHeaders: cacheHeaders });
 // la app de escritorio (origen app://) y otros sitios leen el ranking y los jugadores online
 app.use(['/api', '/stats'], (q, r, next) => { r.setHeader('Access-Control-Allow-Origin', '*'); if (q.method === 'OPTIONS') { r.setHeader('Access-Control-Allow-Methods', 'GET, POST'); r.setHeader('Access-Control-Allow-Headers', 'content-type'); return r.sendStatus(204); } next(); });
+app.use('/api/nube', express.json({ limit: '600kb' })); // progreso en la nube: el guardado completo puede pesar
 app.use('/api', express.json({ limit: '4kb' }));
 app.get('/', (q, r, next) => { if (q.query.server || process.env.NO_LANDING) return next(); r.setHeader('Cache-Control', 'no-cache'); r.sendFile(LANDING, (e) => e && next()); });
 app.get('/ranking', (_q, r) => { r.setHeader('Cache-Control', 'no-cache'); r.sendFile(path.join(SITE, 'ranking.html')); }); // ranking y perfiles en la web (?p=<id público>)
@@ -55,6 +58,24 @@ app.get('/version', (_q, r) => { r.setHeader('Access-Control-Allow-Origin', '*')
 app.get('/api/leaderboard', (_q, r) => r.json(DB.leaderboard(20))); // compatibilidad: top 20 de la temporada actual
 // ranking con temporadas (S08, 25/10): ?season=AAAA-MM | all (histórico), ?limit=1..100
 app.get('/api/ranking', (q, r) => r.json(DB.ranking(q.query.season ? String(q.query.season) : null, q.query.limit)));
+// progreso en la nube y vinculación (S08, 09/11; API en docs/sesiones/S08 "Progreso en la nube")
+const nubeAns = (r, x) => r.status(x.ok ? 200 : x.error === 'identidad' ? 401 : x.error === 'demasiados' ? 429 : x.error === 'muy grande' ? 413 : 400).json(x);
+const reqIp = (q) => q.get('fly-client-ip') || q.ip || q.socket?.remoteAddress || '?';
+app.post('/api/nube/bajar', (q, r) => nubeAns(r, NUBE.bajar(q.body || {})));
+app.post('/api/nube/subir', (q, r) => nubeAns(r, NUBE.subir(q.body || {})));
+app.post('/api/nube/codigo', (q, r) => nubeAns(r, NUBE.crearCodigo(q.body || {})));
+app.post('/api/nube/vincular', (q, r) => nubeAns(r, NUBE.vincular(q.body || {}, reqIp(q))));
+// cuentas (S08, 09/11; Google primero; API en docs/sesiones/S08 "Cuentas")
+const ctaAns = (r, x) => r.status(x.ok ? 200 : x.error === 'identidad' ? 401 : x.error === 'apagado' ? 503 : 400).json(x);
+app.get('/api/cuenta/config', (_q, r) => r.json(CUENTA.config()));
+app.post('/api/cuenta/estado', (q, r) => ctaAns(r, CUENTA.estado(q.body || {})));
+app.post('/api/cuenta/google', async (q, r) => { const b = q.body || {}; const v = await CUENTA.verifyGoogle(b.credential); ctaAns(r, v.ok ? CUENTA.unir(v, b) : v); });
+app.post('/api/cuenta/navegador/iniciar', (q, r) => ctaAns(r, CUENTA.sesionIniciar(q.body || {})));
+app.post('/api/cuenta/navegador/google', async (q, r) => ctaAns(r, await CUENTA.sesionGoogle(q.body || {})));
+app.post('/api/cuenta/navegador/estado', (q, r) => ctaAns(r, CUENTA.sesionEstado(q.body || {})));
+app.post('/api/cuenta/desconectar', (q, r) => ctaAns(r, CUENTA.desconectar(q.body || {})));
+app.post('/api/cuenta/borrar', (q, r) => ctaAns(r, CUENTA.borrar(q.body || {})));
+app.get('/cuenta', (_q, r) => { r.setHeader('Cache-Control', 'no-cache'); r.sendFile(path.join(SITE, 'cuenta.html')); }); // entrar con Google desde la app
 // desafío diario de campaña (S08, 25/10; API en docs/sesiones/S08 "Desafío diario")
 const answer = (r, x) => r.status(x.ok || !x.error ? 200 : x.error === 'ya jugaste' ? 409 : x.error === 'identidad' ? 401 : 400).json(x);
 app.get('/api/diario', (q, r) => r.json(DIARIO.ranking(q.query.dia ? String(q.query.dia) : null, q.query.limit)));

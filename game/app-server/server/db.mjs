@@ -40,6 +40,14 @@ if (db) db.exec(`
   CREATE TABLE IF NOT EXISTS daily (day TEXT NOT NULL, player TEXT NOT NULL, token TEXT NOT NULL, started INTEGER NOT NULL, finished INTEGER,
     kingdom TEXT, floor INTEGER, won INTEGER, turns INTEGER, castle INTEGER, PRIMARY KEY (day, player));
   CREATE INDEX IF NOT EXISTS daily_rank ON daily (day, won DESC, floor DESC, castle DESC, turns ASC);
+  -- progreso en la nube y vinculación de dispositivos (S08, 09/11; lógica en nube.mjs)
+  CREATE TABLE IF NOT EXISTS saves (player TEXT NOT NULL, section TEXT NOT NULL, data TEXT NOT NULL, v INTEGER NOT NULL, updated INTEGER NOT NULL, PRIMARY KEY (player, section));
+  CREATE TABLE IF NOT EXISTS tokens (token_hash TEXT PRIMARY KEY, player TEXT NOT NULL, created INTEGER NOT NULL, used INTEGER);
+  CREATE INDEX IF NOT EXISTS tokens_player ON tokens (player);
+  CREATE TABLE IF NOT EXISTS link_codes (code TEXT PRIMARY KEY, player TEXT NOT NULL, expires INTEGER NOT NULL);
+  -- cuentas (S08, 09/11; lógica en cuenta.mjs): solo el id de la cuenta y el mail (sin nombre real ni foto)
+  CREATE TABLE IF NOT EXISTS accounts (provider TEXT NOT NULL, subject TEXT NOT NULL, player TEXT NOT NULL, email TEXT, created INTEGER NOT NULL, PRIMARY KEY (provider, subject));
+  CREATE INDEX IF NOT EXISTS accounts_player ON accounts (player);
 `);
 // columnas nuevas en bases que ya existen (Fly): se agregan una sola vez
 if (db) {
@@ -56,7 +64,8 @@ if (db) {
 const hash = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
 const now = () => Date.now();
 // id público: no deja ver el id secreto del jugador (con el que se identifica) y sirve para ver perfiles de otros
-export const rawDb = () => db; // para diario.mjs
+export const rawDb = () => db; // para diario.mjs y nube.mjs
+export const hashToken = (t) => hash(t);
 export function pubOf(id) { return crypto.createHash('sha256').update('pub:' + id).digest('base64url').slice(0, 12); }
 
 // ---- temporadas: una por mes calendario (UTC). id 'AAAA-MM' ----
@@ -91,6 +100,8 @@ const q = !db ? null : {
   sCount: db.prepare(`SELECT COUNT(*) AS n FROM season_stats s JOIN players p ON p.id = s.player WHERE s.season = ? AND s.games > 0 AND p.hidden = 0`),
   sList: db.prepare('SELECT season, COUNT(*) AS n FROM season_stats WHERE games > 0 GROUP BY season ORDER BY season DESC'),
   sMine: db.prepare('SELECT * FROM season_stats WHERE player = ? AND games > 0 ORDER BY season DESC LIMIT 24'),
+  tok: db.prepare('SELECT * FROM tokens WHERE token_hash = ?'),
+  tokUsed: db.prepare('UPDATE tokens SET used = ? WHERE token_hash = ?'),
   hist: db.prepare(`SELECT m.*, pa.name AS na, pa.pub AS pa, pb.name AS nb, pb.pub AS pb FROM matches m
     LEFT JOIN players pa ON pa.id = m.a LEFT JOIN players pb ON pb.id = m.b WHERE m.a = ? OR m.b = ? ORDER BY m.ts DESC LIMIT ?`),
 };
@@ -100,8 +111,12 @@ export function auth(id, token, name) {
   if (!db) return MEMAPI.auth(id, token, name);
   if (typeof id !== 'string' || typeof token !== 'string' || id.length < 8 || id.length > 64 || token.length < 16) return null;
   const p = q.get.get(id);
-  if (!p) { q.ins.run(id, hash(token), name, now(), now(), pubOf(id)); return q.get.get(id); }
-  if (p.token_hash !== hash(token)) return null;
+  if (!p) { q.ins.run(id, hash(token), name || 'Jugador', now(), now(), pubOf(id)); return q.get.get(id); }
+  if (p.token_hash !== hash(token)) {
+    // otro dispositivo vinculado con un código (nube.mjs): cada uno tiene su llave
+    const t = q.tok.get(hash(token)); if (!t || t.player !== id) return null;
+    q.tokUsed.run(now(), t.token_hash);
+  }
   if (name && name !== p.name && !p.name_locked) q.name.run(name, now(), id); // name_locked: le cambiaron el nombre por reportes
   return q.get.get(id);
 }
@@ -193,9 +208,12 @@ const qr = !db ? null : {
   del: [ // borrado a pedido (privacidad): jugador, estadísticas, temporadas, reportes; en las partidas del rival queda como "borrado"
     db.prepare('DELETE FROM card_plays WHERE player = ?'), db.prepare('DELETE FROM season_stats WHERE player = ?'),
     db.prepare('DELETE FROM reports WHERE target = ? OR reporter = ?'), db.prepare("UPDATE matches SET a = 'borrado' WHERE a = ?"),
-    db.prepare("UPDATE matches SET b = 'borrado' WHERE b = ?"), db.prepare('DELETE FROM daily WHERE player = ?'), db.prepare('DELETE FROM players WHERE id = ?')],
+    db.prepare("UPDATE matches SET b = 'borrado' WHERE b = ?"), db.prepare('DELETE FROM daily WHERE player = ?'),
+    db.prepare('DELETE FROM saves WHERE player = ?'), db.prepare('DELETE FROM tokens WHERE player = ?'), db.prepare('DELETE FROM link_codes WHERE player = ?'),
+    db.prepare('DELETE FROM accounts WHERE player = ?'), db.prepare('DELETE FROM players WHERE id = ?')],
   oldMatches: db.prepare('DELETE FROM matches WHERE ts < ?'),
   oldReports: db.prepare('DELETE FROM reports WHERE done = 1 AND ts < ?'),
+  oldCodes: db.prepare('DELETE FROM link_codes WHERE expires < ?'),
 };
 // Devuelve { ok } o { error }. Límites: 10 reportes por día por jugador, 1 por día al mismo jugador, hay que haber jugado.
 // Acción automática: si 3 jugadores distintos reportan el NOMBRE en 7 días, pasa a "Jugador" y no lo puede cambiar.
@@ -213,13 +231,19 @@ export function report({ pid, ptoken, target, reason, note }) {
   if (reason === 'nombre' && !t.name_locked && qr.distinct.get(t.id, 'nombre', now() - 7 * DAY).n >= 3) qr.lockName.run(now(), t.id);
   return { ok: true };
 }
+// Borrar un jugador del todo (a pedido, o "Borrar mi cuenta"): estadísticas, temporadas, reportes, diario, nube, llaves y
+// cuentas; en las partidas del rival queda como "borrado"
+export function deletePlayer(id) {
+  if (!db) return;
+  db.exec('BEGIN'); try { qr.del.forEach((st, i) => (i === 2 ? st.run(id, id) : st.run(id))); db.exec('COMMIT'); } catch (e) { db.exec('ROLLBACK'); throw e; }
+}
 // Para revisar (con la clave ADMIN_KEY): reportes pendientes agrupados por jugador
 export const pendingReports = () => (db ? qr.pending.all() : []);
 // acciones: hide (sacar del ranking), unhide, rename (nombre "Jugador" y bloqueado), unlock (puede volver a cambiar el nombre), done (archivar)
 export function adminAction(pub, action) {
   if (!db) return { error: 'sin base' };
   const t = q.getPub.get(String(pub || '')); if (!t) return { error: 'jugador' };
-  if (action === 'delete') { db.exec('BEGIN'); try { qr.del.forEach((st, i) => (i === 2 ? st.run(t.id, t.id) : st.run(t.id))); db.exec('COMMIT'); } catch (e) { db.exec('ROLLBACK'); throw e; } return { ok: true, deleted: true }; }
+  if (action === 'delete') { deletePlayer(t.id); return { ok: true, deleted: true }; }
   if (action === 'hide') qr.hide.run(1, t.id); else if (action === 'unhide') qr.hide.run(0, t.id);
   else if (action === 'rename') qr.lockName.run(now(), t.id); else if (action === 'unlock') qr.unlock.run(t.id);
   else if (action !== 'done') return { error: 'acción' };
@@ -232,6 +256,6 @@ export function adminAction(pub, action) {
 export function cleanup() {
   if (!db) return;
   const days = Number(process.env.HISTORY_DAYS) || 730;
-  qr.oldMatches.run(now() - days * DAY); qr.oldReports.run(now() - 180 * DAY);
+  qr.oldMatches.run(now() - days * DAY); qr.oldReports.run(now() - 180 * DAY); qr.oldCodes.run(now());
 }
 if (db) { try { cleanup(); } catch (e) { console.error('limpieza', e.message); } setInterval(() => { try { cleanup(); } catch {} }, DAY).unref(); }

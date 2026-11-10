@@ -298,5 +298,1892 @@
  "torre/entera": {
   "h": 1400,
   "w": 765
+ },
+ "oso/quieto": {
+  "w": 1065,
+  "h": 640
+ },
+ "oso/duerme": {
+  "w": 1065,
+  "h": 640
+ },
+ "oso/ruge": {
+  "w": 1065,
+  "h": 640
+ },
+ "oso/zarpazo": {
+  "w": 1065,
+  "h": 640
+ },
+ "oso/golpe": {
+  "w": 1065,
+  "h": 640
+ },
+ "oso/muere": {
+  "w": 1065,
+  "h": 640
+ },
+ "_gen": {
+  "oso": {
+   "tipo": "suelo",
+   "w": 1065,
+   "h": 640,
+   "cx": 527.4,
+   "cy": 343.8,
+   "piso": 633,
+   "poses": [
+    "quieto",
+    "duerme",
+    "ruge",
+    "zarpazo",
+    "golpe",
+    "muere"
+   ]
+  },
+  "minero": {
+   "tipo": "camp",
+   "w": 1705,
+   "h": 640,
+   "cx": 998.0,
+   "cy": 405.3,
+   "piso": 634,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "murcielago": {
+   "tipo": "vuela",
+   "w": 877,
+   "h": 560,
+   "cx": 409.8,
+   "cy": 261.4,
+   "piso": 549,
+   "poses": [
+    "alas_arriba",
+    "alas_abajo",
+    "picada",
+    "golpe",
+    "muerto"
+   ]
+  },
+  "contrabandistas": {
+   "tipo": "camp",
+   "w": 1087,
+   "h": 640,
+   "cx": 582.0,
+   "cy": 406.4,
+   "piso": 635,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "duendes": {
+   "tipo": "camp",
+   "w": 1286,
+   "h": 640,
+   "cx": 725.1,
+   "cy": 396.5,
+   "piso": 638,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "chaman": {
+   "tipo": "camp",
+   "w": 1259,
+   "h": 640,
+   "cx": 657.3,
+   "cy": 401.5,
+   "piso": 638,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "saqueadores_orcos": {
+   "tipo": "camp",
+   "w": 1260,
+   "h": 640,
+   "cx": 586.9,
+   "cy": 406.9,
+   "piso": 605,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "negreros_estepa": {
+   "tipo": "camp",
+   "w": 1238,
+   "h": 640,
+   "cx": 653.4,
+   "cy": 421.4,
+   "piso": 634,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "bruto": {
+   "tipo": "camp",
+   "w": 1249,
+   "h": 640,
+   "cx": 575.3,
+   "cy": 368.9,
+   "piso": 636,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "exploradores": {
+   "tipo": "camp",
+   "w": 1119,
+   "h": 640,
+   "cx": 548.4,
+   "cy": 377.1,
+   "piso": 605,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "ilusionista": {
+   "tipo": "camp",
+   "w": 1004,
+   "h": 640,
+   "cx": 464.6,
+   "cy": 430.5,
+   "piso": 615,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "chatarreros": {
+   "tipo": "camp",
+   "w": 1298,
+   "h": 640,
+   "cx": 715.8,
+   "cy": 367.1,
+   "piso": 618,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "ingenieros": {
+   "tipo": "camp",
+   "w": 1038,
+   "h": 640,
+   "cx": 571.8,
+   "cy": 407.2,
+   "piso": 634,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "acolitos": {
+   "tipo": "camp",
+   "w": 1202,
+   "h": 640,
+   "cx": 590.1,
+   "cy": 388.4,
+   "piso": 636,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "ladrones": {
+   "tipo": "camp",
+   "w": 1101,
+   "h": 640,
+   "cx": 587.8,
+   "cy": 408.6,
+   "piso": 635,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "domadora": {
+   "tipo": "camp",
+   "w": 1317,
+   "h": 640,
+   "cx": 675.8,
+   "cy": 389.1,
+   "piso": 636,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "vigia": {
+   "tipo": "camp",
+   "w": 368,
+   "h": 640,
+   "cx": 185.8,
+   "cy": 341.8,
+   "piso": 633,
+   "poses": [
+    "entera",
+    "destruida"
+   ]
+  },
+  "vigia_torre": {
+   "tipo": "secuaz",
+   "w": 343,
+   "h": 560,
+   "cx": 167.6,
+   "cy": 281.7,
+   "piso": 526,
+   "poses": [
+    "entera",
+    "carga",
+    "destruida"
+   ]
+  },
+  "totem_guerra": {
+   "tipo": "secuaz",
+   "w": 744,
+   "h": 560,
+   "cx": 368.9,
+   "cy": 340.4,
+   "piso": 556,
+   "poses": [
+    "entera",
+    "danada",
+    "destruida"
+   ]
+  },
+  "duende": {
+   "tipo": "secuaz",
+   "w": 417,
+   "h": 480,
+   "cx": 238.1,
+   "cy": 238.6,
+   "piso": 478,
+   "poses": [
+    "entera",
+    "ataca",
+    "destruida"
+   ]
+  },
+  "daga_viva": {
+   "tipo": "vuela",
+   "w": 991,
+   "h": 400,
+   "cx": 499.7,
+   "cy": 184.1,
+   "piso": 232,
+   "poses": [
+    "quieto",
+    "brilla",
+    "rota"
+   ]
+  },
+  "golem_escombros": {
+   "tipo": "suelo",
+   "w": 429,
+   "h": 700,
+   "cx": 221.0,
+   "cy": 377.1,
+   "piso": 696,
+   "poses": [
+    "quieto",
+    "alza",
+    "ataca",
+    "golpe",
+    "muere"
+   ]
+  },
+  "esfera": {
+   "tipo": "vuela",
+   "w": 576,
+   "h": 600,
+   "cx": 286.5,
+   "cy": 298.8,
+   "piso": 532,
+   "poses": [
+    "cerrada",
+    "abierta",
+    "anillo",
+    "rota"
+   ]
+  },
+  "guardian": {
+   "tipo": "suelo",
+   "w": 445,
+   "h": 720,
+   "cx": 232.3,
+   "cy": 378.8,
+   "piso": 716,
+   "poses": [
+    "quieto",
+    "alza",
+    "ataca",
+    "muralla",
+    "golpe",
+    "muere"
+   ]
+  },
+  "forja": {
+   "tipo": "suelo",
+   "w": 857,
+   "h": 600,
+   "cx": 484.5,
+   "cy": 323.4,
+   "piso": 595,
+   "poses": [
+    "fria",
+    "caliente",
+    "al_rojo",
+    "ataca",
+    "rota"
+   ]
+  },
+  "huargo": {
+   "tipo": "suelo",
+   "w": 1028,
+   "h": 560,
+   "cx": 505.6,
+   "cy": 259.1,
+   "piso": 551,
+   "poses": [
+    "quieto",
+    "salta",
+    "golpe",
+    "muerto"
+   ]
+  },
+  "jabali": {
+   "tipo": "suelo",
+   "w": 1010,
+   "h": 600,
+   "cx": 494.0,
+   "cy": 296.1,
+   "piso": 593,
+   "poses": [
+    "quieto",
+    "embiste",
+    "golpe",
+    "muerto"
+   ]
+  },
+  "totem": {
+   "tipo": "suelo",
+   "w": 385,
+   "h": 640,
+   "cx": 195.3,
+   "cy": 308.1,
+   "piso": 635,
+   "poses": [
+    "quieto",
+    "ataca",
+    "muerto"
+   ]
+  },
+  "halcon": {
+   "tipo": "vuela",
+   "w": 861,
+   "h": 560,
+   "cx": 418.9,
+   "cy": 264.2,
+   "piso": 547,
+   "poses": [
+    "alas_arriba",
+    "alas_abajo",
+    "planea",
+    "picada",
+    "golpe",
+    "muerto"
+   ]
+  },
+  "hongo": {
+   "tipo": "suelo",
+   "w": 331,
+   "h": 600,
+   "cx": 175.8,
+   "cy": 276.7,
+   "piso": 588,
+   "poses": [
+    "quieto",
+    "respira",
+    "ataca",
+    "escupe",
+    "golpe",
+    "muere"
+   ]
+  },
+  "driade": {
+   "tipo": "suelo",
+   "w": 503,
+   "h": 720,
+   "cx": 273.3,
+   "cy": 309.7,
+   "piso": 716,
+   "poses": [
+    "quieto",
+    "respira",
+    "alza",
+    "ataca",
+    "golpe",
+    "muere"
+   ]
+  },
+  "planta": {
+   "tipo": "suelo",
+   "w": 386,
+   "h": 720,
+   "cx": 204.6,
+   "cy": 340.3,
+   "piso": 710,
+   "poses": [
+    "quieto",
+    "abre",
+    "muerde",
+    "cierra",
+    "golpe",
+    "muere"
+   ]
+  },
+  "ent": {
+   "tipo": "suelo",
+   "w": 497,
+   "h": 800,
+   "cx": 267.3,
+   "cy": 424.2,
+   "piso": 795,
+   "poses": [
+    "quieto",
+    "respira",
+    "raices",
+    "alza",
+    "ataca",
+    "golpe",
+    "muere"
+   ]
+  },
+  "serpiente": {
+   "tipo": "suelo",
+   "w": 462,
+   "h": 800,
+   "cx": 240.2,
+   "cy": 393.9,
+   "piso": 797,
+   "poses": [
+    "quieto",
+    "alza",
+    "muerde",
+    "golpe",
+    "muere"
+   ]
+  },
+  "polvorin": {
+   "tipo": "suelo",
+   "w": 722,
+   "h": 520,
+   "cx": 360.1,
+   "cy": 292.9,
+   "piso": 511,
+   "poses": [
+    "quieto",
+    "respira",
+    "camina",
+    "hincha",
+    "golpe",
+    "roto"
+   ]
+  },
+  "torreta": {
+   "tipo": "suelo",
+   "w": 956,
+   "h": 600,
+   "cx": 495.2,
+   "cy": 299.6,
+   "piso": 595,
+   "poses": [
+    "quieto",
+    "carga",
+    "dispara",
+    "golpe",
+    "roto"
+   ]
+  },
+  "rata_engranaje": {
+   "tipo": "suelo",
+   "w": 935,
+   "h": 480,
+   "cx": 476.4,
+   "cy": 262.7,
+   "piso": 475,
+   "poses": [
+    "quieto",
+    "corre1",
+    "corre2",
+    "muerde",
+    "golpe",
+    "roto"
+   ]
+  },
+  "tortuga": {
+   "tipo": "suelo",
+   "w": 970,
+   "h": 560,
+   "cx": 498.6,
+   "cy": 294.5,
+   "piso": 553,
+   "poses": [
+    "quieto",
+    "placas",
+    "camina",
+    "embiste",
+    "golpe",
+    "roto"
+   ]
+  },
+  "golem_laton": {
+   "tipo": "suelo",
+   "w": 411,
+   "h": 760,
+   "cx": 184.4,
+   "cy": 371.4,
+   "piso": 758,
+   "poses": [
+    "quieto",
+    "respira",
+    "alza",
+    "golpea",
+    "golpe",
+    "muere"
+   ]
+  },
+  "automata": {
+   "tipo": "suelo",
+   "w": 420,
+   "h": 760,
+   "cx": 220.4,
+   "cy": 333.1,
+   "piso": 736,
+   "poses": [
+    "quieto",
+    "carga",
+    "dispara",
+    "aturdido",
+    "golpe",
+    "muere"
+   ]
+  },
+  "automata_orbe": {
+   "tipo": "vuela",
+   "w": 538,
+   "h": 360,
+   "cx": 272.1,
+   "cy": 181.9,
+   "piso": 355,
+   "poses": [
+    "entera"
+   ]
+  },
+  "reloj": {
+   "tipo": "suelo",
+   "w": 431,
+   "h": 760,
+   "cx": 215.1,
+   "cy": 334.3,
+   "piso": 740,
+   "poses": [
+    "quieto",
+    "tic",
+    "ataca",
+    "golpe",
+    "roto"
+   ]
+  },
+  "arana_cueva": {
+   "tipo": "suelo",
+   "w": 1091,
+   "h": 520,
+   "cx": 570.4,
+   "cy": 193.6,
+   "piso": 490,
+   "poses": [
+    "quieto",
+    "corre1",
+    "corre2",
+    "salta",
+    "golpe",
+    "muere"
+   ]
+  },
+  "sombra": {
+   "tipo": "vuela",
+   "w": 384,
+   "h": 640,
+   "cx": 209.0,
+   "cy": 286.2,
+   "piso": 555,
+   "poses": [
+    "quieto",
+    "flota",
+    "ataca",
+    "golpe",
+    "se_disuelve"
+   ]
+  },
+  "elegida": {
+   "tipo": "suelo",
+   "w": 465,
+   "h": 720,
+   "cx": 258.7,
+   "cy": 399.2,
+   "piso": 714,
+   "poses": [
+    "quieto",
+    "respira",
+    "hechiza",
+    "lanza",
+    "golpe",
+    "muere"
+   ]
+  },
+  "telarana": {
+   "tipo": "suelo",
+   "w": 868,
+   "h": 560,
+   "cx": 474.4,
+   "cy": 289.5,
+   "piso": 527,
+   "poses": [
+    "quieto",
+    "late",
+    "ataca",
+    "golpe",
+    "muere"
+   ]
+  },
+  "nemesis": {
+   "tipo": "suelo",
+   "w": 481,
+   "h": 760,
+   "cx": 260.6,
+   "cy": 387.4,
+   "piso": 737,
+   "poses": [
+    "quieto",
+    "respira",
+    "alza",
+    "ataca",
+    "intangible",
+    "golpe",
+    "muere"
+   ]
+  },
+  "lodo": {
+   "tipo": "suelo",
+   "w": 849,
+   "h": 520,
+   "cx": 389.4,
+   "cy": 251.1,
+   "piso": 502,
+   "poses": [
+    "quieto",
+    "aplasta",
+    "salta",
+    "escupe",
+    "golpe",
+    "muere"
+   ]
+  },
+  "masa": {
+   "tipo": "suelo",
+   "w": 1025,
+   "h": 560,
+   "cx": 508.9,
+   "cy": 282.9,
+   "piso": 551,
+   "poses": [
+    "quieto",
+    "late",
+    "ataca",
+    "golpe",
+    "muere"
+   ]
+  },
+  "espectro": {
+   "tipo": "vuela",
+   "w": 450,
+   "h": 760,
+   "cx": 244.7,
+   "cy": 372.4,
+   "piso": 717,
+   "poses": [
+    "quieto",
+    "grita",
+    "ataca",
+    "se_desvanece"
+   ]
+  },
+  "cabeza": {
+   "tipo": "suelo",
+   "w": 458,
+   "h": 760,
+   "cx": 241.5,
+   "cy": 386.5,
+   "piso": 738,
+   "poses": [
+    "quieto",
+    "despierta",
+    "carga",
+    "ruge",
+    "rota"
+   ]
+  },
+  "heraldo": {
+   "tipo": "suelo",
+   "w": 526,
+   "h": 800,
+   "cx": 297.1,
+   "cy": 393.9,
+   "piso": 794,
+   "poses": [
+    "quieto",
+    "alza",
+    "ataca",
+    "golpe",
+    "muere"
+   ]
+  },
+  "demonio_corazon": {
+   "tipo": "suelo",
+   "w": 439,
+   "h": 720,
+   "cx": 215.3,
+   "cy": 330.4,
+   "piso": 647,
+   "poses": [
+    "quieto",
+    "late",
+    "golpe",
+    "rompe"
+   ]
+  },
+  "demonio": {
+   "tipo": "suelo",
+   "w": 555,
+   "h": 900,
+   "cx": 320.6,
+   "cy": 434.0,
+   "piso": 880,
+   "poses": [
+    "quieto",
+    "respira",
+    "alza",
+    "ataca",
+    "ruge",
+    "golpe",
+    "renace",
+    "muere"
+   ]
+  },
+  "demonio_humo": {
+   "tipo": "vuela",
+   "w": 471,
+   "h": 900,
+   "cx": 273.3,
+   "cy": 340.2,
+   "piso": 718,
+   "poses": [
+    "sale",
+    "se_va"
+   ]
+  },
+  "poseido_aldric": {
+   "tipo": "suelo",
+   "w": 520,
+   "h": 900,
+   "cx": 266.3,
+   "cy": 461.1,
+   "piso": 896,
+   "poses": [
+    "quieto",
+    "liberado"
+   ]
+  },
+  "poseido_thorgrim": {
+   "tipo": "suelo",
+   "w": 517,
+   "h": 900,
+   "cx": 272.6,
+   "cy": 484.6,
+   "piso": 897,
+   "poses": [
+    "quieto",
+    "liberado"
+   ]
+  },
+  "poseido_aelwyn": {
+   "tipo": "suelo",
+   "w": 507,
+   "h": 900,
+   "cx": 262.0,
+   "cy": 473.2,
+   "piso": 894,
+   "poses": [
+    "quieto",
+    "liberado"
+   ]
+  },
+  "poseido_vaelith": {
+   "tipo": "suelo",
+   "w": 507,
+   "h": 900,
+   "cx": 248.8,
+   "cy": 474.1,
+   "piso": 897,
+   "poses": [
+    "quieto",
+    "liberado"
+   ]
+  },
+  "poseido_fizzwick": {
+   "tipo": "suelo",
+   "w": 510,
+   "h": 900,
+   "cx": 262.3,
+   "cy": 458.6,
+   "piso": 896,
+   "poses": [
+    "quieto",
+    "liberado"
+   ]
+  },
+  "poseido_gorrak": {
+   "tipo": "suelo",
+   "w": 510,
+   "h": 900,
+   "cx": 267.0,
+   "cy": 460.4,
+   "piso": 897,
+   "poses": [
+    "quieto",
+    "liberado"
+   ]
+  }
+ },
+ "minero/entera": {
+  "w": 1705,
+  "h": 640
+ },
+ "minero/danada": {
+  "w": 1705,
+  "h": 640
+ },
+ "minero/destruida": {
+  "w": 1705,
+  "h": 640
+ },
+ "murcielago/alas_arriba": {
+  "w": 877,
+  "h": 560
+ },
+ "murcielago/alas_abajo": {
+  "w": 877,
+  "h": 560
+ },
+ "murcielago/picada": {
+  "w": 877,
+  "h": 560
+ },
+ "murcielago/golpe": {
+  "w": 877,
+  "h": 560
+ },
+ "murcielago/muerto": {
+  "w": 877,
+  "h": 560
+ },
+ "contrabandistas/entera": {
+  "w": 1087,
+  "h": 640
+ },
+ "contrabandistas/danada": {
+  "w": 1087,
+  "h": 640
+ },
+ "contrabandistas/destruida": {
+  "w": 1087,
+  "h": 640
+ },
+ "duendes/entera": {
+  "w": 1286,
+  "h": 640
+ },
+ "duendes/danada": {
+  "w": 1286,
+  "h": 640
+ },
+ "duendes/destruida": {
+  "w": 1286,
+  "h": 640
+ },
+ "chaman/entera": {
+  "w": 1259,
+  "h": 640
+ },
+ "chaman/danada": {
+  "w": 1259,
+  "h": 640
+ },
+ "chaman/destruida": {
+  "w": 1259,
+  "h": 640
+ },
+ "saqueadores_orcos/entera": {
+  "w": 1260,
+  "h": 640
+ },
+ "saqueadores_orcos/danada": {
+  "w": 1260,
+  "h": 640
+ },
+ "saqueadores_orcos/destruida": {
+  "w": 1260,
+  "h": 640
+ },
+ "negreros_estepa/entera": {
+  "w": 1238,
+  "h": 640
+ },
+ "negreros_estepa/danada": {
+  "w": 1238,
+  "h": 640
+ },
+ "negreros_estepa/destruida": {
+  "w": 1238,
+  "h": 640
+ },
+ "bruto/entera": {
+  "w": 1249,
+  "h": 640
+ },
+ "bruto/danada": {
+  "w": 1249,
+  "h": 640
+ },
+ "bruto/destruida": {
+  "w": 1249,
+  "h": 640
+ },
+ "exploradores/entera": {
+  "w": 1119,
+  "h": 640
+ },
+ "exploradores/danada": {
+  "w": 1119,
+  "h": 640
+ },
+ "exploradores/destruida": {
+  "w": 1119,
+  "h": 640
+ },
+ "ilusionista/entera": {
+  "w": 1004,
+  "h": 640
+ },
+ "ilusionista/danada": {
+  "w": 1004,
+  "h": 640
+ },
+ "ilusionista/destruida": {
+  "w": 1004,
+  "h": 640
+ },
+ "chatarreros/entera": {
+  "w": 1298,
+  "h": 640
+ },
+ "chatarreros/danada": {
+  "w": 1298,
+  "h": 640
+ },
+ "chatarreros/destruida": {
+  "w": 1298,
+  "h": 640
+ },
+ "ingenieros/entera": {
+  "w": 1038,
+  "h": 640
+ },
+ "ingenieros/danada": {
+  "w": 1038,
+  "h": 640
+ },
+ "ingenieros/destruida": {
+  "w": 1038,
+  "h": 640
+ },
+ "acolitos/entera": {
+  "w": 1202,
+  "h": 640
+ },
+ "acolitos/danada": {
+  "w": 1202,
+  "h": 640
+ },
+ "acolitos/destruida": {
+  "w": 1202,
+  "h": 640
+ },
+ "ladrones/entera": {
+  "w": 1101,
+  "h": 640
+ },
+ "ladrones/danada": {
+  "w": 1101,
+  "h": 640
+ },
+ "ladrones/destruida": {
+  "w": 1101,
+  "h": 640
+ },
+ "domadora/entera": {
+  "w": 1317,
+  "h": 640
+ },
+ "domadora/danada": {
+  "w": 1317,
+  "h": 640
+ },
+ "domadora/destruida": {
+  "w": 1317,
+  "h": 640
+ },
+ "vigia/entera": {
+  "w": 368,
+  "h": 640
+ },
+ "vigia/destruida": {
+  "w": 368,
+  "h": 640
+ },
+ "vigia_torre/entera": {
+  "w": 343,
+  "h": 560
+ },
+ "vigia_torre/carga": {
+  "w": 343,
+  "h": 560
+ },
+ "vigia_torre/destruida": {
+  "w": 343,
+  "h": 560
+ },
+ "totem_guerra/entera": {
+  "w": 744,
+  "h": 560
+ },
+ "totem_guerra/danada": {
+  "w": 744,
+  "h": 560
+ },
+ "totem_guerra/destruida": {
+  "w": 744,
+  "h": 560
+ },
+ "duende/entera": {
+  "w": 417,
+  "h": 480
+ },
+ "duende/ataca": {
+  "w": 417,
+  "h": 480
+ },
+ "duende/destruida": {
+  "w": 417,
+  "h": 480
+ },
+ "daga_viva/quieto": {
+  "w": 991,
+  "h": 400
+ },
+ "daga_viva/brilla": {
+  "w": 991,
+  "h": 400
+ },
+ "daga_viva/rota": {
+  "w": 991,
+  "h": 400
+ },
+ "golem_escombros/quieto": {
+  "w": 429,
+  "h": 700
+ },
+ "golem_escombros/alza": {
+  "w": 429,
+  "h": 700
+ },
+ "golem_escombros/ataca": {
+  "w": 429,
+  "h": 700
+ },
+ "golem_escombros/golpe": {
+  "w": 429,
+  "h": 700
+ },
+ "golem_escombros/muere": {
+  "w": 429,
+  "h": 700
+ },
+ "esfera/cerrada": {
+  "w": 576,
+  "h": 600
+ },
+ "esfera/abierta": {
+  "w": 576,
+  "h": 600
+ },
+ "esfera/anillo": {
+  "w": 576,
+  "h": 600
+ },
+ "esfera/rota": {
+  "w": 576,
+  "h": 600
+ },
+ "guardian/quieto": {
+  "w": 445,
+  "h": 720
+ },
+ "guardian/alza": {
+  "w": 445,
+  "h": 720
+ },
+ "guardian/ataca": {
+  "w": 445,
+  "h": 720
+ },
+ "guardian/muralla": {
+  "w": 445,
+  "h": 720
+ },
+ "guardian/golpe": {
+  "w": 445,
+  "h": 720
+ },
+ "guardian/muere": {
+  "w": 445,
+  "h": 720
+ },
+ "forja/fria": {
+  "w": 857,
+  "h": 600
+ },
+ "forja/caliente": {
+  "w": 857,
+  "h": 600
+ },
+ "forja/al_rojo": {
+  "w": 857,
+  "h": 600
+ },
+ "forja/ataca": {
+  "w": 857,
+  "h": 600
+ },
+ "forja/rota": {
+  "w": 857,
+  "h": 600
+ },
+ "huargo/quieto": {
+  "w": 1028,
+  "h": 560
+ },
+ "huargo/salta": {
+  "w": 1028,
+  "h": 560
+ },
+ "huargo/golpe": {
+  "w": 1028,
+  "h": 560
+ },
+ "huargo/muerto": {
+  "w": 1028,
+  "h": 560
+ },
+ "jabali/quieto": {
+  "w": 1010,
+  "h": 600
+ },
+ "jabali/embiste": {
+  "w": 1010,
+  "h": 600
+ },
+ "jabali/golpe": {
+  "w": 1010,
+  "h": 600
+ },
+ "jabali/muerto": {
+  "w": 1010,
+  "h": 600
+ },
+ "totem/quieto": {
+  "w": 385,
+  "h": 640
+ },
+ "totem/ataca": {
+  "w": 385,
+  "h": 640
+ },
+ "totem/muerto": {
+  "w": 385,
+  "h": 640
+ },
+ "halcon/alas_arriba": {
+  "w": 861,
+  "h": 560
+ },
+ "halcon/alas_abajo": {
+  "w": 861,
+  "h": 560
+ },
+ "halcon/planea": {
+  "w": 861,
+  "h": 560
+ },
+ "halcon/picada": {
+  "w": 861,
+  "h": 560
+ },
+ "halcon/golpe": {
+  "w": 861,
+  "h": 560
+ },
+ "halcon/muerto": {
+  "w": 861,
+  "h": 560
+ },
+ "hongo/quieto": {
+  "w": 331,
+  "h": 600
+ },
+ "hongo/respira": {
+  "w": 331,
+  "h": 600
+ },
+ "hongo/ataca": {
+  "w": 331,
+  "h": 600
+ },
+ "hongo/escupe": {
+  "w": 331,
+  "h": 600
+ },
+ "hongo/golpe": {
+  "w": 331,
+  "h": 600
+ },
+ "hongo/muere": {
+  "w": 331,
+  "h": 600
+ },
+ "driade/quieto": {
+  "w": 503,
+  "h": 720
+ },
+ "driade/respira": {
+  "w": 503,
+  "h": 720
+ },
+ "driade/alza": {
+  "w": 503,
+  "h": 720
+ },
+ "driade/ataca": {
+  "w": 503,
+  "h": 720
+ },
+ "driade/golpe": {
+  "w": 503,
+  "h": 720
+ },
+ "driade/muere": {
+  "w": 503,
+  "h": 720
+ },
+ "planta/quieto": {
+  "w": 386,
+  "h": 720
+ },
+ "planta/abre": {
+  "w": 386,
+  "h": 720
+ },
+ "planta/muerde": {
+  "w": 386,
+  "h": 720
+ },
+ "planta/cierra": {
+  "w": 386,
+  "h": 720
+ },
+ "planta/golpe": {
+  "w": 386,
+  "h": 720
+ },
+ "planta/muere": {
+  "w": 386,
+  "h": 720
+ },
+ "ent/quieto": {
+  "w": 497,
+  "h": 800
+ },
+ "ent/respira": {
+  "w": 497,
+  "h": 800
+ },
+ "ent/raices": {
+  "w": 497,
+  "h": 800
+ },
+ "ent/alza": {
+  "w": 497,
+  "h": 800
+ },
+ "ent/ataca": {
+  "w": 497,
+  "h": 800
+ },
+ "ent/golpe": {
+  "w": 497,
+  "h": 800
+ },
+ "ent/muere": {
+  "w": 497,
+  "h": 800
+ },
+ "serpiente/quieto": {
+  "w": 462,
+  "h": 800
+ },
+ "serpiente/alza": {
+  "w": 462,
+  "h": 800
+ },
+ "serpiente/muerde": {
+  "w": 462,
+  "h": 800
+ },
+ "serpiente/golpe": {
+  "w": 462,
+  "h": 800
+ },
+ "serpiente/muere": {
+  "w": 462,
+  "h": 800
+ },
+ "polvorin/quieto": {
+  "w": 722,
+  "h": 520
+ },
+ "polvorin/respira": {
+  "w": 722,
+  "h": 520
+ },
+ "polvorin/camina": {
+  "w": 722,
+  "h": 520
+ },
+ "polvorin/hincha": {
+  "w": 722,
+  "h": 520
+ },
+ "polvorin/golpe": {
+  "w": 722,
+  "h": 520
+ },
+ "polvorin/roto": {
+  "w": 722,
+  "h": 520
+ },
+ "torreta/quieto": {
+  "w": 956,
+  "h": 600
+ },
+ "torreta/carga": {
+  "w": 956,
+  "h": 600
+ },
+ "torreta/dispara": {
+  "w": 956,
+  "h": 600
+ },
+ "torreta/golpe": {
+  "w": 956,
+  "h": 600
+ },
+ "torreta/roto": {
+  "w": 956,
+  "h": 600
+ },
+ "rata_engranaje/quieto": {
+  "w": 935,
+  "h": 480
+ },
+ "rata_engranaje/corre1": {
+  "w": 935,
+  "h": 480
+ },
+ "rata_engranaje/corre2": {
+  "w": 935,
+  "h": 480
+ },
+ "rata_engranaje/muerde": {
+  "w": 935,
+  "h": 480
+ },
+ "rata_engranaje/golpe": {
+  "w": 935,
+  "h": 480
+ },
+ "rata_engranaje/roto": {
+  "w": 935,
+  "h": 480
+ },
+ "tortuga/quieto": {
+  "w": 970,
+  "h": 560
+ },
+ "tortuga/placas": {
+  "w": 970,
+  "h": 560
+ },
+ "tortuga/camina": {
+  "w": 970,
+  "h": 560
+ },
+ "tortuga/embiste": {
+  "w": 970,
+  "h": 560
+ },
+ "tortuga/golpe": {
+  "w": 970,
+  "h": 560
+ },
+ "tortuga/roto": {
+  "w": 970,
+  "h": 560
+ },
+ "golem_laton/quieto": {
+  "w": 411,
+  "h": 760
+ },
+ "golem_laton/respira": {
+  "w": 411,
+  "h": 760
+ },
+ "golem_laton/alza": {
+  "w": 411,
+  "h": 760
+ },
+ "golem_laton/golpea": {
+  "w": 411,
+  "h": 760
+ },
+ "golem_laton/golpe": {
+  "w": 411,
+  "h": 760
+ },
+ "golem_laton/muere": {
+  "w": 411,
+  "h": 760
+ },
+ "automata/quieto": {
+  "w": 420,
+  "h": 760
+ },
+ "automata/carga": {
+  "w": 420,
+  "h": 760
+ },
+ "automata/dispara": {
+  "w": 420,
+  "h": 760
+ },
+ "automata/aturdido": {
+  "w": 420,
+  "h": 760
+ },
+ "automata/golpe": {
+  "w": 420,
+  "h": 760
+ },
+ "automata/muere": {
+  "w": 420,
+  "h": 760
+ },
+ "automata_orbe/entera": {
+  "w": 538,
+  "h": 360
+ },
+ "reloj/quieto": {
+  "w": 431,
+  "h": 760
+ },
+ "reloj/tic": {
+  "w": 431,
+  "h": 760
+ },
+ "reloj/ataca": {
+  "w": 431,
+  "h": 760
+ },
+ "reloj/golpe": {
+  "w": 431,
+  "h": 760
+ },
+ "reloj/roto": {
+  "w": 431,
+  "h": 760
+ },
+ "arana_cueva/quieto": {
+  "w": 1091,
+  "h": 520
+ },
+ "arana_cueva/corre1": {
+  "w": 1091,
+  "h": 520
+ },
+ "arana_cueva/corre2": {
+  "w": 1091,
+  "h": 520
+ },
+ "arana_cueva/salta": {
+  "w": 1091,
+  "h": 520
+ },
+ "arana_cueva/golpe": {
+  "w": 1091,
+  "h": 520
+ },
+ "arana_cueva/muere": {
+  "w": 1091,
+  "h": 520
+ },
+ "sombra/quieto": {
+  "w": 384,
+  "h": 640
+ },
+ "sombra/flota": {
+  "w": 384,
+  "h": 640
+ },
+ "sombra/ataca": {
+  "w": 384,
+  "h": 640
+ },
+ "sombra/golpe": {
+  "w": 384,
+  "h": 640
+ },
+ "sombra/se_disuelve": {
+  "w": 384,
+  "h": 640
+ },
+ "elegida/quieto": {
+  "w": 465,
+  "h": 720
+ },
+ "elegida/respira": {
+  "w": 465,
+  "h": 720
+ },
+ "elegida/hechiza": {
+  "w": 465,
+  "h": 720
+ },
+ "elegida/lanza": {
+  "w": 465,
+  "h": 720
+ },
+ "elegida/golpe": {
+  "w": 465,
+  "h": 720
+ },
+ "elegida/muere": {
+  "w": 465,
+  "h": 720
+ },
+ "telarana/quieto": {
+  "w": 868,
+  "h": 560
+ },
+ "telarana/late": {
+  "w": 868,
+  "h": 560
+ },
+ "telarana/ataca": {
+  "w": 868,
+  "h": 560
+ },
+ "telarana/golpe": {
+  "w": 868,
+  "h": 560
+ },
+ "telarana/muere": {
+  "w": 868,
+  "h": 560
+ },
+ "nemesis/quieto": {
+  "w": 481,
+  "h": 760
+ },
+ "nemesis/respira": {
+  "w": 481,
+  "h": 760
+ },
+ "nemesis/alza": {
+  "w": 481,
+  "h": 760
+ },
+ "nemesis/ataca": {
+  "w": 481,
+  "h": 760
+ },
+ "nemesis/intangible": {
+  "w": 481,
+  "h": 760
+ },
+ "nemesis/golpe": {
+  "w": 481,
+  "h": 760
+ },
+ "nemesis/muere": {
+  "w": 481,
+  "h": 760
+ },
+ "lodo/quieto": {
+  "w": 849,
+  "h": 520
+ },
+ "lodo/aplasta": {
+  "w": 849,
+  "h": 520
+ },
+ "lodo/salta": {
+  "w": 849,
+  "h": 520
+ },
+ "lodo/escupe": {
+  "w": 849,
+  "h": 520
+ },
+ "lodo/golpe": {
+  "w": 849,
+  "h": 520
+ },
+ "lodo/muere": {
+  "w": 849,
+  "h": 520
+ },
+ "masa/quieto": {
+  "w": 1025,
+  "h": 560
+ },
+ "masa/late": {
+  "w": 1025,
+  "h": 560
+ },
+ "masa/ataca": {
+  "w": 1025,
+  "h": 560
+ },
+ "masa/golpe": {
+  "w": 1025,
+  "h": 560
+ },
+ "masa/muere": {
+  "w": 1025,
+  "h": 560
+ },
+ "espectro/quieto": {
+  "w": 450,
+  "h": 760
+ },
+ "espectro/grita": {
+  "w": 450,
+  "h": 760
+ },
+ "espectro/ataca": {
+  "w": 450,
+  "h": 760
+ },
+ "espectro/se_desvanece": {
+  "w": 450,
+  "h": 760
+ },
+ "cabeza/quieto": {
+  "w": 458,
+  "h": 760
+ },
+ "cabeza/despierta": {
+  "w": 458,
+  "h": 760
+ },
+ "cabeza/carga": {
+  "w": 458,
+  "h": 760
+ },
+ "cabeza/ruge": {
+  "w": 458,
+  "h": 760
+ },
+ "cabeza/rota": {
+  "w": 458,
+  "h": 760
+ },
+ "heraldo/quieto": {
+  "w": 526,
+  "h": 800
+ },
+ "heraldo/alza": {
+  "w": 526,
+  "h": 800
+ },
+ "heraldo/ataca": {
+  "w": 526,
+  "h": 800
+ },
+ "heraldo/golpe": {
+  "w": 526,
+  "h": 800
+ },
+ "heraldo/muere": {
+  "w": 526,
+  "h": 800
+ },
+ "demonio_corazon/quieto": {
+  "w": 439,
+  "h": 720
+ },
+ "demonio_corazon/late": {
+  "w": 439,
+  "h": 720
+ },
+ "demonio_corazon/golpe": {
+  "w": 439,
+  "h": 720
+ },
+ "demonio_corazon/rompe": {
+  "w": 439,
+  "h": 720
+ },
+ "demonio/quieto": {
+  "w": 555,
+  "h": 900
+ },
+ "demonio/respira": {
+  "w": 555,
+  "h": 900
+ },
+ "demonio/alza": {
+  "w": 555,
+  "h": 900
+ },
+ "demonio/ataca": {
+  "w": 555,
+  "h": 900
+ },
+ "demonio/ruge": {
+  "w": 555,
+  "h": 900
+ },
+ "demonio/golpe": {
+  "w": 555,
+  "h": 900
+ },
+ "demonio/renace": {
+  "w": 555,
+  "h": 900
+ },
+ "demonio/muere": {
+  "w": 555,
+  "h": 900
+ },
+ "demonio_humo/sale": {
+  "w": 471,
+  "h": 900
+ },
+ "demonio_humo/se_va": {
+  "w": 471,
+  "h": 900
+ },
+ "poseido_aldric/quieto": {
+  "w": 520,
+  "h": 900
+ },
+ "poseido_aldric/liberado": {
+  "w": 520,
+  "h": 900
+ },
+ "poseido_thorgrim/quieto": {
+  "w": 517,
+  "h": 900
+ },
+ "poseido_thorgrim/liberado": {
+  "w": 517,
+  "h": 900
+ },
+ "poseido_aelwyn/quieto": {
+  "w": 507,
+  "h": 900
+ },
+ "poseido_aelwyn/liberado": {
+  "w": 507,
+  "h": 900
+ },
+ "poseido_vaelith/quieto": {
+  "w": 507,
+  "h": 900
+ },
+ "poseido_vaelith/liberado": {
+  "w": 507,
+  "h": 900
+ },
+ "poseido_fizzwick/quieto": {
+  "w": 510,
+  "h": 900
+ },
+ "poseido_fizzwick/liberado": {
+  "w": 510,
+  "h": 900
+ },
+ "poseido_gorrak/quieto": {
+  "w": 510,
+  "h": 900
+ },
+ "poseido_gorrak/liberado": {
+  "w": 510,
+  "h": 900
  }
 }

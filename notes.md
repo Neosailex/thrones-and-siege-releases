@@ -1,1 +1,1 @@
-Mismo dispositivo: las cartas giran al dar vuelta la mano y la mano se tapa antes del cambio de turno. Campaña: reinos enano y orco jugables y enemigos más fuertes cerca de la Grieta.
+Campaña: los 5 reinos y la Grieta con sus bichos y campamentos dibujados, los 6 reyes poseídos y liberados, y cartas y artefactos propios para jugar con enano, orco, elfo, gnomo y drow. Online: tu progreso queda guardado en el servidor y podés vincular otro dispositivo con un código. Animaciones nuevas de flechas, Catapulta, Ballesta, Traición, Óxido y Drenaje.
