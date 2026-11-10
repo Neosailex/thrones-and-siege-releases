@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.76.1 · 2026-11-10
+
+- El juego abre con la ventana maximizada (Full HD). Fuera lo último de Argentum Online (créditos nuevos). Mejoras de campaña de otras sesiones.
+
 ## 0.76.0 · 2026-11-10
 
 - Campaña: botín con cartas grandes que dicen qué hacen e íconos del juego; botón Continuar en Un jugador; la aldea prepara la partida (raza y equipo) y 'Ver mundo' lleva al mapa para partir; mapa de la run más grande y caminos más claros.

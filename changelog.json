@@ -1,5 +1,10 @@
 [
  {
+  "version": "0.76.1",
+  "date": "2026-11-10",
+  "notes": "El juego abre con la ventana maximizada (Full HD). Fuera lo último de Argentum Online (créditos nuevos). Mejoras de campaña de otras sesiones."
+ },
+ {
   "version": "0.76.0",
   "date": "2026-11-10",
   "notes": "Campaña: botín con cartas grandes que dicen qué hacen e íconos del juego; botón Continuar en Un jugador; la aldea prepara la partida (raza y equipo) y 'Ver mundo' lleva al mapa para partir; mapa de la run más grande y caminos más claros."

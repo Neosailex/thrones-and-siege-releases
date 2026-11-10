@@ -269,7 +269,7 @@ function hit(q, dmg, direct) { q.wall -= dmg; if (q.wall < 0) { q.castle += q.wa
 // Regla demoníaca de cada rey (fase poseída, Juan 27/10): lo que hace desde que el demonio lo posee
 export const DEMON_RULES = {
   humano: [{ k: 'curseEvery', every: 3, id: 192 }],                 // Aldric poseído: cada 3 turnos te mete Miedo en la mano (tus ataques −1). Medido: cada turno el jugador ganaba 12 %; así, 28 %
-  enano: [{ k: 'regenWall', amount: 6 }],                            // Thorgrim: su muro se regenera +6 por turno
+  enano: [{ k: 'regenWall', amount: 3 }],                            // Thorgrim: su muro se regenera +3 por turno (S03 10/11: era 6, las peleas no terminaban)
   orco: [{ k: 'lowCastleBonus', below: 999, amount: 4 }],           // Gorrak: todos sus ataques +4
   elfo: [{ k: 'costUp', res: 5, amount: 2 }],                        // Aelwyn: tus cartas de cristales cuestan 3 más
   gnomo: [{ k: 'dmgEvery', every: 2, amount: 5 }],                   // Fizzwick: cada 2 turnos una bomba, 5 directo al castillo
@@ -345,9 +345,9 @@ export const ENEMIES = {
       bug({ name: 'Libro maldito', tier: 3, kind: 'constructo', rare: true, res: U(1, 1, 1, 0, 0, 0, 10, 55), capWall: 10,
         pattern: [316], rules: [{ k: 'pages' }, { k: 'woundOnHit', id: 203 }] }),
     ],
-    lor: { name: 'Lor Edmund, el Recaudador', tier: 4, kind: 'castillo', race: 'humano', king: false, ai: 'normal', hand: 3, plays: 1.5, res: U(2, 1, 2, 8, 8, 6, 20, 62),
+    lor: { name: 'Lor Edmund, el Recaudador', tier: 4, kind: 'castillo', race: 'humano', king: false, ai: 'normal', hand: 3, plays: 1.5, res: U(2, 1, 2, 8, 8, 6, 15, 55),   // (S03 10/11) 62/20 → 55/15: era el que más mataba al arrancar
       deck: deckOf({ 8: 2, 37: 2, 50: 1, 60: 2, 6: 2, 199: 2, 69: 2, 36: 1, 11: 1 }), rules: [{ k: 'tithe', every: 4, amount: 2, min: 2 }] },
-    rey: { name: 'Rey Aldric', tier: 5, kind: 'castillo', race: 'humano', king: true, ai: 'dificil', hand: 4, plays: 1.5, atk: 1, res: U(2, 2, 2, 6, 6, 6, 15, 45),
+    rey: { name: 'Rey Aldric', tier: 5, kind: 'castillo', race: 'humano', king: true, ai: 'dificil', hand: 4, plays: 1.5, atk: 1, res: U(2, 2, 2, 6, 6, 6, 10, 45),   // (S03 10/11) muro 15 → 10: con las peleas más cortas pasó a ser el que más mataba
       deck: deckOf({ 8: 2, 37: 1, 50: 1, 60: 1, 6: 2, 2: 2, 62: 1, 63: 1, 66: 1, 36: 1, 11: 1, 68: 1, 69: 1 }), rules: [{ k: 'startRes', amount: 2 }, possessRule('humano', 0.5)] }, // con la fase poseída arranca con +2 (antes +8)
   },
 };
@@ -380,10 +380,10 @@ ENEMIES.enano = {
     bug({ name: 'Forja maldita', tier: 3, kind: 'constructo', atk: 0, res: U(1, 1, 1, 0, 0, 0, 10, 50), capWall: 10,
       pattern: [329, 329, 330], rules: [{ k: 'ritual', amount: 1 }] }),
   ],
-  lor: { name: 'Lor Brakk, el Inamovible', tier: 4, kind: 'castillo', race: 'enano', king: false, ai: 'normal', hand: 3, plays: 1.5, res: U(2, 1, 2, 10, 8, 6, 25, 60), capWall: 40,
-    deck: deckOf({ 73: 2, 75: 2, 76: 2, 134: 2, 37: 2, 38: 2, 8: 2, 6: 2, 36: 1 }), rules: [{ k: 'regenWall', amount: 3 }] },
-  rey: { name: 'Rey Thorgrim', tier: 5, kind: 'castillo', race: 'enano', king: true, ai: 'dificil', hand: 4, plays: 1.5, res: U(2, 2, 2, 6, 6, 6, 15, 40), capWall: 35,
-    deck: deckOf({ 73: 2, 76: 2, 134: 2, 37: 2, 8: 2, 6: 2, 2: 2, 79: 1, 38: 2 }), rules: [{ k: 'kingPeriod', period: 3 }, possessRule('enano', 0.5)] },
+  lor: { name: 'Lor Brakk, el Inamovible', tier: 4, kind: 'castillo', race: 'enano', king: false, ai: 'normal', hand: 3, plays: 1.5, res: U(2, 1, 2, 10, 8, 6, 20, 60), capWall: 30,   // (S03 10/11) muro 25 → 20, tope 40 → 30, regenera 2 (era 3), menos cartas de muro: las peleas pasaban de 80 turnos
+    deck: deckOf({ 73: 2, 75: 1, 76: 1, 134: 2, 37: 2, 38: 2, 8: 3, 6: 3, 36: 1 }), rules: [{ k: 'regenWall', amount: 2 }] },
+  rey: { name: 'Rey Thorgrim', tier: 5, kind: 'castillo', race: 'enano', king: true, ai: 'dificil', hand: 4, plays: 1.5, res: U(2, 2, 2, 6, 6, 6, 15, 40), capWall: 25,   // (S03 10/11) tope de muro 35 → 25, rey cada 4 (era 3), poseído regenera 3 (era 6) y en la campaña no se cura con el rey
+    deck: deckOf({ 73: 2, 76: 2, 134: 2, 37: 2, 8: 2, 6: 2, 2: 2, 79: 1, 38: 2 }), rules: [{ k: 'kingPeriod', period: 4 }, possessRule('enano', 0.5)] },
 };
 // Estepas de Gorrak (S03 04/11): ataque, furia, sangre
 const DUENDES = { name: 'Pandilla de duendes', hp: 12, heal: 0, atk: 0, rage: 0 }, TOTEM = { name: 'Tótem de guerra', hp: 15, heal: 0, atk: 3, rage: 0 };
@@ -520,6 +520,9 @@ export function enemyFor(reino, tier, rnd = Math.random) { const l = enemyList(r
 // Además (25/10): player.plays (jugadas por turno, por defecto CAMPAIGN.plays; el Salón de guerra suma), player.gold (oro de la run), player.kills
 // (enemigos vencidos en la run: Banquete), player.grow ({ id: n } lo que ya creció cada carta "Crece"), player.works (ids de Obras que
 // quedaron de la pelea anterior: solo con Engranaje eterno), player.maxCastle (vida máxima: Berserker de sangre).
+// (S03 10/11, pedido de S10: la run completa en ~2 h) vida y muro de los enemigos según su tier, para peleas más cortas
+export const FIGHT_LEN = { hp: { 1: 0.6, 2: 0.55, 3: 0.7, 4: 0.65, 5: 0.7 } };   // medido con camp_sts (con el enfurecimiento): la run ganada pasó de ~600-800 a ~325 turnos tuyos (~2 h 15)
+const shortRes = (e) => { const m = FIGHT_LEN.hp[e.tier] ?? 1; if (m === 1 || !e.res) return e.res; return { ...e.res, castle: e.res.castle >= 900 ? e.res.castle : Math.max(5, Math.round(e.res.castle * m)), wall: Math.round((e.res.wall || 0) * m) }; };
 export function makeBattle(player, enemy, { starter = 0, rnd = Math.random } = {}) {
   const pr = player.rules || [], er = enemy.rules || [];
   const sum = (k) => pr.reduce((a, r) => a + (RULES[r.k]?.[k] || 0), 0); // equipo que cambia jugadas/mano (Corona de guerra, Ojo del vigía)
@@ -529,7 +532,7 @@ export function makeBattle(player, enemy, { starter = 0, rnd = Math.random } = {
     seats: [
       { deck: player.deck, hand: Math.max(1, (player.hand ?? PLAYER_START.hand) + sum('hand')), res: { ...PLAYER_START.res, ...(player.res || {}) }, race: player.race || 'humano', king: player.king !== false, hooks: ruleHooks(pr), rules: pr,
         plays: (player.plays ?? CAMPAIGN.plays) + sum('plays'), discardHand: player.discardHand ?? CAMPAIGN.discardHand, gold: player.gold || 0, kills: player.kills || 0, grow: player.grow || {}, works: keepWorks ? player.works || [] : [], maxCastle: player.maxCastle ?? player.res?.castle ?? PLAYER_START.res.castle },
-      { deck: enemy.deck, hand: enemy.hand, res: enemy.res, race: enemy.race, king: !!enemy.king, hooks: ruleHooks(er), rules: er, plays: enemy.plays || 1, discardHand: !!enemy.discardHand, ...(enemy.capWall != null ? { capWall: enemy.capWall } : {}), noProd: !!enemy.noProd, atk: enemy.atk || 0, pattern: enemy.pattern || null, patternLoop: enemy.patternLoop || 0, weights: enemy.weights || null, minion: enemy.minion || null, fly: enemy.fly || 0, immune: enemy.immune || 0, thorns: enemy.thorns || 0 },
+      { deck: enemy.deck, hand: enemy.hand, res: shortRes(enemy), race: enemy.race, king: !!enemy.king, hooks: ruleHooks(er), rules: er, plays: enemy.plays || 1, discardHand: !!enemy.discardHand, ...(enemy.capWall != null ? { capWall: enemy.capWall } : {}), noProd: !!enemy.noProd, atk: enemy.atk || 0, pattern: enemy.pattern || null, patternLoop: enemy.patternLoop || 0, weights: enemy.weights || null, minion: enemy.minion || null, fly: enemy.fly || 0, immune: enemy.immune || 0, thorns: enemy.thorns || 0 },
     ],
   });
   g.enemy = { name: enemy.name, tier: enemy.tier, ai: enemy.ai, kind: enemy.kind || 'castillo', rules: er.map((r) => ({ ...r, text: ruleText(r) })) };
@@ -543,6 +546,7 @@ export function makeBattle(player, enemy, { starter = 0, rnd = Math.random } = {
   if (g.players[0].venomStart) E.campVenom(g.players[1], g.players[0].venomStart); // Madre araña (Crece)
   if (CAMP_RACE[g.players[0].race]?.boiler) { g.players[0].boilerOn = true; g.players[0].pressure ||= 0; }
   if (CAMP_RACE[g.players[0].race]?.fury) { g.players[0].furyOn = true; g.players[0].fury ||= 0; } // el orco de campaña juega a la Furia (antes de las reglas de equipo: Pintura de guerra la sube) // (S03 08/11) el enano de campaña juega a las runas: sin la pasiva del PvP (muro +2)
+  g.players[1].campTurns ??= 0; // enfurecimiento (E.ENRAGE): la vista ya muestra cuánto falta
   g.rules = [pr, er];
   return g;
 }

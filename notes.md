@@ -1,1 +1,1 @@
-Campaña: botín con cartas grandes que dicen qué hacen e íconos del juego; botón Continuar en Un jugador; la aldea prepara la partida (raza y equipo) y 'Ver mundo' lleva al mapa para partir; mapa de la run más grande y caminos más claros.
+El juego abre con la ventana maximizada (Full HD). Fuera lo último de Argentum Online (créditos nuevos). Mejoras de campaña de otras sesiones.
