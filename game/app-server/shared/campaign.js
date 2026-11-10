@@ -495,9 +495,10 @@ ENEMIES.grieta = {
     bug({ name: 'Masa retorcida', tier: 1, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 50), capWall: 20, weights: { 389: 45, 390: 25, 379: 30 }, rules: [{ k: 'reactive' }, { k: 'runCurse', id: 390, curse: 191 }] }),
   ],
   t2: [
-    bug({ name: 'Masa retorcida', tier: 2, kind: 'bestia', atk: 2, res: U(1, 1, 1, 0, 0, 0, 0, 65), capWall: 30, weights: { 389: 45, 390: 25, 379: 30 }, rules: [{ k: 'reactive' }, { k: 'runCurse', id: 390, curse: 191 }] }),
-    bug({ name: 'Espectro', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 999), capWall: 0, pattern: [391], rules: [{ k: 'endure', turns: 5, max: 9 }] }),
-    bug({ name: 'Lodos', tier: 2, kind: 'bestia', atk: 2, res: U(1, 1, 1, 0, 0, 0, 0, 56), capWall: 0, pattern: [387, 387, 388], rules: [{ k: 'split', atk: 3 }] }),
+    // (S03 10/11) sin la ayuda de los reyes en el camino, las T2 de la Grieta se bajan un poco (Lodos ganaba 21 %)
+    bug({ name: 'Masa retorcida', tier: 2, kind: 'bestia', atk: 1, res: U(1, 1, 1, 0, 0, 0, 0, 60), capWall: 30, weights: { 389: 45, 390: 25, 379: 30 }, rules: [{ k: 'reactive' }, { k: 'runCurse', id: 390, curse: 191 }] }),
+    bug({ name: 'Espectro', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 999), capWall: 0, pattern: [391], rules: [{ k: 'endure', turns: 4, max: 9 }] }),
+    bug({ name: 'Lodos', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 48), capWall: 0, pattern: [387, 387, 388], rules: [{ k: 'split', atk: 2 }] }),
   ],
   t3: [
     bug({ name: 'Cabeza de piedra', tier: 3, kind: 'constructo', atk: 0, res: U(1, 1, 1, 0, 0, 0, 10, 80), capWall: 20, pattern: [392, 392, 393], rules: [{ k: 'comboVuln', amount: 3 }] }),

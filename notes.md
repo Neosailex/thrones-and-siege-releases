@@ -1,1 +1,1 @@
-Campaña: mapa con arte pintado. Obras grandes y trampas con piezas pintadas. Repaso de sonidos de las animaciones nuevas.
+Campaña: botín con cartas grandes que dicen qué hacen e íconos del juego; botón Continuar en Un jugador; la aldea prepara la partida (raza y equipo) y 'Ver mundo' lleva al mapa para partir; mapa de la run más grande y caminos más claros.
