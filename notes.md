@@ -1,1 +1,1 @@
-Campaña: los 5 reinos y la Grieta con sus bichos y campamentos dibujados, los 6 reyes poseídos y liberados, y cartas y artefactos propios para jugar con enano, orco, elfo, gnomo y drow. Online: tu progreso queda guardado en el servidor y podés vincular otro dispositivo con un código. Animaciones nuevas de flechas, Catapulta, Ballesta, Traición, Óxido y Drenaje.
+Campaña: mapa con arte pintado. Obras grandes y trampas con piezas pintadas. Repaso de sonidos de las animaciones nuevas.
