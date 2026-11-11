@@ -1,1 +1,1 @@
-El juego abre con la ventana maximizada (Full HD). Fuera lo último de Argentum Online (créditos nuevos). Mejoras de campaña de otras sesiones.
+Campaña (mega arreglo): pantalla antes de la run con la Anciana o un rey liberado; Coronas del mundo y Crónica; botín de tu raza; Maestría de raza; el As de los reyes liberados en la manga; el rey avisa su golpe grande; 62 cartas nuevas de sinergias; básicas con versión +; Ugrak más blando y razas parejas; arreglos (Cartógrafo, Planta carnívora, Descartar); arte nuevo y animaciones de las cartas de campaña.

@@ -1,5 +1,6 @@
 import { RACE_CARDS, RACES, raceOf, RARE_RACE, LEGENDARY, KINGS, KING_CARDS, FAVOR_CARDS, TACTIC_CARDS, ARROW_IDS, MELEE_IDS, MYTHIC_CARDS, MYTHIC } from './races.js';
 import { CAMPAIGN_CARDS, CAMP_RAPID, setCostFn } from './campaign-cards.js';
+const BASIC_PLUS_RAPID = [];
 export { CAMPAIGN_CARDS };
 export { RACES, raceOf, RARE_RACE, LEGENDARY, KINGS, ARROW_IDS, MELEE_IDS, MYTHIC };
 // Datos de cartas de Thrones & Siege: valores iniciales inspirados en el género; el balance es propio (ajustes abajo, en BAL).
@@ -29,10 +30,20 @@ for (const [id, [nm, tx, c, sf, op, fx]] of Object.entries(FAVOR_CARDS)) { CARDS
 for (const [id, [nm, tx, c, sf, op, fx]] of Object.entries(TACTIC_CARDS)) { CARDS[id] = [c, sf, op]; NAMES[id] = [nm, tx]; if (fx) FX[id] = fx; }
 for (const [id, [nm, tx, c, sf, op, fx]] of Object.entries(MYTHIC_CARDS)) { CARDS[id] = [c, sf, op]; NAMES[id] = [nm, tx]; if (fx) FX[id] = fx; } // míticas 180-185 (PvP)
 for (const [id, [nm, tx, c, sf, op, fx]] of Object.entries(CAMPAIGN_CARDS)) { CARDS[id] = [c, sf, op]; NAMES[id] = [nm, tx]; if (fx) FX[id] = fx; } // solo campaña (190+), fuera de NCARDS
+// (S03 10/11) versión + de las básicas del mazo inicial (solo campaña; id + 1000): [costo, propio, rival, texto]
+{ const v = (o) => { const a = [0, 0, 0, 0, 0, 0, 0, 0]; for (const [k, n] of Object.entries(o)) a[{ b: 1, w: 3, cr: 5, bu: 0, so: 2, ma: 4, wall: 6, castle: 7, dmg: 6, direct: 7 }[k]] = n; return a; };
+  const BP = {
+    2: [v({ w: 4 }), v({}), v({ dmg: 9 }), 'Daño 9'], 6: [v({ w: 8 }), v({}), v({ dmg: 14 }), 'Daño 14'], 8: [v({ w: 10 }), v({}), v({ dmg: 16 }), 'Daño 16'],
+    30: [v({ b: 11 }), v({ castle: 15 }), v({}), 'Castillo +15'], 34: [v({ b: 5 }), v({ wall: 10 }), v({}), 'Muro +10'], 36: [v({ b: 6 }), v({ wall: 14 }), v({}), 'Muro +14'],
+    37: [v({ b: 11 }), v({}), v({ dmg: 17 }), 'Daño 17'], 54: [v({ cr: 8 }), v({ b: 9, w: 9 }), v({}), 'Ladrillos +9, armas +9'], 60: [v({ w: 8, cr: 8 }), v({}), v({ dmg: 15, direct: 6 }), 'Daño 15 y 6 directo al castillo'],
+    62: [v({ b: 4 }), v({ w: 5, cr: 5 }), v({}), 'Armas +5, cristales +5'], 63: [v({ cr: 6 }), v({ b: 8, w: 5 }), v({}), 'Ladrillos +8, armas +5'], 64: [v({ w: 7 }), v({ so: 1, wall: 5 }), v({}), 'Soldados +1, muro +5'],
+  };
+  for (const [id, [c, sf, op, tx]] of Object.entries(BP)) { const pid = +id + 1000; CARDS[pid] = [c, sf, op]; NAMES[pid] = [NAMES[id][0] + '+', tx]; FX[pid] = { ...(FX[id] || {}), plus: true, base: +id }; }
+  BASIC_PLUS_RAPID.push(1034); }
 // Balance 0.35: cartas revividas, orcos y gnomos
 export const RAPID = new Set([1, 95, 13, 28, 40, 32, 34, 126, 129, 186, 187]);
 setCostFn((id) => (CARDS[id] ? CARDS[id][0].reduce((x, y) => x + y, 0) : 0)); // Sacrificio: la carta más cara de la mano
-for (const id of CAMP_RAPID) RAPID.add(id); // campaña: Brisa, Sed de batalla, Engranaje suelto (y sus +) // "Rápida": se juegan y seguís jugando una vez más (máximo 2 rápidas por turno: con la segunda termina el turno)
+for (const id of CAMP_RAPID) RAPID.add(id); for (const id of BASIC_PLUS_RAPID) RAPID.add(id); // campaña: Brisa, Sed de batalla, Engranaje suelto (y sus +) // "Rápida": se juegan y seguís jugando una vez más (máximo 2 rápidas por turno: con la segunda termina el turno)
 export const GNOME_MACHINES = [103, 105, 107, 110, 143, 144]; // lo que puede inventar el rey Fizzwick
 {
   const BAL = {

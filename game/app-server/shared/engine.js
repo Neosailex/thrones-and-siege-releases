@@ -15,7 +15,7 @@ function makePlayer(counts, res, rnd, handSize = HAND) {
   return p;
 }
 // Tamaño de mano del jugador (PvP: HAND = 5; campaña: 3 a 6 por asiento)
-export const handSize = (p) => p.handSize ?? HAND;
+export const handSize = (p) => (p.handSize ?? HAND) + (p.sealPact ? p.hand.filter((h) => isCurse(h) || isState(h)).length : 0); // Sello del pacto (drow): las maldiciones no ocupan lugar
 // Período del rey (campaña: una regla de jefe puede acortarlo)
 const hasKing = (p) => !!(p.race && KINGS[p.race] && !p.noKing);
 export const kingPeriod = (p) => p.kingPeriod ?? (p.race && KINGS[p.race] ? KINGS[p.race].period : 0);
@@ -99,7 +99,9 @@ function fire(g, name, info) {
 
 function draw(g, p, rnd = g._rnd) {
   if (!p.deck.length) { p.deck = p.used.slice(); p.used = []; shuffle(p.deck, rnd); }
-  return p.deck.pop();
+  const id = p.deck.pop();
+  if (p.ladyPact && id != null && isCurse(id)) { p.wall += 3; const o = other(g, p); o.venom = (o.venom || 0) + 2; } // Señora de los pactos (drow)
+  return id;
 }
 /* ---------- Manga ---------- */
 // Al empezar, cada jugador aparta 1 carta de su mazo en la manga (secreta; el rival solo ve que hay una). Se juega desde ahí en cualquier
@@ -224,6 +226,7 @@ function statRemove(g, p, a, keep, fx, foe = g.turn !== g.players.indexOf(p), pa
   // Venganza: todo el daño recibido durante el turno rival (cartas, efectos, rey, monedas, Horda)
   if (hits && g.turn !== g.players.indexOf(p) && !g._kingAct) p.dmgRound = (p.dmgRound || 0) + Math.max(0, w0 - p.wall) + Math.max(0, c0 - p.castle);
   if (ashB) ashHit(g, p, ashB, fx);
+  if (hits && foe) { const att = g.players[g.turn]; if (att && att !== p) att.dmgTurn = (att.dmgTurn || 0) + Math.max(0, w0 - p.wall) + Math.max(0, c0 - p.castle); } // daño hecho este turno (Sangre por sangre)
   if (hits && (w0 > p.wall || c0 > p.castle)) { if (p.furyOn && foe) furyAdd(g, p, 1 + (p.furyRecv || 0) + (p.hideFury || 0), fx); if (o.furyOn && foe && g.turn === g.players.indexOf(o)) { furyAdd(g, o, 1, fx); o.hitTurn = true; } p.hideFury = 0; } // Furia: +1 por golpe recibido y por golpe dado
   if (hits && foe && p.runes?.length && !g._storm && (w0 > p.wall || c0 > p.castle)) runeStorm(g, p, fx); // ⚡ Tormenta: te pegan → devuelve
   if (hits && g.hooks) fire(g, 'onDamage', { seat: g.players.indexOf(p), from: foe ? 1 - g.players.indexOf(p) : g.players.indexOf(p), wall: Math.max(0, w0 - p.wall), castle: Math.max(0, c0 - p.castle), fx });
@@ -315,9 +318,10 @@ export function cardVectors(g, p, o, id, sleeve = false) {
     if (p.rage) { if (op[6] > 0) op[6] += p.rage; else op[7] += p.rage; }
     if (p.lowCastleBonus && p.castle < p.lowCastleBonus.below) { if (op[6] > 0) op[6] += p.lowCastleBonus.amount; else op[7] += p.lowCastleBonus.amount; }
     if (p.hand?.includes(192)) { if (op[6] > 0) op[6] = Math.max(0, op[6] - 1); else op[7] = Math.max(0, op[7] - 1); }
-    { const b = (p.camp ? campAtkBonus(p) : 0) + (p.atkPlus || 0) + (p.minionHp > 0 ? p.minionAtk || 0 : 0); if (b) { if (op[6] > 0) op[6] += b; else op[7] += b; } if (p.atkMul > 1) { op[6] *= p.atkMul; op[7] *= p.atkMul; } if (p.frenzy > 0) { const fb = p.frenzyAtk || 0; if (op[6] > 0) op[6] = (op[6] + fb) * 2; else op[7] = (op[7] + fb) * 2; } } /* atkPlus y secuaz también desde la vista (realOf: la carta muestra el daño real) */ // Furia de sangre, Estandarte, Tambor de huesos; enemigos: ritual, enjambre, furia, secuaz
+    { const b = (p.camp ? campAtkBonus(p) : 0) + (p.atkPlus || 0) + (p.minionHp > 0 ? p.minionAtk || 0 : 0) + (p.warlord ? p.recruit || 0 : 0) + (p.hand?.includes(564) || p.hand?.includes(1564) ? 2 * p.hand.filter((h) => h === 564 || h === 1564).length : 0); if (b) { if (op[6] > 0) op[6] += b; else op[7] += b; } if (p.atkMul > 1) { op[6] *= p.atkMul; op[7] *= p.atkMul; } if (p.frenzy > 0) { const fb = p.frenzyAtk || 0; if (op[6] > 0) op[6] = (op[6] + fb) * 2; else op[7] = (op[7] + fb) * 2; } } /* atkPlus y secuaz también desde la vista (realOf: la carta muestra el daño real) */ // Furia de sangre, Estandarte, Tambor de huesos; enemigos: ritual, enjambre, furia, secuaz
   }
   if (s[7] > 0 && (p.noHeal || p.noHealT || (p.venom > 0 && o?.webNoHeal))) s[7] = 0; // Ojos rojos / Telarañas: no te podés curar
+  if (s[6] > 0 && p.nextWall) s[6] += p.nextWall; // Formación (humano)
   if (s[6] > 0 && p.wallGloves) s[6] = Math.max(0, s[6] - 1);
   if (s[6] > 0 && p.wallMinus) s[6] = Math.max(0, s[6] - p.wallMinus); // Arco de la luna (contra) // Guantes de albañil (contra): tus cartas de muro dan −1
   if (s[6] > 0 && p.hand?.includes(193)) s[6] = Math.floor(s[6] / 2);
@@ -520,7 +524,7 @@ function campCtx(g, p, o, id, fx) {
   x.runWorks = (times = 1, mult = 1) => { for (let t = 0; t < times; t++) for (const w of p.works.slice()) FX[w.id]?.camp?.work?.tick?.({ ...campCtx(g, p, o, w.id, fx), w, mult }); };
   x.addWork = (wid) => campAddWork(g, p, o, wid, fx);
   // Veneno y Pactos (drow)
-  x.venom = (n, q = o) => venomAdd(q, n, fx); x.pact = () => { const i = p.hand.findIndex(stuck); if (i < 0) return false; const cid = p.hand.splice(i, 1)[0]; pactPlay(g, p, o, cid, fx, false); return true; };
+  x.venom = (n, q = o) => venomAdd(q, n * (p.queenNight && p.veil > 0 ? 2 : 1), fx); x.pact = () => { const i = p.hand.findIndex(stuck); if (i < 0) return false; const cid = p.hand.splice(i, 1)[0]; pactPlay(g, p, o, cid, fx, false); return true; };
   x.curses = () => [...p.deck, ...p.used, ...p.hand].filter(isCurse).length;
   // Caldera e Inventos (gnomo)
   x.press = (n) => boilerAdd(g, p, n, fx); x.release = (mode) => boilerRelease(g, p, mode, fx); x.inv = (bid) => invLevel(p, bid);
@@ -546,6 +550,10 @@ function campAfter(g, p, o, id, special, fx, s, op, c) {
   const k = special?.camp, attack = op[6] > 0 || op[7] > 0;
   if (attack) { p.nextAtk = 0; p.turnAtks++; if (p.drumFury && p.furyOn) furyAdd(g, p, 1, fx); if (p.atkVenom) venomAdd(o, p.atkVenom, fx); }
   p.turnPlays++; p.playedAny = true;
+  if (s[6] > 0 && p.nextWall) p.nextWall = 0;
+  if (k?.invent) p.lastInvent = id;
+  if (p.martialLaw && s[0] + s[2] + s[4] > 0) { campCtx(g, p, o, id, fx).hurt(3, 0, o, 'regla'); fx.push('camp:martial'); } // Ley marcial (humano)
+  if (p.kingFront && p.turnPlays === 1 && !campKw(id, 'quema') && !k?.work && !stuck(id)) { statAdd(p, s); statRemove(g, o, op, false, fx); fx.push('camp:twice'); } // Rey al frente: la 1.ª carta del turno, dos veces
   if (p.boilerOn && !g._kingInvent) boilerAdd(g, p, (k?.pressure ?? 1) + (p.wallPress && s[6] > 0 ? p.wallPress : 0), fx); // Caldera (gnomo): cada carta suma su presión
   if (k?.invent) { p.inv = { ...(p.inv || {}) }; p.inv[baseId(id)] = (p.inv[baseId(id)] || 0) + (p.invDouble ? 2 : 1); fx.push('invent:+' + p.inv[baseId(id)]); } // Invento: mejora cada vez que lo jugás
   if (p.wallGloves && s[6] > 0) { campCtx(g, p, o, id, fx).hurt(2, 0, o, 'regla'); fx.push('eq:wallGloves'); } // Guantes de albañil
@@ -578,12 +586,13 @@ function campTurnStart(g, p, o, log) {
   if (g.campaign && p === g.players[1] && !p.noEnrage) { p.campTurns = (p.campTurns || 0) + 1; if (p.campTurns >= ENRAGE.at) { p.enrage = (p.enrage || 0) + ENRAGE.step; p.atkPlus = (p.atkPlus || 0) + ENRAGE.step; log.push('enrage:' + p.enrage); } }
   if (g.campaign && p === g.players[0] && ENRAGE.both && (o.campTurns || 0) >= ENRAGE.at) { p.enrage = (p.enrage || 0) + ENRAGE.both; p.atkPlus = (p.atkPlus || 0) + ENRAGE.both; log.push('enrage:me:' + p.enrage); } // muerte súbita: vos también
   if (p.venom > 0) venomTick(g, p, log, true);
+  p.dmgTurn = 0; campTurnExtras(g, p, o, log);
   p.brakeTurn = false; p.arrowsTurn = 0; p.aimTurn = 0; p.arrowPlusTurn = 0; if (p.arrowTurn) { for (let i = 0; i < p.arrowTurn; i++) p.hand.push(ARROW); log.push('arrow:' + p.arrowTurn); } if (p.eyeTurn) eagleEye(g, p, p.eyeTurn, log);
   p.hitTurn = false; p.drumFury = false; p.turnPlays = 0; p.turnAtks = 0; p.turnAtk = 0; p.nextAtk = 0; p.freeTurn = false; p.cycleBonus = 0; p.turnRapidFree = false;
   if (p.wallFloorTurns > 0) p.wallFloorTurns--; else p.wallFloor = null; // Escudo de runas
   p.castleShield = false; // Piel de jabalí: dura hasta tu próximo turno
   p.wallT0 = p.wall; if (p.runes) { p.stormLeft = p.runes.filter((t) => t === 'tormenta').length; for (let k = 0; k < (p.runeTimes || 1); k++) for (const t of p.runes.slice()) { const rf = []; runeAct(g, p, t, 1, rf); log.push(...rf.map((f) => f.replace('rune:act', 'rune:turno'))); } }
-  const mult = 1 + (p.workBoost || 0); p.workBoost = 0;
+  const mult = 1 + (p.workBoost || 0) + (p.workDouble ? 1 : 0); p.workBoost = 0;
   for (const w of p.works.slice()) { const fx = []; FX[w.id]?.camp?.work?.tick?.({ ...campCtx(g, p, o, w.id, fx), w, mult }); w.age++; log.push('work:' + w.id); }
 }
 /* ---------- Runas del enano (S03 08/11, docs/campaña/razas.md §1) ----------
@@ -612,6 +621,7 @@ function runeGrabar(g, p, t, fx) {
 function runeRomper(g, p, i, fx) {
   if (!p.runes?.length || p.noBreak) return null; const t = p.runes.splice(i, 1)[0]; fx.push('rune:romper:' + t);
   runeAct(g, p, t, p.breakMul || RUNE_CFG.breakMul, fx);
+  if (t === 'oro' && p.oroTreasure) { p.brick += 5; p.weapon += 5; p.crystal += 5; fx.push('camp:oroTreasure'); } // Tesoro de la montaña
   if (p.echoBreak && !p.rs?.echoUsed) { p.rs ||= {}; p.rs = { ...p.rs, echoUsed: true }; p.runes.push(t); fx.push('rune:grabar:' + t, 'eq:yunqueEcos'); } // Yunque de ecos: se vuelve a grabar (1 por pelea)
   return t;
 }
@@ -620,17 +630,24 @@ function runeStorm(g, p, fx) { // ⚡ Tormenta: cuando te pegan, cada runa de To
   try { const pc = glCtx(g, 'efecto', 'runa:tormenta'); statRemove(g, o, [0, 0, 0, 0, 0, 0, RUNE_CFG.tormenta * n * (p.runeTimes || 1), 0], false, fx, true); glRestore(g, pc); } finally { g._storm = false; }
   fx.push('rune:act:tormenta');
 }
+// (S03 10/11) cartas de sinergias.md que actúan al empezar tu turno
+function campTurnExtras(g, p, o, log) {
+  if (p.factory) { const best = p.used.filter((h) => FX[h]?.camp?.invent).sort((a, b) => (p.inv?.[baseId(b)] || 0) - (p.inv?.[baseId(a)] || 0))[0]; if (best != null) { p.used.splice(p.used.indexOf(best), 1); p.hand.push(best); log.push('camp:factory'); } } // Fábrica (gnomo)
+  if (p.plagueQueen) { const n = [...p.deck, ...p.used, ...p.hand].filter(isCurse).length; if (n) { venomAdd(o, n, log); log.push('camp:plagueQueen'); } } // Plaga reina (drow)
+  const ira = p.hand.filter((h) => h === 517 || h === 1517).length; if (ira && p.furyOn) furyAdd(g, p, 2 * ira, log); // Ira contenida (orco)
+  if (p.livingMountain && p.wall >= 4) { const pc = glCtx(g, 'efecto', 'montaña'); statRemove(g, o, [0, 0, 0, 0, 0, 0, Math.floor(p.wall / 4), 0], false, log, true); glRestore(g, pc); log.push('camp:mountain'); } // Montaña viva (enano)
+}
 /* ---------- Veneno y Pactos del drow (S03 08/11, razas.md §1) ----------
    q.venom: al empezar SU turno pierde esa cantidad de castillo (ignora el muro) y el veneno baja 1 (p.venomDecay del que lo puso: Telaraña 2;
    p.venomHold: Frasco de sombra, no baja el 1.er turno). Pacto (p.pactOn): las maldiciones y estados se pueden jugar (costo 0): se queman y dan
-   +3 de veneno al rival (+p.pactBonus; x2 con p.pactMul / el 1.er pacto con p.firstPactX2). fx: 'venom:<n>', 'venom:tick:<daño>', 'pact:<id>'. */
+   +2 de veneno al rival (VENOM_CFG.pact, +p.pactBonus; x2 con p.pactMul / el 1.er pacto con p.firstPactX2). fx: 'venom:<n>', 'venom:tick:<daño>', 'pact:<id>'. */
 // (S03 08/11, camp_grind RAZA=drow) healWin: al ganar una pelea el drow cura 4 (sin eso, y sin el sostén del humano, ganaba 1-2 % de las runs)
-export const VENOM_CFG = { pact: 3, decay: 1, healWin: 4 };
+export const VENOM_CFG = { pact: 2, decay: 1, healWin: 0 };
 export function campVenom(q, n) { if (n > 0) q.venom = (q.venom || 0) + n; }
 function venomAdd(q, n, fx) { if (!q || n <= 0) return; q.venom = (q.venom || 0) + n; fx.push('venom:' + q.venom); }
 function venomTick(g, q, fx, decay = true) {
   const src = other(g, q), n = q.venom || 0; if (n <= 0) return; const pc = glCtx(g, 'efecto', 'veneno'); statRemove(g, q, [0, 0, 0, 0, 0, 0, 0, n], false, fx, true); glRestore(g, pc); fx.push('venom:tick:' + n);
-  if (decay) { if (src.venomHold && !src.rs?.vh) { src.rs = { ...(src.rs || {}), vh: true }; } else q.venom = Math.max(0, n - (src.venomDecay || VENOM_CFG.decay)); }
+  if (decay && !src.venomNoDecay) { if (src.venomHold && !src.rs?.vh) { src.rs = { ...(src.rs || {}), vh: true }; } else q.venom = Math.max(0, n - (src.venomDecay || VENOM_CFG.decay)); }
   if (q.castle <= 0 && g.winner == null) g.winner = g.players.indexOf(src);
 }
 function pactPlay(g, p, o, id, fx, fromPlay = true) {
@@ -652,7 +669,8 @@ const invLevel = (p, bid) => (p.inv?.[bid] || 0) + (p.invBonus || 0);
 export const boilerMax = (p) => BOILER_CFG.max + (p.boilerMaxMod || 0);
 function boilerAdd(g, p, n, fx) {
   if (!p.boilerOn || !n) return; p.pressure = Math.max(0, (p.pressure || 0) + n); fx.push('boiler:' + p.pressure);
-  if (p.pressure > boilerMax(p)) { if (p.brakeTurn) { p.pressure = boilerMax(p); fx.push('boiler:brake'); return; } boilerBoom(g, p, fx); }
+  if (p.pressure > boilerMax(p)) { if (p.autoRelease) { const n = p.pressure; p.pressure = 0; const o = other(g, p), pc = glCtx(g, 'efecto', 'caldera'); statRemove(g, o, [0, 0, 0, 0, 0, 0, n, 0], false, fx, true); glRestore(g, pc); fx.push('boiler:release:dmg:' + n); return; } // Válvula maestra
+    if (p.brakeTurn) { p.pressure = boilerMax(p); fx.push('boiler:brake'); return; } boilerBoom(g, p, fx); }
 }
 function boilerBoom(g, p, fx) {
   const o = other(g, p); p.pressure = 0; fx.push('boiler:boom');
@@ -686,7 +704,7 @@ function eagleEye(g, p, n, fx) {
    p.furyOn (el orco de campaña), p.fury 0-10: +1 por golpe que das (que haga daño) y +1 por golpe que recibís. A 10 entrás en
    Frenesí (p.frenzy = turnos tuyos que quedan, 2): tus ataques x2 y recibís +50 %. Al terminar, la Furia vuelve a 0.
    fx: 'fury:<n>' (cuánto quedó), 'frenzy:start', 'frenzy:end', 'fury:calm'. */
-export const FURY_MAX = 10, FURY_CFG = { frenzyTurns: 2, recv: 1.25, bloodLess: 0, healWin: 10, kingFury: 4, bloodBack: 1 };
+export const FURY_MAX = 10, FURY_CFG = { frenzyTurns: 2, recv: 1.25, bloodLess: 0, healWin: 6, kingFury: 4, bloodBack: 1 };
 // (S03 08/11, medido con camp_grind RAZA=orco): recv = cuánto más recibís en Frenesí (doc +50 %: el orco perdía 11 de vida por pelea contra 1,5 del humano);
 // healWin/bloodBack = Sangre caliente (al ganar curás 10 + la vida que pagaste con sangre); kingFury = Furia que suma Gorrak al actuar
 function furyAdd(g, p, n, fx) { if (!p.furyOn || n <= 0) return; if (p.frenzy > 0) return; p.fury = Math.min(FURY_MAX, (p.fury || 0) + n); fx.push('fury:' + p.fury); if (p.fury >= FURY_MAX) frenzyStart(g, p, fx); }
@@ -810,7 +828,8 @@ export function discardAuto(p, ids, hand = p.hand) {
 }
 export function discard(g, idxs, pick = null) {
   if (g.winner != null || g.pending || g.phase === 'sleeve') return null;
-  const list = [...new Set(idxs)].filter((i) => i >= 0 && i < g.players[g.turn].hand.length && !stuck(g.players[g.turn].hand[i])).slice(0, 3);
+  // (S03 10/11, pedido de S10) en la campaña también se pueden descartar maldiciones y estados, gastando la jugada (la maldición vuelve al mazo; el estado se va)
+  const list = [...new Set(idxs)].filter((i) => i >= 0 && i < g.players[g.turn].hand.length && (g.campaign || !stuck(g.players[g.turn].hand[i]))).slice(0, 3);
   if (!list.length) return null;
   const p = g.players[g.turn], cards = list.map((i) => p.hand[i]);
   let gain = null;
@@ -823,7 +842,7 @@ export function discard(g, idxs, pick = null) {
     } else k = lowestRes(p);
     gain = { res: k, n: OPT.discardGain, card };
   }
-  for (const i of list) { p.used.push(p.hand[i]); p.hand[i] = draw(g, p); } p.acted = true;
+  for (const i of list) { if (!(g.campaign && isState(p.hand[i]))) p.used.push(p.hand[i]); p.hand[i] = draw(g, p); } p.acted = true;
   if (gain) p[gain.res] += gain.n;
   return { type: 'discard', seat: g.turn, cards, ...(gain ? { gain } : {}) };
 }
@@ -869,7 +888,7 @@ function endTurnInner(g) {
   if (OPT.finalSiege && !g.campaign && g.turnNo > OPT.finalSiege) { const pc = glCtx(g, 'efecto', 'siege'); statRemove(g, p, [0, 0, 0, 0, 0, 0, 0, Math.floor((g.turnNo - OPT.finalSiege - 1) * OPT.siegeRamp) + 1], false, [], true); glRestore(g, pc); } // asedio final (opción)
   const wd = p.wounded || 0, wm = Math.min(OPT.woundedMin, 1e9), ub = wd & 1 ? wm : p.builder, ur = wd & 2 ? wm : p.recruit, um = wd & 4 ? wm : p.mage, all = ub + ur + um, healed = woundedList(p); // unidades heridas: este turno no producen
   if (!p.noProd) switch (p.statsType) {
-    case 0: { const f = g.campaign ? 0 : OPT.prodFloor; p.brick += Math.max(f, ub); p.weapon += Math.max(f, ur); p.crystal += Math.max(f, um); break; }
+    case 0: { const f = g.campaign ? 0 : OPT.prodFloor, pm = p.prodMul || 1; p.brick += Math.max(f, ub) * pm; p.weapon += Math.max(f, ur) * pm; p.crystal += Math.max(f, um) * pm; break; } // prodMul: Gran ejército (humano)
     case 1: p.brick += all; break;
     case 2: p.weapon += all; break;
     case 3: p.crystal += all; break;

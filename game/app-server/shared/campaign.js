@@ -34,7 +34,7 @@ export const MIDRUN_GOLD = 60;
 // Estado base del jugador al empezar la campaña (la aldea lo sube). castle/wall se pisan con lo que arrastra la run.
 // (S03 08/11) razas jugables de campaña (docs/campaña/razas.md §1): el humano juega como en el PvP; las demás, con su mecánica propia
 // humanPassive: el sostén del humano (recurso más bajo +1, muro +1 con menos de 10) — sin él el orco ganaba 0-2 % de las runs (el humano sin su pasiva, 2 %)
-export const CAMP_RACE = { enano: { noPassive: true }, orco: { noPassive: true, fury: true, humanPassive: true }, elfo: { noPassive: true, aim: true, humanPassive: true }, gnomo: { noPassive: true, boiler: true }, drow: { noPassive: true, pact: true, humanPassive: true } };
+export const CAMP_RACE = { enano: { noPassive: true, humanPassive: true }, orco: { noPassive: true, fury: true, humanPassive: true }, elfo: { noPassive: true, aim: true, humanPassive: true }, gnomo: { noPassive: true, boiler: true, humanPassive: true }, drow: { noPassive: true, pact: true, humanPassive: true } };
 export const PLAYER_START = { hand: 3, res: { builder: 1, recruit: 1, mage: 1, brick: 8, weapon: 8, crystal: 8, wall: 15, castle: 30 } };
 
 /* ---------- reglas de jefe / equipo (datos) → hooks del motor ---------- */
@@ -50,7 +50,7 @@ export const RULES = {
   // Muro que se regenera (Lor enano)
   regenWall: { text: (r) => `Su muro se regenera +${r.amount} por turno`, onTurnStart(g, me, r, info) { if (info.seat !== me) return; g.players[me].wall += r.amount; info.fx.push('rule:regenWall'); } },
   // Furia (Lor orco): cada ataque que recibe le suma +amount a su próximo ataque
-  enrage: { text: (r) => `Cada ataque tuyo le suma +${r.amount} a su próximo ataque`, onCardPlayed(g, me, r, info) { if (info.seat === me || !info.attack) return; const p = g.players[me]; p.rage = (p.rage || 0) + r.amount; info.fx.push('rule:enrage'); } },
+  enrage: { text: (r) => `Cada ${r.every > 1 ? r.every + ' ataques tuyos le suman' : 'ataque tuyo le suma'} +${r.amount} a su próximo ataque`, onCardPlayed(g, me, r, info) { if (info.seat === me || !info.attack) return; const p = g.players[me]; p.rs.enr = (p.rs.enr || 0) + 1; if (p.rs.enr % (r.every || 1)) return; p.rage = (p.rage || 0) + r.amount; info.fx.push('rule:enrage'); } },
   // Castillo bajo pega más (Gorrak)
   lowCastleBonus: { text: (r) => `Con castillo por debajo de ${r.below}, sus ataques hacen +${r.amount}`, onBattleStart(g, me, r) { g.players[me].lowCastleBonus = { below: r.below, amount: r.amount }; } },
   // Te mete una maldición/estado cada N turnos (Lor drow, cultistas)
@@ -143,7 +143,7 @@ export const RULES = {
   warCrown: { name: 'Corona de guerra', rar: 'jefe', plays: 1, hand: -1, text: () => '+1 jugada por turno, pero tu mano es 1 menos' },
   stolenThrone: { name: 'Trono robado', rar: 'jefe', text: () => 'Tu rey actúa cada 3 turnos, pero arranca desmayado 2 turnos en cada pelea', onBattleStart(g, me) { const p = g.players[me]; p.kingPeriod = 3; p.kingStun = Math.max(p.kingStun || 0, 2); } },
   demonChalice: { name: 'Cáliz del demonio', rar: 'jefe', text: () => '+5 de cada recurso al empezar cada pelea; cada pelea empieza con una Plaga de ratas en tu mano', onBattleStart(g, me) { const p = g.players[me]; p.brick += 5; p.weapon += 5; p.crystal += 5; E.giveCard(g, p, 190); } },
-  cartographer: { name: 'Mapa del cartógrafo', rar: 'jefe', seeMap: true, noCampfire: true, text: () => 'Ves todo el mapa y los enemigos de cada nodo; no hay fogatas en la run' },
+  cartographer: { name: 'Mapa del cartógrafo', rar: 'jefe', seeMap: true, text: () => 'Ves todo el mapa y los enemigos de cada nodo; las fogatas curan la mitad' },
   watcherEye: { name: 'Ojo del vigía', rar: 'jefe', hand: -1, text: () => 'Ves siempre la trampa y la jugada exacta del enemigo; tu mano es 1 menos', onBattleStart(g, me) { const p = g.players[me]; p.seeTraps = true; p.seeIntentAlways = true; const o = g.players[1 - me]; if (o.trap) o.trapSeen = true; } },
   /* ---- reyes poseídos y Grieta (Juan 27/10, diseño §7b) ---- */
   // Fase demoníaca: cuando el castillo baja a `at` (0,5 = la mitad de con lo que arrancó), el demonio lo posee: fx 'possessed' (UI: cinemática)
@@ -205,7 +205,7 @@ export const RULES = {
   // Esporas (Hongo): si lo matás, empezás la próxima pelea con Vulnerable (battleResult.carry)
   spores: { text: () => 'Al morir larga esporas: empezás la próxima pelea con Vulnerable' },
   // Maleable (Planta): cada golpe que recibe le da más muro que el anterior (start, start+1, …)
-  malleable: { text: (r) => `Cada golpe que recibe le da muro: ${r.start}, después ${r.start + 1}, ${r.start + 2}…`, onDamage(g, me, r, info) { const p = g.players[me]; if (info.seat !== me || !((info.wall || 0) + (info.castle || 0) > 0)) return; p.rs.mal = (p.rs.mal ?? r.start); p.wall += p.rs.mal; p.rs.mal++; info.fx.push('rule:malleable'); } },
+  malleable: { text: (r) => `Cada golpe que recibe le da muro: ${r.start}, después ${r.start + 1}, ${r.start + 2}…`, onDamage(g, me, r, info) { const p = g.players[me]; if (info.seat !== me || !((info.wall || 0) + (info.castle || 0) > 0)) return; p.rs.mal = (p.rs.mal ?? r.start); p.wall += p.rs.mal; if (p.capWall != null) p.wall = Math.min(p.wall, p.capWall); p.rs.mal = Math.min(r.max || 99, p.rs.mal + 1); info.fx.push('rule:malleable'); } },
   // Cura de castillo por turno (Ent)
   regenCastle: { text: (r) => `Se cura ${r.amount} por turno`, onBattleStart(g, me) { g.players[me].rs.c0 = g.players[me].castle; }, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.castle = Math.min(p.rs.c0 || p.castle, p.castle + r.amount); info.fx.push('rule:regenCastle'); } },
   // Intangible un turno sí y uno no (Serpiente): el turno que juega "Se sumerge", hasta su próximo turno, cada golpe le hace 1
@@ -286,6 +286,10 @@ export const GRIETA_ALLIES = {
   drow: { k: 'enemyDrain', amount: 8 },            // Vaelith: el rival empieza con −8 de cada recurso
 };
 export const MYTHIC_OF = { humano: 180, enano: 181, elfo: 182, drow: 183, gnomo: 184, orco: 185 };
+// (S03 10/11, pedido de S10) Manga de campaña: cada rey liberado (aldea.seals) deja su As ("Ataque del rey") disponible para las runs
+// siguientes. Va 1 en la manga, como en el PvP: el del rey elegido (pick) si está liberado; si no, el del último liberado.
+export const sleeveOptions = (seals = []) => seals.filter((r) => MYTHIC_OF[r]).map((r) => ({ race: r, id: MYTHIC_OF[r] }));
+export function sleeveFor(seals = [], pick = null) { const o = sleeveOptions(seals); return (o.find((x) => x.race === pick) || o.at(-1))?.id ?? null; }
 // grietaSetup(tuRaza, razasLiberadas) → { rules: ayudas (sumalas a player.rules), mythics: ids de "Ataque del rey" de los OTROS reyes liberados
 // (sumalas al mazo; al jugarlas entra el rey invitado: fx 'guestKing:<raza>', y tu rey no se desmaya) }
 export function grietaSetup(race, freed = []) {
@@ -406,8 +410,9 @@ ENEMIES.orco = {
       deck: deckOf({ 198: 2, 8: 3, 6: 3, 2: 3, 36: 2, 34: 1 }), rules: [{ k: 'execute' }] },
     bug({ name: 'Bruto', tier: 3, kind: 'campamento', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 45), capWall: 0, pattern: [313, 314, 314, 315], rules: [{ k: 'buildRage', amount: 3 }] }),
   ],
-  lor: { name: 'Lor Ugrak, el Rabioso', tier: 4, kind: 'castillo', race: 'orco', king: false, ai: 'normal', hand: 3, plays: 1.5, res: U(1, 2, 1, 6, 10, 4, 15, 60),
-    deck: deckOf({ 112: 2, 114: 2, 115: 2, 117: 2, 145: 2, 119: 2, 8: 2, 6: 2, 36: 1 }), rules: [{ k: 'enrage', amount: 1 }] },
+  // (S03 10/11) era la pared de todas las razas: castillo 60 → 50, muro 15 → 10, furia cada 2 ataques tuyos (era cada uno), sin la pasiva orca del PvP
+  lor: { name: 'Lor Ugrak, el Rabioso', tier: 4, kind: 'castillo', race: 'orco', king: false, ai: 'normal', hand: 3, plays: 1.5, noPassive: true, res: U(1, 2, 1, 6, 10, 4, 10, 38),
+    deck: deckOf({ 112: 2, 114: 2, 115: 2, 117: 2, 145: 2, 119: 2, 8: 2, 6: 2, 36: 1 }), rules: [{ k: 'enrage', amount: 1, every: 2 }] },
   rey: { name: 'Rey Gorrak', tier: 5, kind: 'castillo', race: 'orco', king: true, ai: 'dificil', hand: 4, plays: 1.5, res: U(2, 2, 2, 6, 8, 6, 15, 48),
     deck: deckOf({ 112: 2, 114: 2, 117: 2, 145: 2, 147: 1, 119: 2, 178: 1, 8: 2, 6: 2, 36: 1 }), rules: [{ k: 'lowCastleBonus', below: 25, amount: 2 }, possessRule('orco', 0.5)] },
 };
@@ -422,7 +427,7 @@ ENEMIES.elfo = {
   t2: [
     { name: 'Guarnición del claro', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 2, res: U(1, 3, 2, 4, 6, 4, 10, 35),
       deck: deckOf({ 197: 4, 2: 3, 6: 2, 19: 1, 36: 2 }), rules: [{ k: 'costUp', res: 5, amount: 1 }] },
-    bug({ name: 'Planta carnívora', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 50), capWall: 40, pattern: [352], rules: [{ k: 'malleable', start: 1 }] }),
+    bug({ name: 'Planta carnívora', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 50), capWall: 20, pattern: [352], rules: [{ k: 'malleable', start: 1, max: 4 }] }), // (S03 10/11) tope de muro 40 → 20 y cada golpe le da hasta 4
     bug({ name: 'Ent corrompido', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 60), capWall: 0, pattern: [354, 354, 353], rules: [{ k: 'regenCastle', amount: 2 }] }), // (S03 09/11) 65/3 por turno → 60/2: era la T2 elfa que más mataba
     bug({ name: 'Ilusionista', tier: 2, kind: 'campamento', atk: 0, res: U(1, 1, 2, 0, 0, 6, 5, 45), capWall: 10, pattern: [359, 355, 359], rules: [] }),
   ],
@@ -538,7 +543,9 @@ export function makeBattle(player, enemy, { starter = 0, rnd = Math.random } = {
   g.enemy = { name: enemy.name, tier: enemy.tier, ai: enemy.ai, kind: enemy.kind || 'castillo', rules: er.map((r) => ({ ...r, text: ruleText(r) })) };
   for (const id of player.startStates || []) E.giveCard(g, g.players[0], id); // estados que trae de la pelea anterior (esporas → Vulnerable)
   if (enemy.pattern || enemy.weights) E.bugNext(g, g.players[1]); /* la primera acción queda elegida (la intención y la jugada coinciden) */
+  if (player.sleeve != null) g.players[0].sleeve = player.sleeve; // (S03 10/11) manga de campaña: el As de un rey liberado (se juega una vez por pelea, pagando +1 de cada recurso)
   if (CAMP_RACE[g.players[0].race]?.noPassive) g.players[0].noPassive = true;
+  if (enemy.noPassive) g.players[1].noPassive = true;
   if (CAMP_RACE[g.players[0].race]?.noKing) g.players[0].noKing = true;
   if (CAMP_RACE[g.players[0].race]?.humanPassive) g.players[0].basePassive = true; // sostén de la campaña: recurso más bajo +1 y muro +1 (como el humano)
   if (CAMP_RACE[g.players[0].race]?.aim) g.players[0].aimOn = true;
@@ -560,8 +567,10 @@ export function aiIntent(g, level = 'normal', rnd = Math.random) {
   if (g.winner != null) return null;
   const enemy = 1 - g.turn, c = cloneForIntent(g); c._rnd = rnd;
   if (c.pending) c.pending = null; c.inExtra = false; c.extraTurn = 0; c.rapidPending = false; c.playsLeft = 0; // el jugador pasa (aunque le queden jugadas)
-  E.endTurn(c); if (c.winner != null || c.turn !== enemy) return null;
+  const pv = c.players[1 - enemy], pre = [pv.castle, pv.wall], tev = E.endTurn(c); if (c.winner != null || c.turn !== enemy) return null;
   const p = c.players[enemy], o = c.players[1 - enemy];
+  // (S03 10/11, pedido de S10) el rey que actúa al empezar su turno también se anuncia (Thorgrim/Fizzwick sacaban 20 en dos turnos sin aviso)
+  const kingHit = tev?.king ? { dmg: Math.max(0, pre[0] - o.castle) + Math.max(0, pre[1] - o.wall), race: p.race } : null;
   E.aiMaybeCycle(c);
   const m = E.aiChooseLevel(c, level, rnd);
   const it = { seat: enemy, turnNo: c.turnNo, type: m.type, card: null, name: null, kind: 'other', dmg: 0, direct: 0, wall: 0, castle: 0, text: 'Descarta' };
@@ -586,6 +595,7 @@ export function aiIntent(g, level = 'normal', rnd = Math.random) {
     if (sp.pages || sp.hits > 1) { const n = sp.pages ? Math.max(1, p.pageHits || 1) : sp.hits; it.text = `Ataca ${n} × ${it.dmg}`; it.dmg *= n; }
     if (sp.give && it.kind === 'attack') it.text += ` y te mete ${NAMES[sp.give][0]}`; }
   { const pl = g.players[g.turn]; if (pl.hand.includes(195)) { if (pl.seeIntentAlways) {} else if (pl.seeIntent > 0) pl.seeIntent--; else it.hidden = true; } } // estado Humo: la UI no la muestra (la IA igual la cumple); Espía de la corte / Ojo del vigía la dejan ver
+  if (kingHit) { it.king = kingHit; it.text = (kingHit.dmg > 0 ? `¡Su rey actúa (${kingHit.dmg} de daño)! ` : '¡Su rey actúa! ') + it.text; }
   g.intent = it;
   return it;
 }
@@ -608,7 +618,7 @@ export function battleResult(g, seat = 0) {
   const curses = (g.players[1 - seat]?.rs?.rcs || '').split(',').filter(Boolean).map(Number); /* Masa de telaraña / retorcida: maldiciones que quedan en el mazo de la run (S10: addCurse) */
   const fled = !!g.fled, carry = g.winner === seat && (g.rules?.[1 - seat] || []).some((r) => r.k === 'spores') ? [205] : []; // esporas: la próxima pelea empezás con Vulnerable (player.startStates) // el enemigo huyó (Saqueadores): ganás, pero el cliente no da oro de recompensa
   const heal = g.winner === seat && !p.noHeal ? (p.furyOn ? Math.round((p.bloodPaid || 0) * E.FURY_CFG.bloodBack) + E.FURY_CFG.healWin : 0) + (p.pactOn ? E.VENOM_CFG.healWin : 0) : 0; /* (S03 08/11) orco, Sangre caliente: al ganar recuperás la vida que pagaste con cartas de sangre */
-  return { win: g.winner === seat, fled, noGold: fled, carry, curses, castle: Math.min(p.maxCastle || 999, p.castle + heal), ...(heal ? { healed: heal } : {}), wall: p.wall, gold, goldGained: gold - (p.goldStart || 0), grown, works: (p.works || []).map((w) => w.id), burned: (p.burned || []).slice(), kills: g.winner === seat ? 1 : 0 };
+  return { win: g.winner === seat, fled, noGold: fled, carry, curses, ...(p.hpMaxUp ? { hpMaxUp: p.hpMaxUp } : {}), castle: Math.min(p.maxCastle || 999, p.castle + heal), ...(heal ? { healed: heal } : {}), wall: p.wall, gold, goldGained: gold - (p.goldStart || 0), grown, works: (p.works || []).map((w) => w.id), burned: (p.burned || []).slice(), kills: g.winner === seat ? 1 : 0 };
 }
 // Para S10: la versión + de una carta (fogata, eventos, dorada) y sus datos de recompensa
 export { CAMP_INFO, CAMP_IDS, PLUS, plusOf, baseOf, isPlus, hasPlus } from './campaign-cards.js';

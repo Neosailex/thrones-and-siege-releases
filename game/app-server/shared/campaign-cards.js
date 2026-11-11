@@ -392,11 +392,11 @@ def(437, 'Tambor de guerra', 'orco', 'comun', { cost: c(0, 2), kw: ['guardada'],
 /* ---------- Elfo de campaña: FLECHAS y PUNTERÍA (S03 08/11, docs/campaña/razas.md §1-2). Reemplazan a las 10 élficas viejas (240-249) ----------
    Flecha (440): costo 0, daño 2 + Puntería, Se quema, no gasta jugada; las que no tirás se pierden al terminar el turno. Ojo de águila N: mirás
    las N de arriba del mazo y descartás las que no sirven. La fórmula del daño de la Flecha (también la usa la vista del motor): */
-export const ARROW_CFG = { base: 3, aimMax: 99 }; // (S03 08/11) daño base de la Flecha: 3 (el doc decía 2: con 2 el elfo ganaba 3 % de las runs)
-export function arrowDmg(p) { let d = ARROW_CFG.base + Math.min(ARROW_CFG.aimMax, p.aim || 0) + (p.aimTurn || 0) + (p.arrowPlusTurn || 0) + (p.arrowPlus || 0) + (p.nextArrowPlus || 0); if (p.nextArrowX2) d *= 2; if (p.arrowMul) d *= p.arrowMul; return d; }
+export const ARROW_CFG = { base: 4, aimMax: 99 }; // (S03 08/11) daño base de la Flecha: 3 (el doc decía 2: con 2 el elfo ganaba 3 % de las runs); (S03 10/11) 4: el elfo tardaba 22,5 runs en vencer al Demonio (media 20)
+export function arrowDmg(p) { let d = ARROW_CFG.base + Math.min(ARROW_CFG.aimMax, p.aim || 0) + (p.aimTurn || 0) + (p.arrowPlusTurn || 0) + (p.arrowPlus || 0) + (p.nextArrowPlus || 0); if (p.moonSilver) d += p.mage || 0; if (p.nextArrowX2) d *= 2; if (p.arrowMul) d *= p.arrowMul; return d; }
 const ARROW = 440;
-def(440, 'Flecha', 'elfo', 'comun', { o: o({ dmg: 3 }), kw: ['quema'], text: 'Daño 3 + tu Puntería. No gasta jugada', plusText: 'Daño 3 + tu Puntería. No gasta jugada',
-  camp: { can: (p) => !(p.arrowCap && (p.arrowsTurn || 0) >= p.arrowCap), dyn: (x) => { x.op[6] = arrowDmg(x.p); }, after: (x) => { x.p.arrowsTurn = (x.p.arrowsTurn || 0) + 1; x.p.nextArrowX2 = false; x.p.nextArrowPlus = 0; if (x.g) x.g.freePlay = true; } } });
+def(440, 'Flecha', 'elfo', 'comun', { o: o({ dmg: 4 }), kw: ['quema'], text: 'Daño 4 + tu Puntería. No gasta jugada', plusText: 'Daño 4 + tu Puntería. No gasta jugada',
+  camp: { can: (p) => !(p.arrowCap && (p.arrowsTurn || 0) >= p.arrowCap), dyn: (x) => { const d = arrowDmg(x.p); if (x.p.arrowPierce) { x.op[6] = 0; x.op[7] = d; } else x.op[6] = d; }, after: (x) => { x.p.arrowsTurn = (x.p.arrowsTurn || 0) + 1; if (x.p.arrowWallTurn) x.p.wall += x.p.arrowWallTurn; if (x.p.splinters && x.p.arrowsTurn === 1) x.arrows(1); x.p.nextArrowX2 = false; x.p.nextArrowPlus = 0; if (x.g) x.g.freePlay = true; } } });
 def(441, 'Arco corto', 'elfo', 'comun', { cost: c(0, 0, 2), text: 'Te da 3 Flechas', plusText: 'Te da 4 Flechas', camp: { after: (x) => x.arrows(x.plus ? 4 : 3) } });
 def(442, 'Ojo de águila', 'elfo', 'comun', { cost: c(0, 0, 1), text: 'Ojo de águila 3; robás 1', plusText: 'Ojo de águila 4; robás 1', camp: { after: (x) => { x.eye(x.plus ? 4 : 3); x.draw(1); } } });
 def(443, 'Puntería', 'elfo', 'comun', { cost: c(0, 0, 2), text: 'Puntería +1 (la pelea) y te da 1 Flecha', plusText: 'Puntería +1 (la pelea) y te da 2 Flechas', camp: { after: (x) => { x.p.aim = (x.p.aim || 0) + 1; x.arrows(x.plus ? 2 : 1); } } });
@@ -460,7 +460,7 @@ def(477, 'Freno de mano', 'gnomo', 'comun', { cost: c(2), kw: ['guardada'], text
 
 /* ---------- Drow de campaña: VENENO y PACTOS (S03 08/11, docs/campaña/razas.md §1-2). Reemplazan a los 10 drows viejos (260-269) ----------
    Veneno en el rival: al empezar SU turno pierde esa cantidad de castillo (ignora el muro) y baja 1. Pacto: para el drow las maldiciones
-   y estados se juegan (costo 0): se queman y dan +3 de veneno. */
+   y estados se juegan (costo 0): se queman y dan +2 de veneno (VENOM_CFG.pact). */
 const isDark = (h) => ['curse', 'state'].includes(CAMPAIGN_CARDS[h]?.[5]?.k); const curseInHand = (p) => p.hand.some(isDark);
 def(480, 'Daga envenenada', 'drow', 'comun', { cost: c(0, 2), o: o({ dmg: 3 }), text: 'Daño 3; veneno 3', plusText: 'Daño 4; veneno 4', plus: { o: o({ dmg: 4 }) }, camp: { after: (x) => x.venom(x.plus ? 4 : 3) } });
 def(481, 'Pacto oscuro', 'drow', 'comun', { cost: c(0, 0, 1), text: 'Te metés un Miedo; veneno 4', plusText: 'Te metés un Miedo; veneno 6', camp: { after: (x) => { x.give(x.p, 192); x.venom(x.plus ? 6 : 4); } } });
@@ -489,13 +489,112 @@ def(495, 'Hoja negra', 'drow', 'comun', { cost: c(0, 3), o: o({ dmg: 5 }), text:
   camp: { dyn: (x) => { if ((x.o?.venom || 0) > 0) x.op[6] += x.plus ? 4 : 3; } } });
 def(496, 'Ritual prohibido', 'drow', 'comun', { cost: c(0, 0, 1), text: 'Te metés un Pánico; robás 2', plusText: 'Te metés un Pánico; robás 3', camp: { after: (x) => { x.give(x.p, 194); x.draw(x.plus ? 3 : 2); } } });
 def(497, 'Velo', 'drow', 'comun', { cost: c(0, 0, 2), kw: ['guardada'], text: 'El próximo golpe enemigo te hace 5 menos', plusText: 'El próximo golpe enemigo te hace 7 menos', camp: { after: (x) => { x.p.veil = Math.max(x.p.veil || 0, x.plus ? 7 : 5); } } });
+
+/* ---------- Cartas nuevas de docs/campaña/sinergias.md (S03 10/11): 9 por raza y el humano rehecho ---------- */
+// Enano (500-508)
+def(500, 'Golpe de escudo', 'enano', 'comun', { cost: c(3), text: 'Daño igual a la mitad de tu muro', plusText: 'Daño igual a tu muro x0,75', camp: { dyn: (x) => { x.op[6] = Math.floor(x.p.wall * (x.plus ? 0.75 : 0.5)); } } });
+def(501, 'Muralla tallada', 'enano', 'comun', { cost: c(3), s: s({ wall: 4 }), text: 'Muro +4; +1 por cada runa de Piedra', plusText: 'Muro +6; +2 por cada runa de Piedra', plus: { s: s({ wall: 6 }) },
+  camp: { dyn: (x) => { x.s[6] += (x.p.runes || []).filter((t) => t === 'piedra').length * (x.plus ? 2 : 1); } } });
+def(502, 'Chispazo', 'enano', 'comun', { cost: c(0, 2), o: o({ dmg: 2 }), text: 'Grabá una runa de Fuego; daño 2', plusText: 'Grabá una runa de Fuego; daño 4', plus: { o: o({ dmg: 4 }) }, camp: { after: (x) => x.rune('fuego') } });
+def(503, 'Martillo y yunque', 'enano', 'poco', { cost: c(0, 0, 1), rapid: true, text: 'Rompé tu runa más vieja (x3); robás 1', plusText: 'Rompé tu runa más vieja (x3); robás 2',
+  camp: { can: (p) => !!(p.runes || []).length && !p.noBreak, after: (x) => { x.breakOld(); x.draw(x.plus ? 2 : 1); } } });
+def(504, 'Ladrillo rúnico', 'enano', 'comun', { cost: c(0, 0, 1), s: s({ b: 3 }), text: 'Ladrillos +3; si tenés una runa de Oro, +3 más', plusText: 'Ladrillos +5; si tenés una runa de Oro, +3 más', plus: { s: s({ b: 5 }) },
+  camp: { dyn: (x) => { if ((x.p.runes || []).includes('oro')) x.s[1] += 3; } } });
+def(505, 'Maestro cantero', 'enano', 'poco', { cost: c(5), kw: ['obra'], text: 'Obra: al empezar tu turno, muro +1 por cada constructor', plusText: 'Obra: al empezar tu turno, muro +1 por cada constructor', plus: { cost: c(4) },
+  camp: { work: { value: 6, tick: (x) => { x.p.wall += (x.p.builder || 0) * Math.round(x.mult); } } } });
+def(506, 'Cuarta ranura', 'enano', 'rara', { cost: c(0, 0, 4), kw: ['quema'], text: 'Lo que queda de la pelea, tenés una ranura de runa más', plusText: 'Lo que queda de la pelea, tenés una ranura de runa más; grabá una Piedra',
+  camp: { after: (x) => { x.p.runeSlots = (x.p.runeSlots || 3) + 1; if (x.plus) x.rune('piedra'); } } });
+def(507, 'Montaña viva', 'enano', 'rara', { cost: c(6), kw: ['quema'], text: 'Lo que queda de la pelea, al empezar tu turno daño igual a tu muro ÷ 4', plusText: 'Lo que queda de la pelea, al empezar tu turno daño igual a tu muro ÷ 4', plus: { cost: c(5) },
+  camp: { after: (x) => { x.p.livingMountain = true; } } });
+def(508, 'Tesoro de la montaña', 'enano', 'rara', { cost: c(0, 0, 4), kw: ['quema'], text: 'Lo que queda de la pelea, las runas de Oro al romperse dan además +5 de cada recurso; grabá una de Oro', plusText: 'Lo que queda de la pelea, las runas de Oro al romperse dan además +5 de cada recurso; grabá dos de Oro',
+  camp: { after: (x) => { x.p.oroTreasure = true; x.rune('oro', x.plus ? 2 : 1); } } });
+// Orco (510-518)
+def(510, 'Festín', 'orco', 'comun', { cost: c(0, 3), o: o({ dmg: 6 }), text: 'Daño 6; si el rival tiene menos muro que vos, curás 4', plusText: 'Daño 8; si el rival tiene menos muro que vos, curás 5', plus: { o: o({ dmg: 8 }) },
+  camp: { after: (x) => { if (x.o.wall < x.p.wall && !x.p.noHeal) x.p.castle += x.plus ? 5 : 4; } } });
+def(511, 'Sangre por sangre', 'orco', 'poco', { cost: c(0, 2), text: 'Curás la mitad del daño que hiciste este turno (máx. 12)', plusText: 'Curás la mitad del daño que hiciste este turno (máx. 16)',
+  camp: { can: (p) => (p.dmgTurn || 0) > 0, after: (x) => { if (!x.p.noHeal) x.p.castle += Math.min(x.plus ? 16 : 12, Math.floor((x.p.dmgTurn || 0) / 2)); } } });
+def(512, 'Trofeo de guerra', 'orco', 'rara', { cost: c(0, 5), o: o({ dmg: 10 }), text: 'Daño 10; si deja al rival sin muro o sin castillo, +3 de vida máxima en la run', plusText: 'Daño 13; si deja al rival sin muro o sin castillo, +3 de vida máxima en la run', plus: { o: o({ dmg: 13 }) },
+  camp: { after: (x) => { if ((x.o.wall <= 0 || x.o.castle <= 0) && !x.p.rs?.trophy) { x.p.hpMaxUp = (x.p.hpMaxUp || 0) + 3; x.fx.push('camp:trophy'); } } } });
+def(513, 'Carga de la horda', 'orco', 'comun', { cost: c(0, 3), text: 'Daño 2 por cada soldado', plusText: 'Daño 3 por cada soldado', camp: { dyn: (x) => { x.op[6] = (x.plus ? 3 : 2) * (x.p.recruit || 0); } } });
+def(514, 'Leva orca', 'orco', 'comun', { cost: c(0, 3), s: s({ so: 1 }), text: 'Soldados +1 (esta pelea); Furia +1', plusText: 'Soldados +1 (esta pelea); Furia +2', camp: { after: (x) => x.fury(x.plus ? 2 : 1) } });
+def(515, 'Forja de guerra', 'orco', 'poco', { cost: c(2), text: 'Armas +2 por cada soldado', plusText: 'Armas +3 por cada soldado', camp: { dyn: (x) => { x.s[3] += (x.plus ? 3 : 2) * (x.p.recruit || 0); } } });
+def(516, 'Aullido', 'orco', 'comun', { cost: c(0, 1), rapid: true, text: 'Furia +2; robás 1', plusText: 'Furia +3; robás 1', camp: { after: (x) => { x.fury(x.plus ? 3 : 2); x.draw(1); } } });
+def(517, 'Ira contenida', 'orco', 'poco', { cost: c(0, 2), kw: ['guardada'], text: 'Si la tenés en la mano al empezar tu turno, Furia +2. Jugada: Furia +3', plusText: 'Si la tenés en la mano al empezar tu turno, Furia +2. Jugada: Furia +5', camp: { after: (x) => x.fury(x.plus ? 5 : 3) } });
+def(518, 'Señor de la guerra', 'orco', 'rara', { cost: c(0, 6), kw: ['quema'], text: 'Lo que queda de la pelea, cada soldado suma +1 al daño de tus ataques', plusText: 'Lo que queda de la pelea, cada soldado suma +1 al daño de tus ataques; soldados +1', plus: { s: s({ so: 1 }) },
+  camp: { after: (x) => { x.p.warlord = true; } } });
+// Elfo (520-528)
+def(520, 'Carcaj lleno', 'elfo', 'comun', { cost: c(0, 0, 2), text: 'Te da 2 Flechas; si ya tenés 2 o más en la mano, 1 más', plusText: 'Te da 3 Flechas; si ya tenés 2 o más en la mano, 1 más',
+  camp: { after: (x) => { const had = x.p.hand.filter((h) => h === ARROW || h === ARROW + PLUS).length; x.arrows((x.plus ? 3 : 2) + (had >= 2 ? 1 : 0)); } } });
+def(521, 'Sombra del bosque', 'elfo', 'poco', { cost: c(0, 0, 2), text: 'Lo que queda del turno, cada Flecha que tirás te da muro +1; te da 1 Flecha', plusText: 'Lo que queda del turno, cada Flecha que tirás te da muro +2; te da 1 Flecha',
+  camp: { after: (x) => { x.p.arrowWallTurn = x.plus ? 2 : 1; x.arrows(1); } } });
+def(522, 'Mil astillas', 'elfo', 'rara', { cost: c(0, 0, 5), kw: ['quema'], text: 'Lo que queda de la pelea, la primera Flecha de cada turno se copia a tu mano', plusText: 'Lo que queda de la pelea, la primera Flecha de cada turno se copia a tu mano; te da 2 Flechas',
+  camp: { after: (x) => { x.p.splinters = true; if (x.plus) x.arrows(2); } } });
+def(523, 'Respirar', 'elfo', 'comun', { cost: c(0, 0, 1), rapid: true, text: 'Puntería +1; Ojo de águila 1', plusText: 'Puntería +1; Ojo de águila 3', camp: { after: (x) => { x.p.aim = (x.p.aim || 0) + 1; x.eye(x.plus ? 3 : 1); } } });
+def(524, 'Tiro al corazón', 'elfo', 'poco', { cost: c(0, 0, 3), kw: ['quema'], text: 'Daño igual a tu Puntería x3', plusText: 'Daño igual a tu Puntería x4', camp: { dyn: (x) => { x.op[6] = ((x.p.aim || 0) + (x.p.aimTurn || 0)) * (x.plus ? 4 : 3); } } });
+def(525, 'Ojo infalible', 'elfo', 'rara', { cost: c(0, 0, 5), kw: ['quema'], text: 'Lo que queda de la pelea, tus Flechas ignoran el muro', plusText: 'Lo que queda de la pelea, tus Flechas ignoran el muro; te da 2 Flechas', camp: { after: (x) => { x.p.arrowPierce = true; if (x.plus) x.arrows(2); } } });
+def(526, 'Flecha de cristal', 'elfo', 'comun', { cost: c(1), s: s({ cr: 3 }), text: 'Cristales +3; te da 1 Flecha', plusText: 'Cristales +5; te da 1 Flecha', plus: { s: s({ cr: 5 }) }, camp: { after: (x) => x.arrows(1) } });
+def(527, 'Arquero arcano', 'elfo', 'poco', { cost: c(0, 0, 5), kw: ['obra'], text: 'Obra: cada 2 turnos, 1 Flecha por cada mago', plusText: 'Obra: cada 2 turnos, 1 Flecha por cada mago', plus: { cost: c(0, 0, 4) },
+  camp: { work: { value: 6, tick: (x) => { x.p.rs = { ...(x.p.rs || {}), arcT: ((x.p.rs || {}).arcT || 0) + 1 }; if (x.p.rs.arcT % 2 === 0) x.arrows(Math.min(4, (x.p.mage || 0) * Math.round(x.mult))); } } } });
+def(528, 'Luna de plata', 'elfo', 'rara', { cost: c(0, 0, 5), kw: ['quema'], text: 'Lo que queda de la pelea, tus Flechas hacen +1 por cada mago', plusText: 'Lo que queda de la pelea, tus Flechas hacen +1 por cada mago; magos +1', plus: { s: s({ ma: 1 }) }, camp: { after: (x) => { x.p.moonSilver = true; } } });
+// Gnomo (530-538)
+def(530, 'Recalibrar', 'gnomo', 'comun', { cost: c(1), rapid: true, text: 'Volvé a tu mano el último Invento que jugaste', plusText: 'Volvé a tu mano el último Invento que jugaste; presión −1',
+  camp: { pressure: 0, can: (p) => p.lastInvent != null && p.used.includes(p.lastInvent), after: (x) => { const i = x.p.used.lastIndexOf(x.p.lastInvent); if (i >= 0) x.p.hand.push(x.p.used.splice(i, 1)[0]); if (x.plus) x.press(-1); } } });
+def(531, 'Cinta transportadora', 'gnomo', 'poco', { cost: c(2), text: 'Robás tu Invento más fuerte del mazo', plusText: 'Robás tu Invento más fuerte del mazo y robás 1',
+  camp: { pressure: 0, after: (x) => { const L = [...x.p.deck, ...x.p.used].filter((h) => CAMPAIGN_CARDS[h]?.[5]?.camp?.invent); const best = L.sort((a, b) => ((x.p.inv || {})[b % PLUS] || 0) - ((x.p.inv || {})[a % PLUS] || 0))[0]; if (best != null) { for (const Q of [x.p.deck, x.p.used]) { const i = Q.indexOf(best); if (i >= 0) { Q.splice(i, 1); break; } } x.p.hand.push(best); } if (x.plus) x.draw(1); } } });
+def(532, 'Fábrica', 'gnomo', 'rara', { cost: c(6), kw: ['quema'], text: 'Lo que queda de la pelea, al empezar tu turno vuelve a tu mano el Invento más fuerte de tu descarte', plusText: 'Lo que queda de la pelea, al empezar tu turno vuelve a tu mano el Invento más fuerte de tu descarte', plus: { cost: c(5) },
+  camp: { pressure: 0, after: (x) => { x.p.factory = true; } } });
+def(533, 'Calentar', 'gnomo', 'comun', { cost: c(2), s: s({ wall: 3 }), text: 'Presión +2; muro +3', plusText: 'Presión +2; muro +6', plus: { s: s({ wall: 6 }) }, camp: { pressure: 2 } });
+def(534, 'Vapor a presión', 'gnomo', 'poco', { cost: c(2), text: 'Si la presión está a 2 del máximo o menos, daño 12', plusText: 'Si la presión está a 3 del máximo o menos, daño 15',
+  camp: { pressure: 0, dyn: (x) => { const mx = 10 + (x.p.boilerMaxMod || 0); if ((x.p.pressure || 0) >= mx - (x.plus ? 3 : 2)) x.op[6] = x.plus ? 15 : 12; } } });
+def(535, 'Válvula maestra', 'gnomo', 'rara', { cost: c(4), kw: ['quema'], text: 'Lo que queda de la pelea, cuando la caldera explotaría se libera sola: daño igual a la presión', plusText: 'Lo que queda de la pelea, cuando la caldera explotaría se libera sola: daño igual a la presión; presión +3',
+  camp: { pressure: 0, after: (x) => { x.p.autoRelease = true; if (x.plus) x.press(3); } } });
+def(536, 'Cristal de energía', 'gnomo', 'comun', { cost: c(1), s: s({ cr: 3 }), text: 'Cristales +3; presión +1', plusText: 'Cristales +5; presión +1', plus: { s: s({ cr: 5 }) } });
+def(537, 'Aprendiz de mago', 'gnomo', 'poco', { cost: c(0, 0, 4), s: s({ ma: 1 }), text: 'Magos +1 (esta pelea); tus Inventos +1', plusText: 'Magos +1 (esta pelea); tus Inventos +2', camp: { after: (x) => { x.p.invBonus = (x.p.invBonus || 0) + (x.plus ? 2 : 1); } } });
+def(538, 'Gran taller', 'gnomo', 'rara', { cost: c(6), kw: ['quema'], text: 'Lo que queda de la pelea, tus Obras actúan dos veces al empezar tu turno', plusText: 'Lo que queda de la pelea, tus Obras actúan dos veces al empezar tu turno', plus: { cost: c(5) },
+  camp: { pressure: 0, after: (x) => { x.p.workDouble = true; } } });
+// Drow (540-548)
+def(540, 'Gota a gota', 'drow', 'comun', { cost: c(0, 1), rapid: true, text: 'Veneno 2', plusText: 'Veneno 3', camp: { after: (x) => x.venom(x.plus ? 3 : 2) } });
+def(541, 'Ponzoña lenta', 'drow', 'poco', { cost: c(0, 0, 4), kw: ['quema'], text: 'Lo que queda de la pelea, el veneno del rival no baja al actuar', plusText: 'Lo que queda de la pelea, el veneno del rival no baja al actuar; veneno 3', camp: { after: (x) => { x.p.venomNoDecay = true; if (x.plus) x.venom(3); } } });
+def(542, 'Plaga reina', 'drow', 'rara', { cost: c(0, 0, 5), kw: ['quema'], text: 'Lo que queda de la pelea, al empezar tu turno veneno +1 por cada maldición de tu mazo', plusText: 'Lo que queda de la pelea, al empezar tu turno veneno +1 por cada maldición de tu mazo; te metés un Miedo',
+  camp: { after: (x) => { x.p.plagueQueen = true; if (x.plus) x.give(x.p, 192); } } });
+def(543, 'Pacto cumplido', 'drow', 'comun', { cost: c(0, 0, 1), text: 'Jugás una maldición de tu mano (su pacto); robás 1', plusText: 'Jugás una maldición de tu mano (su pacto); robás 2',
+  camp: { can: (p) => p.hand.some((h) => ['curse', 'state'].includes(CAMPAIGN_CARDS[h]?.[5]?.k)), after: (x) => { x.pact(); x.draw(x.plus ? 2 : 1); } } });
+def(544, 'Sello del pacto', 'drow', 'poco', { cost: c(0, 0, 3), kw: ['quema'], text: 'Lo que queda de la pelea, las maldiciones no ocupan lugar en tu mano', plusText: 'Lo que queda de la pelea, las maldiciones no ocupan lugar en tu mano; robás 1', camp: { after: (x) => { x.p.sealPact = true; if (x.plus) x.draw(1); } } });
+def(545, 'Señora de los pactos', 'drow', 'rara', { cost: c(0, 0, 5), kw: ['quema'], text: 'Lo que queda de la pelea, cada maldición que robás te da muro +3 y le pone 2 de veneno al rival', plusText: 'Lo que queda de la pelea, cada maldición que robás te da muro +3 y le pone 2 de veneno al rival', plus: { cost: c(0, 0, 4) },
+  camp: { after: (x) => { x.p.ladyPact = true; } } });
+def(546, 'Manto de sombra', 'drow', 'comun', { cost: c(0, 0, 2), s: s({ wall: 3 }), text: 'Muro +3; el próximo golpe enemigo te hace 4 menos', plusText: 'Muro +5; el próximo golpe enemigo te hace 4 menos', plus: { s: s({ wall: 5 }) }, camp: { after: (x) => { x.p.veil = Math.max(x.p.veil || 0, 4); } } });
+def(547, 'Telaraña de sombras', 'drow', 'poco', { cost: c(0, 0, 2), text: 'Muro igual al veneno del rival', plusText: 'Muro igual al veneno del rival +3', camp: { dyn: (x) => { x.s[6] = (x.o?.venom || 0) + (x.plus ? 3 : 0); } } });
+def(548, 'Reina de la noche', 'drow', 'rara', { cost: c(0, 0, 5), kw: ['quema'], text: 'Lo que queda de la pelea, mientras tengas Velo tus cartas de veneno dan el doble; Velo 4', plusText: 'Lo que queda de la pelea, mientras tengas Velo tus cartas de veneno dan el doble; Velo 6',
+  camp: { after: (x) => { x.p.queenNight = true; x.p.veil = Math.max(x.p.veil || 0, x.plus ? 6 : 4); } } });
+// Humano rehecho: Ejército, Corona y Estandartes (550-566)
+def(550, 'Recluta', 'humano', 'comun', { cost: c(0, 3), s: s({ so: 1 }), text: 'Soldados +1 (esta pelea)', plusText: 'Soldados +1 (esta pelea); armas +2', plus: { s: s({ so: 1, w: 2 }) } });
+def(551, 'Cuadrilla', 'humano', 'comun', { cost: c(3), s: s({ bu: 1, wall: 2 }), text: 'Constructores +1 (esta pelea); muro +2', plusText: 'Constructores +1 (esta pelea); muro +4', plus: { s: s({ bu: 1, wall: 4 }) } });
+def(552, 'Aprendices', 'humano', 'comun', { cost: c(0, 0, 3), s: s({ ma: 1, cr: 2 }), text: 'Magos +1 (esta pelea); cristales +2', plusText: 'Magos +1 (esta pelea); cristales +4', plus: { s: s({ ma: 1, cr: 4 }) } });
+def(553, 'Carga de caballería', 'humano', 'comun', { cost: c(0, 4), text: 'Daño 2 por cada soldado', plusText: 'Daño 3 por cada soldado', camp: { dyn: (x) => { x.op[6] = (x.plus ? 3 : 2) * (x.p.recruit || 0); } } });
+def(554, 'Murallas del pueblo', 'humano', 'comun', { cost: c(3), text: 'Muro +2 por cada constructor', plusText: 'Muro +3 por cada constructor', camp: { dyn: (x) => { x.s[6] = (x.plus ? 3 : 2) * (x.p.builder || 0); } } });
+def(555, 'Instrucción', 'humano', 'poco', { cost: c(0, 0, 1), rapid: true, text: 'Tus unidades producen una vez más ahora', plusText: 'Tus unidades producen una vez más ahora; robás 1',
+  camp: { after: (x) => { x.p.brick += x.p.builder || 0; x.p.weapon += x.p.recruit || 0; x.p.crystal += x.p.mage || 0; if (x.plus) x.draw(1); } } });
+def(556, 'Gran ejército', 'humano', 'rara', { cost: c(4, 4, 4), kw: ['quema'], text: 'Lo que queda de la pelea, tus unidades producen el doble', plusText: 'Lo que queda de la pelea, tus unidades producen el doble', plus: { cost: c(3, 3, 3) }, camp: { after: (x) => { x.p.prodMul = 2; } } });
+def(557, 'Cofre de guerra', 'humano', 'comun', { cost: c(0, 0, 2), text: '+12 de oro (de la run); robás 1', plusText: '+18 de oro (de la run); robás 1', camp: { after: (x) => { x.p.gold = (x.p.gold || 0) + (x.plus ? 18 : 12); x.draw(1); } } });
+def(558, 'Paga de la tropa', 'humano', 'poco', { o: o({ dmg: 6 }), s: s({ so: 2 }), text: 'Pagás 20 de oro: soldados +2 (esta pelea) y daño 6', plusText: 'Pagás 15 de oro: soldados +2 (esta pelea) y daño 8', plus: { o: o({ dmg: 8 }), camp: { gold: 15 } }, camp: { gold: 20 } });
+def(559, 'Rescate del rey', 'humano', 'poco', { o: o({ dmg: 16 }), text: 'Pagás 30 de oro: daño 16', plusText: 'Pagás 25 de oro: daño 20', plus: { o: o({ dmg: 20 }), camp: { gold: 25 } }, camp: { gold: 30 } });
+def(560, 'Tesoro real', 'humano', 'rara', { cost: c(0, 0, 5), kw: ['obra'], text: 'Obra: +4 de oro al empezar tu turno; si tenés 100 o más, además daño 5', plusText: 'Obra: +6 de oro al empezar tu turno; si tenés 100 o más, además daño 5',
+  camp: { work: { value: 7, tick: (x) => { x.p.gold = (x.p.gold || 0) + (x.plus ? 6 : 4) * Math.round(x.mult); if (x.p.gold >= 100) x.hurt(5); } } } });
+def(561, 'Orden de ataque', 'humano', 'comun', { cost: c(0, 1), rapid: true, text: 'Tu próximo ataque este turno hace +4', plusText: 'Tu próximo ataque este turno hace +6', camp: { after: (x) => { x.p.nextAtk = (x.p.nextAtk || 0) + (x.plus ? 6 : 4); } } });
+def(562, 'Formación', 'humano', 'comun', { cost: c(3), s: s({ wall: 5 }), text: 'Muro +5; tu próxima carta de muro da +3', plusText: 'Muro +7; tu próxima carta de muro da +3', plus: { s: s({ wall: 7 }) }, camp: { after: (x) => { x.p.nextWall = 3; } } });
+def(563, 'Toque de clarín', 'humano', 'poco', { cost: c(0, 2), text: 'Robás 2; tu próximo ataque +2', plusText: 'Robás 2; tu próximo ataque +4', camp: { after: (x) => { x.draw(2); x.p.nextAtk = (x.p.nextAtk || 0) + (x.plus ? 4 : 2); } } });
+def(564, 'Estandarte alzado', 'humano', 'poco', { cost: c(0, 3), kw: ['guardada'], text: 'Mientras esté en tu mano, tus ataques +2. Jugada: muro +4', plusText: 'Mientras esté en tu mano, tus ataques +2. Jugada: muro +7', s: s({ wall: 4 }), plus: { s: s({ wall: 7 }) } });
+def(565, 'Rey al frente', 'humano', 'rara', { cost: c(0, 0, 6), kw: ['quema'], text: 'Lo que queda de la pelea, la primera carta de cada turno se juega dos veces', plusText: 'Lo que queda de la pelea, la primera carta de cada turno se juega dos veces', plus: { cost: c(0, 0, 5) }, camp: { after: (x) => { x.p.kingFront = true; } } });
+def(566, 'Ley marcial', 'humano', 'rara', { cost: c(0, 4), kw: ['quema'], text: 'Lo que queda de la pelea, cada carta de unidades que jugás hace daño 3', plusText: 'Lo que queda de la pelea, cada carta de unidades que jugás hace daño 3; soldados +1', plus: { s: s({ so: 1 }) }, camp: { after: (x) => { x.p.martialLaw = true; } } });
 for (let id = 220; id <= 229; id++) CAMP_INFO[id].retired = true;
 for (let id = 260; id <= 269; id++) CAMP_INFO[id].retired = true; // los drows viejos: los reemplazan los de Veneno
 for (let id = 250; id <= 259; id++) CAMP_INFO[id].retired = true; // los gnomos viejos: los reemplazan los de Caldera
 for (let id = 240; id <= 249; id++) CAMP_INFO[id].retired = true; // las élficas viejas: las reemplazan las de Flechas
 for (let id = 230; id <= 239; id++) CAMP_INFO[id].retired = true; // las orcas viejas: las reemplazan las de Furia // (S03 08/11) las enanas viejas: las reemplazan las de runas (siguen andando en mazos guardados; no salen más de botín)
 export const CAMP_IDS = Object.keys(CAMP_INFO).map(Number);
-export const hasPlus = (id) => !!CAMP_INFO[id];
-export const plusOf = (id) => (CAMP_INFO[id] ? id + PLUS : id);
+// (S03 10/11, pedido de S10) las básicas del mazo inicial también tienen versión + (los vectores están en cards.js: BASIC_PLUS)
+export const BASIC_PLUS = new Set([2, 6, 8, 30, 34, 36, 37, 54, 60, 62, 63, 64]);
+export const hasPlus = (id) => !!CAMP_INFO[id] || BASIC_PLUS.has(id);
+export const plusOf = (id) => (hasPlus(id) ? id + PLUS : id);
 export const baseOf = (id) => (id > PLUS ? id - PLUS : id);
 export const isPlus = (id) => id > PLUS;
