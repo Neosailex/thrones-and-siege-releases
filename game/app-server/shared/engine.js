@@ -243,6 +243,8 @@ export function costOf(p, id, sleeve = false) {
   if (lutoOn(p)) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] += 2;
   if (p.halfId === id) for (const i of [1, 3, 5, 8]) c[i] = 0; // invento del rey gnomo: gratis ese turno
   if (p.costMod) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] = Math.max(1, c[i] + (p.costMod[i] || 0)); // campaña: regla de jefe o equipo que encarece/abarata
+  if (p.inqRes && c[p.inqRes] > 0) c[p.inqRes] *= 2; // (S03 11/11) Heraldo Inquisidor: el recurso prohibido cuesta el doble
+  if (p.chains?.includes(id) && !ka) { let m = 1; for (const i of [3, 5]) if (c[i] > c[m]) m = i; c[m] += p.chainCost || 3; } // Forjador de Cadenas: soltar la carta encadenada cuesta 3 más
   if (p.hand?.includes(194)) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] += 1; // estado Pánico: todo cuesta 1 más
   if (p.hand?.includes(CONFUSE_ID)) for (const i of [1, 3, 5]) if (c[i] > 0) c[i] = Math.max(0, c[i] + ((id * 7 + (p.confSeed || 0)) % 5) - 2); // estado Confusión: cada carta cuesta de −2 a +2 al azar (fijo en el turno)
   if (sleeve && OPT.sleeveTier) { // Juan 27/10: recargo de la manga por rareza: mítica +2 de cada recurso, legendaria +1, rara +1 solo en el recurso más caro ("+0,5"), común 0
@@ -643,6 +645,8 @@ function campTurnExtras(g, p, o, log) {
    +2 de veneno al rival (VENOM_CFG.pact, +p.pactBonus; x2 con p.pactMul / el 1.er pacto con p.firstPactX2). fx: 'venom:<n>', 'venom:tick:<daño>', 'pact:<id>'. */
 // (S03 08/11, camp_grind RAZA=drow) healWin: al ganar una pelea el drow cura 4 (sin eso, y sin el sostén del humano, ganaba 1-2 % de las runs)
 export const VENOM_CFG = { pact: 2, decay: 1, healWin: 0 };
+// (S03 11/11) daño de una regla de jefe (Heraldos): pasa por el motor (secuaz, Velo, Vulnerable, hooks onDamage) y define el ganador
+export function campHit(g, q, dmg, direct, fx = []) { if (g.winner != null || !(dmg > 0 || direct > 0)) return; statRemove(g, q, [0, 0, 0, 0, 0, 0, Math.max(0, dmg || 0), Math.max(0, direct || 0)], false, fx, true); if (q.castle <= 0 && g.winner == null) g.winner = 1 - g.players.indexOf(q); }
 export function campVenom(q, n) { if (n > 0) q.venom = (q.venom || 0) + n; }
 function venomAdd(q, n, fx) { if (!q || n <= 0) return; q.venom = (q.venom || 0) + n; fx.push('venom:' + q.venom); }
 function venomTick(g, q, fx, decay = true) {

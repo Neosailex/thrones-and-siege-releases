@@ -4,6 +4,7 @@ import * as E from '../shared/engine.js';
 import { validateDeck, PRESETS, RACES, STYLE_DECKS, padDeck, CARDS } from '../shared/cards.js';
 import * as DB from './db.mjs';
 import { ENG } from './version.mjs';
+import { joinError, deckProblem } from './codigos.mjs';
 import { cleanName, ipOf, checkJoin, takeSeat, freeSeat } from './abuso.mjs';
 
 // Estado público mínimo (las manos son secretas: cada jugador recibe su propia vista por mensaje).
@@ -15,11 +16,14 @@ const newCode = () => Array.from({ length: CODE_LEN }, () => CODE_ABC[Math.floor
 const clean = cleanName; // nombres válidos (abuso.mjs)
 const REMATCH_WAIT_MS = 10 * 60000; // sala de amigos: después del final se espera la revancha hasta 10 min
 // raza, mazo (validado en el servidor) y carta de la manga (tiene que estar en el mazo) que manda el cliente
+// Si el mazo no vale, se juega con el equilibrado de esa raza y se avisa con un código (deckIssue) para el cliente.
 function pickDeck(o = {}) {
   const race = RACES[o.race] ? o.race : null;
-  const deck = padDeck(Array.isArray(o.deck) && !validateDeck(o.deck, race) ? o.deck.map(Number) : (race ? STYLE_DECKS[race].equilibrado.deck : PRESETS.equilibrado.deck));
+  const issue = Array.isArray(o.deck) ? deckProblem(o.deck.map(Number), race) : null;
+  const ok = Array.isArray(o.deck) && !issue && !validateDeck(o.deck, race);
+  const deck = padDeck(ok ? o.deck.map(Number) : (race ? STYLE_DECKS[race].equilibrado.deck : PRESETS.equilibrado.deck));
   const sleeve = Number.isInteger(o.sleeve) && CARDS[o.sleeve] && deck[o.sleeve - 1] > 0 ? o.sleeve : null;
-  return { race, deck, sleeve };
+  return { race, deck, sleeve, deckIssue: Array.isArray(o.deck) && !ok ? issue || { code: 'deck.invalid' } : null };
 }
 
 export class AsedioRoom extends Room {
@@ -28,7 +32,7 @@ export class AsedioRoom extends Room {
 
   // antes de reservar el lugar: límites por IP (anti-abuso.mjs)
   onAuth(client, _o, ctx) {
-    const ip = ipOf(ctx), why = checkJoin(ip); if (why) throw new Error(why);
+    const ip = ipOf(ctx), why = checkJoin(ip); if (why) throw joinError('net.tooMany', why);
     return { ip };
   }
 
@@ -68,6 +72,7 @@ export class AsedioRoom extends Room {
     this.onMessage('rematchDeck', (c, m) => {
       const seat = this.seatOf(c); if (this.state.phase !== 'rematch' || seat < 0) return;
       this.seats[seat].newDeck = pickDeck(m || {}); this.broadcast('rematchReady', { seat });
+      if (this.seats[seat].newDeck.deckIssue) c.send('notice', { ...this.seats[seat].newDeck.deckIssue, replaced: true });
       if (this.seats.every((x) => x.newDeck)) {
         for (const x of this.seats) { Object.assign(x, x.newDeck); x.newDeck = null; x.again = false; }
         this.closeTimer?.clear(); this.finished = false; this.plays = [{}, {}]; this.start();
@@ -85,12 +90,13 @@ export class AsedioRoom extends Room {
   }
 
   onJoin(client, o = {}) {
-    if (o.eng !== ENG) throw new Error('VERSION'); // cliente con otro motor (app o página vieja): el juego le pide actualizar
+    if (o.eng !== ENG) throw joinError('net.version', 'VERSION'); // cliente con otro motor (app o página vieja): el juego le pide actualizar
     const name = clean(o.name);
     const p = DB.auth(o.pid, o.ptoken, name);
-    if (!p) throw new Error('Identidad inválida');
-    if (this.seats.some((s) => s.pid === p.id)) throw new Error('Ya estás en esta sala');
-    const { race, deck, sleeve } = pickDeck(o);
+    if (!p) throw joinError('auth.identity');
+    if (this.seats.some((s) => s.pid === p.id)) throw joinError('room.alreadyIn');
+    const { race, deck, sleeve, deckIssue } = pickDeck(o);
+    if (deckIssue) client.send('notice', { ...deckIssue, replaced: true }); // mazo que no vale: se juega con el equilibrado
     this.ips ??= {}; this.ips[client.sessionId] = client.auth?.ip || '?'; takeSeat(this.ips[client.sessionId]); // por sessionId: sigue igual tras reconectar
     this.seats.push({ sessionId: client.sessionId, pid: p.id, pub: p.pub || DB.pubOf(p.id), name, rating: p.rating, connected: true, deck, race, sleeve });
     if (this.seats.length === 2) this.start();
@@ -144,7 +150,7 @@ export class AsedioRoom extends Room {
     const g = this.g; if (!g || g.winner != null) return;
     if (g.phase === 'sleeve') { // no eligieron el As a tiempo: la CPU les guarda la mítica (o su mejor ataque)
       const evs = []; for (let s = 0; s < 2; s++) if (!g.players[s].sleeveDone) { const ev = E.aiChooseSleeve(g, s); if (ev) evs.push(ev); }
-      this.broadcast('info', { text: 'Se acabó el tiempo para elegir el As: la CPU eligió por quien faltaba.' });
+      this.broadcast('info', { code: 'room.aceTimeout', text: 'Se acabó el tiempo para elegir el As: la CPU eligió por quien faltaba.' }); // text: solo para clientes viejos
       return this.sync(evs);
     }
     const seat = g.pending?.seat ?? g.turn, evs = [];
@@ -158,7 +164,7 @@ export class AsedioRoom extends Room {
       if (g.pending?.type === 'sabotage') evs.push(E.sabotage(g, E.aiSabotageSmart(g)));
       if (g.pending?.type === 'spy') evs.push(E.spyDone(g));
     }
-    this.broadcast('info', { text: `${this.seats[seat]?.name ?? ''} se quedó sin tiempo: jugó la CPU por él.` });
+    this.broadcast('info', { code: 'room.turnTimeout', params: { seat, name: this.seats[seat]?.name ?? '' }, text: `${this.seats[seat]?.name || 'Jugador'} se quedó sin tiempo: jugó la CPU por él.` }); // text: solo para clientes viejos
     this.advance(evs);
   }
 

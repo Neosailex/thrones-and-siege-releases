@@ -5,7 +5,7 @@
 // ---- nombres ----
 // SUB: se buscan dentro del nombre (sin espacios, acentos ni símbolos; 0→o, 1→i, 3→e, 4→a, 5→s, 7→t, @→a).
 // PAL: solo como palabra entera (son cortas y aparecen dentro de palabras normales).
-// Agregar palabras acá (también de otros idiomas cuando entren los mercados de Asia).
+// Nombre vacío = sin nombre: los clientes muestran player.default ('Jugador', 'Player'…). Agregar palabras acá (también de otros idiomas cuando entren los mercados de Asia).
 const SUB = ['hijodeputa', 'hdp', 'pelotud', 'conchatu', 'conchesumadre', 'mogolic', 'nigger', 'nigga', 'faggot', 'retard',
   'hitler', 'kkk', 'motherfuck', 'fuck', 'cunt', 'whore', 'pedof', 'pedophil', 'violad', 'putit', 'caralh', 'viad',
   'thronesandsiege', 'moderador', 'administrador'];
@@ -16,9 +16,9 @@ export function cleanName(s) {
   const n = String(s ?? '').normalize('NFKC')
     .replace(INVIS, '') // invisibles, control y HTML
     .replace(/\s+/g, ' ').trim().slice(0, 16).trim();
-  if ([...n].filter((c) => /[\p{L}\p{N}]/u.test(c)).length < 2) return 'Jugador'; // al menos 2 letras o números
+  if ([...n].filter((c) => /[\p{L}\p{N}]/u.test(c)).length < 2) return ''; // al menos 2 letras o números (sin nombre: cada cliente muestra 'Jugador' en su idioma, código player.default)
   const f = flat(n), joined = f.replace(/[^a-z0-9]/g, ''), words = f.split(/[^a-z0-9]+/).filter(Boolean);
-  if (SUB.some((w) => joined.includes(w)) || words.some((w) => PAL.includes(w))) return 'Jugador';
+  if (SUB.some((w) => joined.includes(w)) || words.some((w) => PAL.includes(w))) return '';
   return n;
 }
 

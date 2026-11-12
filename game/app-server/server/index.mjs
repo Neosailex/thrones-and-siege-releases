@@ -12,6 +12,7 @@ import { ENG } from './version.mjs';
 import * as DIARIO from './diario.mjs';
 import * as NUBE from './nube.mjs';
 import * as CUENTA from './cuenta.mjs';
+import { apiCodes } from './codigos.mjs';
 
 // Último instalador de Windows (Releases del repo público). Se consulta a GitHub como mucho 1 vez cada 15 min;
 // si falla, se manda a la página de la última versión.
@@ -45,6 +46,7 @@ const cacheHeaders = (r, file, st) => {
 const serve = (dir) => express.static(dir, { lastModified: false, setHeaders: cacheHeaders });
 // la app de escritorio (origen app://) y otros sitios leen el ranking y los jugadores online
 app.use(['/api', '/stats'], (q, r, next) => { r.setHeader('Access-Control-Allow-Origin', '*'); if (q.method === 'OPTIONS') { r.setHeader('Access-Control-Allow-Methods', 'GET, POST'); r.setHeader('Access-Control-Allow-Headers', 'content-type'); return r.sendStatus(204); } next(); });
+app.use('/api', apiCodes); // errores con código para cada idioma ({ error, err }) — codigos.mjs
 app.use('/api/nube', express.json({ limit: '600kb' })); // progreso en la nube: el guardado completo puede pesar
 app.use('/api', express.json({ limit: '4kb' }));
 app.get('/', (q, r, next) => { if (q.query.server || process.env.NO_LANDING) return next(); r.setHeader('Cache-Control', 'no-cache'); r.sendFile(LANDING, (e) => e && next()); });

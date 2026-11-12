@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.78.0 · 2026-11-12
+
+- Campaña: regiones de 5 pisos con Heraldos, reyes y élites más blandos, mazo inicial más barato, botín con más raras, menos oro de jefes, sellos legibles y arreglos en celular. Base de idiomas (el juego ya está preparado; el inglés sale cuando esté revisado). Arreglo del descarte después de arrastrar.
+
 ## 0.77.0 · 2026-11-11
 
 - Campaña (mega arreglo): pantalla antes de la run con la Anciana o un rey liberado; Coronas del mundo y Crónica; botín de tu raza; Maestría de raza; el As de los reyes liberados en la manga; el rey avisa su golpe grande; 62 cartas nuevas de sinergias; básicas con versión +; Ugrak más blando y razas parejas; arreglos (Cartógrafo, Planta carnívora, Descartar); arte nuevo y animaciones de las cartas de campaña.

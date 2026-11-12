@@ -27,6 +27,7 @@ export const CAMPAIGN_CARDS = {
   // Estados nuevos (S03 01/11, enemigos.md): Red (sin ataques un turno) y Herida (basura hasta fin de pelea)
   202: ['Red', 'Estado: mientras esté en tu mano no podés jugar ataques; desaparece al terminar tu turno', Z, Z, Z, { k: 'state' }],
   203: ['Herida', 'Maldición de pelea: no se juega ni se descarta; ocupa un lugar en tu mano y se va al terminar la pelea', Z, Z, Z, { k: 'curse', battle: true }],
+  207: ['Escombros', 'Maldición de pelea: no se juega ni se descarta; ocupa un lugar en tu mano y se va al terminar la pelea', Z, Z, Z, { k: 'curse', battle: true }], // (S03 11/11) el derrumbe del Desenterrador
   205: ['Vulnerable', 'Estado: mientras esté en tu mano recibís 50 % más de daño; desaparece al terminar tu turno', Z, Z, Z, { k: 'state' }],
   206: ['Confusión', 'Estado: mientras esté en tu mano tus cartas cuestan de 2 menos a 2 más, al azar; desaparece al terminar tu turno', Z, Z, Z, { k: 'state' }],
   204: ['Quemadura', 'Estado: si te queda en la mano al terminar tu turno, perdés 3 de castillo; desaparece al terminar tu turno', Z, Z, Z, { k: 'state' }],

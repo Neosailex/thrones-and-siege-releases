@@ -127,7 +127,7 @@ export function desconectar({ pid, ptoken }) {
 // "Borrar mi cuenta": se borra todo del servidor
 export function borrar({ pid, ptoken, confirmo }) {
   if (!st()) return { error: 'sin base' };
-  if (confirmo !== 'BORRAR') return { error: 'confirmación' };
+  if (confirmo !== 'DELETE_ACCOUNT' && confirmo !== 'BORRAR') return { error: 'confirmación' }; // código fijo (la palabra que escribe el jugador la revisa el cliente en su idioma); BORRAR = clientes viejos
   const me = DB.auth(pid, ptoken, null); if (!me) return { error: 'identidad' };
   DB.deletePlayer(me.id); return { ok: true };
 }

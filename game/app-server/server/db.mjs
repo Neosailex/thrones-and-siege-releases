@@ -56,6 +56,8 @@ if (db) {
   add('matches', 'season', 'TEXT'); add('matches', 'race_a', 'TEXT'); add('matches', 'race_b', 'TEXT');
   add('matches', 'sra', 'INTEGER'); add('matches', 'srb', 'INTEGER'); add('matches', 'sda', 'INTEGER'); add('matches', 'sdb', 'INTEGER');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS players_pub ON players (pub)');
+  // 11/11: el nombre por defecto ya no es una palabra en castellano sino vacío (player.default en cada idioma)
+  db.exec("UPDATE players SET name = '' WHERE name IN ('Jugador', 'Anónimo')");
   db.exec('CREATE INDEX IF NOT EXISTS matches_a ON matches (a, ts)'); db.exec('CREATE INDEX IF NOT EXISTS matches_b ON matches (b, ts)');
   const fill = db.prepare('UPDATE players SET pub = ? WHERE id = ?');
   for (const r of db.prepare('SELECT id FROM players WHERE pub IS NULL').all()) fill.run(pubOf(r.id), r.id);
@@ -111,7 +113,7 @@ export function auth(id, token, name) {
   if (!db) return MEMAPI.auth(id, token, name);
   if (typeof id !== 'string' || typeof token !== 'string' || id.length < 8 || id.length > 64 || token.length < 16) return null;
   const p = q.get.get(id);
-  if (!p) { q.ins.run(id, hash(token), name || 'Jugador', now(), now(), pubOf(id)); return q.get.get(id); }
+  if (!p) { q.ins.run(id, hash(token), name || '', now(), now(), pubOf(id)); return q.get.get(id); }
   if (p.token_hash !== hash(token)) {
     // otro dispositivo vinculado con un código (nube.mjs): cada uno tiene su llave
     const t = q.tok.get(hash(token)); if (!t || t.player !== id) return null;
@@ -198,7 +200,7 @@ const qr = !db ? null : {
   pair: db.prepare('SELECT COUNT(*) AS n FROM reports WHERE reporter = ? AND target = ? AND ts > ?'),
   ins: db.prepare('INSERT INTO reports (reporter, target, reason, note, ts) VALUES (?, ?, ?, ?, ?)'),
   distinct: db.prepare('SELECT COUNT(DISTINCT reporter) AS n FROM reports WHERE target = ? AND reason = ? AND ts > ?'),
-  lockName: db.prepare("UPDATE players SET name = 'Jugador', name_locked = 1, updated = ? WHERE id = ?"),
+  lockName: db.prepare("UPDATE players SET name = '', name_locked = 1, updated = ? WHERE id = ?"), // sin nombre (cada cliente lo muestra en su idioma)
   pending: db.prepare(`SELECT r.target, p.pub, p.name, p.hidden, p.name_locked, p.games, COUNT(*) AS n, COUNT(DISTINCT r.reporter) AS reporters,
     GROUP_CONCAT(r.reason) AS reasons, GROUP_CONCAT(COALESCE(r.note, ''), ' | ') AS notes, MAX(r.ts) AS last
     FROM reports r JOIN players p ON p.id = r.target WHERE r.done = 0 GROUP BY r.target ORDER BY reporters DESC, last DESC LIMIT 100`),
