@@ -452,7 +452,8 @@ for (const [k, x] of Object.entries(TPL)) Object.assign(RULES[k], x);
 // minion: 8 variantes (cura / ataque / furia al caer), sacadas del texto; el nombre del secuaz pasa por la traducción de textos de campaña
 RULES.minion.tpl = variants('minion', [['base', []], ['h', ['heal']], ['a', ['atk']], ['ha', ['heal', 'atk']], ['r', ['rage']], ['hr', ['heal', 'rage']], ['ar', ['atk', 'rage']], ['har', ['heal', 'atk', 'rage']]]);
 RULES.minion.vars = (r) => ({ v: (r.heal ? 'h' : '') + (r.atk ? 'a' : '') + (r.rage ? 'r' : '') || 'base', name: strI(r.name || 'torre') });
-export const ruleText = (r) => (RULES[r.k] ? tr('rules', r.k, r, () => RULES[r.k].text(r)) : r.k);
+// (S06 13/11) la traducción recibe también los datos calculados (vars: porcentajes, nombre de carta, variante v), no solo r
+export const ruleText = (r) => (RULES[r.k] ? tr('rules', r.k, { ...r, ...(RULES[r.k].vars ? RULES[r.k].vars(r) : {}) }, () => RULES[r.k].text(r)) : r.k);
 export function ruleHooks(rules = []) {
   const h = {};
   for (const name of ['onBattleStart', 'onTurnStart', 'onCardPlayed', 'onDamage', 'onKingAct']) {

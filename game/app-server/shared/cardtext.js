@@ -33,6 +33,7 @@ export const CARD_WORDS = {
   es: { now: 'ahora', base: 'Base', bonus: 'con tus bonus queda', direct: 'directo al castillo', and: 'y', gnome: 'Pasiva gnoma: contra un muro de 25 o más', race: { orco: 'orco', enano: 'enano', drow: 'drow', elfo: 'elfo', gnomo: 'gnomo', humano: 'humano' }, drums: 'Tambores', effects: 'efectos' },
   en: { now: 'now', base: 'Base', bonus: 'with your bonuses it is', direct: 'direct to the castle', and: 'and', gnome: 'Gnome passive: against a wall of 25 or more', race: { orco: 'orc', enano: 'dwarf', drow: 'drow', elfo: 'elf', gnomo: 'gnome', humano: 'human' }, drums: 'Drums', effects: 'effects' },
   'zh-Hans': { now: '现在', base: '基础', bonus: '加上你的加成后为', direct: '直接对城堡', and: '和', gnome: '侏儒被动：对抗 25 或以上的城墙', race: { orco: '兽人', enano: '矮人', drow: '黑暗精灵', elfo: '精灵', gnomo: '侏儒', humano: '人类' }, drums: '战鼓', effects: '效果' },   // S06 12/11
+  ru: { now: 'сейчас', base: 'База', bonus: 'с твоими бонусами', direct: 'прямо по замку', and: 'и', gnome: 'Пассивка гномов: против стены 25 и выше', race: { orco: 'орк', enano: 'дворф', drow: 'дроу', elfo: 'эльф', gnomo: 'гном', humano: 'человек' }, drums: 'Барабаны', effects: 'эффекты' },   // S06 13/11
 };
 const wordsOf = (opt) => ({ ...CARD_WORDS.es, ...(CARD_WORDS[opt?.lang] || {}), ...(opt?.words || {}) });
 

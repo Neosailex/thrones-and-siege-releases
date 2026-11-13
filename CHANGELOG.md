@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.80.0 · 2026-11-13
+
+- Idiomas: aparece el selector con banderas arriba a la derecha (y en Opciones). Ya se puede jugar en English, 简体中文, Español (Latinoamérica) y Español (España); el juego elige solo el idioma de tu compu. Campaña traducida completa. Arreglos de campaña.
+
 ## 0.79.0 · 2026-11-13
 
 - Campaña: el oro de peleas y cofres baja a un tercio, curva de regiones más pareja, Fortaleza de caballeros y Cazadora más blandas, arreglos de la segunda campaña jugada (agrandar carta, mazo pasado del tope, Corrupción 0 %, candado de edificios). Idiomas por dentro: inglés y español al día, chino simplificado completo (todavía no se ven en el juego).

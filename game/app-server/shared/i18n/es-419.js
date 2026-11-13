@@ -1,5 +1,4 @@
-// Español (Latinoamérica) (S06): cartas con tuteo en vez de voseo (plantillas con las marcas de S03). Solo las que cambian;
-// las demás salen de la base castellana.
+// Español (Latinoamérica) (S06): tuteo en vez de voseo. Solo lo que cambia; lo demás sale de la base castellana.
 export const cards = {
   5: ["Espía","Miras la mano rival y quemas la próxima carta de su mazo (sale del juego)"],
   9: ["Bandido de caminos","Robas hasta {thief} ladrillos, armas y cristales"],
@@ -60,8 +59,8 @@ export const cards = {
   403: ["Grabar oro","Graba una runa de Oro"],
   404: ["Pararrayos","Graba una runa de Tormenta"],
   406: ["Romper","Rompe tu runa más vieja (su efecto x3)"],
-  407: ["Picar la veta","+4 de tu recurso más bajo; si tienes una ranura libre, graba una runa de Oro"],
-  409: ["Cincelado","Graba 2 runas iguales a la última que tengas (si no tienes, Piedra)"],
+  407: ["Picar la veta","+4 de tu recurso más bajo; si tienes una ranura libre, grabá una runa de Oro"],
+  409: ["Cincelado","Grabá 2 runas iguales a la última que tengas (si no tienes, Piedra)"],
   410: ["Yunque ancestral","Obra: al empezar cada turno tuyo, graba una runa de Piedra"],
   411: ["Derrumbe rúnico","Rompe todas tus runas de Piedra: daño 4 por cada una"],
   412: ["Puño de basalto","Daño {o6}; si tienes runas, rompe la más vieja y daño +6"],
@@ -95,7 +94,7 @@ export const cards = {
   504: ["Ladrillo rúnico","Ladrillos +{s1}; si tienes una runa de Oro, +3 más"],
   506: ["Cuarta ranura","Lo que queda de la pelea, tienes una ranura de runa más. Se quema"],
   508: ["Tesoro de la montaña","Lo que queda de la pelea, las runas de Oro al romperse dan además +5 de cada recurso; graba una de Oro. Se quema"],
-  510: ["Festín","Daño {o6}; si el rival tiene menos muro que tú, curas 4"],
+  510: ["Festín","Daño {o6}; si el rival tiene menos muro que tú, curás 4"],
   511: ["Sangre por sangre","Curas la mitad del daño que hiciste este turno (máx. 12)"],
   516: ["Aullido","⚡ Rápida. Furia +2; robas 1"],
   517: ["Ira contenida","Si la tienes en la mano al empezar tu turno, Furia +2. Jugada: Furia +3. Guardada"],
@@ -140,8 +139,8 @@ export const cards = {
   1403: ["Grabar oro+","Graba una runa de Oro"],
   1404: ["Pararrayos+","Graba una runa de Tormenta"],
   1406: ["Romper+","Rompe tu runa más vieja (su efecto x3)"],
-  1407: ["Picar la veta+","+6 de tu recurso más bajo; si tienes una ranura libre, graba una runa de Oro"],
-  1409: ["Cincelado+","Graba 2 runas iguales a la última que tengas (si no tienes, Piedra)"],
+  1407: ["Picar la veta+","+6 de tu recurso más bajo; si tienes una ranura libre, grabá una runa de Oro"],
+  1409: ["Cincelado+","Grabá 2 runas iguales a la última que tengas (si no tienes, Piedra)"],
   1410: ["Yunque ancestral+","Obra: al empezar cada turno tuyo, graba una runa de Piedra"],
   1411: ["Derrumbe rúnico+","Rompe todas tus runas de Piedra: daño 6 por cada una"],
   1412: ["Puño de basalto+","Daño {o6}; si tienes runas, rompe la más vieja y daño +8"],
@@ -157,7 +156,7 @@ export const cards = {
   1461: ["Prototipo+","Invento: daño {o6} (+2 cada vez que lo juegas en la pelea)"],
   1463: ["Pistón+","Invento: muro +{s6} (+2 cada vez que lo juegas en la pelea)"],
   1465: ["Tuerca loca+","Invento: +2 de tu recurso más bajo (+1 cada vez que lo juegas en la pelea)"],
-  1466: ["Liberar+","Liberas la caldera ahora: daño igual a la presión x1,5; robas 1"],
+  1466: ["Liberar+","Liberás la caldera ahora: daño igual a la presión x1,5; robas 1"],
   1467: ["Manómetro+","Robas 2 (no suma presión)"],
   1472: ["Gran invento+","Invento: daño {o6} (+4 cada vez que lo juegas en la pelea)"],
   1474: ["Planos maestros+","Tus Inventos +2. Crece: empiezas cada pelea con los Inventos +1 por cada pelea que termines con ella en el mazo (hasta +3)"],
@@ -173,9 +172,9 @@ export const cards = {
   1502: ["Chispazo+","Graba una runa de Fuego; daño {o6}"],
   1503: ["Martillo y yunque+","⚡ Rápida. Rompe tu runa más vieja (x3); robas 2"],
   1504: ["Ladrillo rúnico+","Ladrillos +{s1}; si tienes una runa de Oro, +3 más"],
-  1506: ["Cuarta ranura+","Lo que queda de la pelea, tienes una ranura de runa más; graba una Piedra. Se quema"],
+  1506: ["Cuarta ranura+","Lo que queda de la pelea, tienes una ranura de runa más; grabá una Piedra. Se quema"],
   1508: ["Tesoro de la montaña+","Lo que queda de la pelea, las runas de Oro al romperse dan además +5 de cada recurso; graba dos de Oro. Se quema"],
-  1510: ["Festín+","Daño {o6}; si el rival tiene menos muro que tú, curas 5"],
+  1510: ["Festín+","Daño {o6}; si el rival tiene menos muro que tú, curás 5"],
   1511: ["Sangre por sangre+","Curas la mitad del daño que hiciste este turno (máx. 16)"],
   1516: ["Aullido+","⚡ Rápida. Furia +3; robas 1"],
   1517: ["Ira contenida+","Si la tienes en la mano al empezar tu turno, Furia +2. Jugada: Furia +5. Guardada"],
@@ -195,4 +194,43 @@ export const cards = {
   1563: ["Toque de clarín+","Robas 2; tu próximo ataque +4"],
   1566: ["Ley marcial+","Lo que queda de la pelea, cada carta de unidades que juegas hace daño 3; soldados +1. Se quema"],
 };
-export default { cards };
+export const campaign = {
+ "Torretas que te disparan solas cada turno; si le rompés el muro, se caen": "Torretas que te disparan solas cada turno; si le rompes el muro, se caen",
+ "Arma una torreta cada 4 turnos (hasta 1): cada una te dispara 2 por turno. Si le rompés el muro, se caen todas": "Arma una torreta cada 4 turnos (hasta 1): cada una te dispara 2 por turno. Si le rompes el muro, se caen todas",
+ "Veneno que no baja y huevos que se abren en arañas si no los rompés": "Veneno que no baja y huevos que se abren en arañas si no los rompes",
+ "Los estados del rival a vos también duran un turno más": "Los estados del rival a tú también duran un turno más",
+ "Si en tu turno no pegás, la Furia baja 2": "Si en tu turno no pegas, la Furia baja 2",
+ "No te podés curar": "No te puedes curar",
+ "Tenés una 4.ª ranura de runa": "Tienes una 4.ª ranura de runa",
+ "La primera runa que rompés en cada pelea se vuelve a grabar": "La primera runa que rompes en cada pelea se vuelve a grabar",
+ "No podés romper runas": "No puedes romper runas",
+ "Cada vez que jugás una carta que te sube el muro, daño 2": "Cada vez que juegas una carta que te sube el muro, daño 2",
+ "Cada vez que perdés castillo por una carta tuya, armas +2": "Cada vez que pierdes castillo por una carta tuya, armas +2",
+ "Los estados que le metés al rival duran un turno más": "Los estados que le metes al rival duran un turno más",
+ "Al morir larga esporas: empezás la próxima pelea con Vulnerable": "Al morir larga esporas: empiezas la próxima pelea con Vulnerable",
+ "Reactiva: cada vez que le pegás cambia lo que va a hacer": "Reactiva: cada vez que le pegas cambia lo que va a hacer"
+};
+export const campaignRules = {
+ "kingPain": "Cuando tu rey actúa, pierdes {amount} de vida",
+ "startWork": "Empiezas con {card} construida",
+ "steal": {
+  "top": "Cada golpe que llega a tu castillo te roba {amount} del recurso que más tienes",
+  "brick": "Cada golpe que llega a tu castillo te roba {amount} ladrillos",
+  "weapon": "Cada golpe que llega a tu castillo te roba {amount} armas",
+  "crystal": "Cada golpe que llega a tu castillo te roba {amount} cristales",
+  "favor": "Cada golpe que llega a tu castillo te roba {amount} de favor"
+ },
+ "flee": "Al empezar su turno {turn} se escapa con lo robado: ganas, pero sin oro",
+ "sleep": "Duerme {turns} turnos (gana muro); si le pegas, se despierta",
+ "guardian": "Cuando le sacas {threshold}, se cierra {turns} turnos: recibe la mitad de daño y tiene espinas {thorns} (tus ataques te lastiman el muro)",
+ "timeEater": "Cada {every} cartas que juegas te corta el turno y sus ataques +{atk}",
+ "endure": "No se lo puede matar: ganas si aguantás {turns} turnos suyos. Cada golpe que le das le baja 1 a sus ataques (hasta −{max})",
+ "comboVuln": "Cuantas más cartas juegas en el turno, más le duele: cada ataque le hace {amount} más por cada carta que ya jugaste ese turno",
+ "dmgCap": "En un turno no le puedes sacar más de {cap}",
+ "cardPain": "Cada carta que juegas te saca {amount} de castillo",
+ "flyText": "Vuela: recibe la mitad de daño hasta que le pegas {hits} veces",
+ "countdownText": "Cuenta regresiva: a los {turns} turnos explota (daño {dmg}); si lo rompes antes, nada",
+ "turrets": "Arma una torreta cada {every} turnos (hasta {max}): cada una te dispara {dmg} por turno. Si le rompes el muro, se caen todas",
+ "brood": "Te pone {venom} de veneno por turno y su veneno no baja; cada {every} turnos pone un huevo (vida {hp}): si no lo rompes en {hatch} turnos, nace una araña (sus ataques +{atk})"
+};
+export default { cards, campaign, campaignRules };

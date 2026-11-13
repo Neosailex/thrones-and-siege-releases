@@ -18,7 +18,8 @@ export const campLang = () => D;
 const fill = (s, v = {}) => String(s).replace(/\{(\w+)\}/g, (m, k) => (v[k] ?? m));
 // tr(sección, clave, variables, base): texto del idioma si existe, si no la base (string con {var} o función)
 export function tr(section, key, vars, base) {
-  const x = D?.[section]?.[key];
+  let x = D?.[section]?.[key];
+  if (x && typeof x === 'object') x = x[vars?.v];   // (S06 13/11) plantilla con variantes { variante: texto }: vars.v dice cuál (como RULES[k].tpl)
   if (x != null && x !== '') { try { return typeof x === 'function' ? x(vars || {}) : fill(x, vars); } catch { /* traducción rota: base */ } }
   return typeof base === 'function' ? base(vars || {}) : fill(base ?? key, vars);
 }
