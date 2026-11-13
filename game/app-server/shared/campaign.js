@@ -1,5 +1,7 @@
 // Campaña roguelike: datos de enemigos (mazos, IA, reglas de jefe), mazo inicial del jugador, reglas → hooks e intención de la IA.
 // Motor puro: lo usa el cliente (client/src/campaign/, S10) y tools/balance/camp.mjs. No toca el PvP.
+import { tr, word, cardNameI, strI, foeKey } from './campaign-i18n.js';
+export { setCampLang, foeName, foeDesc, foeKey, tr as campTr } from './campaign-i18n.js';
 import { CARDS, NAMES, FX, NCARDS_ALL, KINGS } from './cards.js';
 import * as E from './engine.js';
 
@@ -269,80 +271,80 @@ export const RULES = {
   // Tesorero Negro: al empezar su turno te roba `amount` de tu recurso más alto y se blinda con lo robado (muro +2 por cada uno)
   hoard: { text: (r) => `Al empezar su turno te roba ${r.amount} de tu recurso más alto y se blinda: muro +${r.wall ?? 2} por cada uno`,
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me], o = g.players[1 - me], k = topRes(o), n = Math.min(r.amount, o[k]); if (n <= 0) return; o[k] -= n; p[k] += n; p.wall += n * (r.wall ?? 2); p.rs.stolen = (p.rs.stolen || 0) + n; info.fx.push('rule:hoard'); },
-    intent: (g, me, r) => { const o = g.players[1 - me], k = topRes(o), n = Math.min(r.amount, o[k]); return n > 0 ? `Te roba ${n} ${RES_NAME[k]} y se blinda (+${n * (r.wall ?? 2)} muro)` : null; } },
+    intent: (g, me, r) => { const o = g.players[1 - me], k = topRes(o), n = Math.min(r.amount, o[k]); return n > 0 ? I('hoard', { n, res: RES_NAME[k], w: n * (r.wall ?? 2) }, 'Te roba {n} {res} y se blinda (+{w} muro)') : null; } },
   // Dama de los Estandartes: planta un estandarte cada `every` turnos (hasta `max`): +`atk` a sus ataques cada uno. Los estandartes son su secuaz (vida `hp` cada uno): tus ataques los rompen primero
   banners: { text: (r) => `Planta un estandarte cada ${r.every} turnos (hasta ${r.max}; vida ${r.hp} cada uno): sus ataques +${r.atk} por estandarte en pie. Tus ataques rompen primero los estandartes`,
     onBattleStart(g, me, r) { packSet(g.players[me], 'Estandartes', r.hp, r.start || 0, 'atk', r.atk); },
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.rs.ban = (p.rs.ban || 0) + 1; if (p.rs.ban % r.every) return packSync(p, r.hp, r.atk, 'atk'); const n = Math.min(r.max, packCount(p, r.hp) + 1); packSet(p, 'Estandartes', r.hp, n, 'atk', r.atk); info.fx.push('rule:banner'); },
     onDamage(g, me, r, info) { if (info.seat === me) packSync(g.players[me], r.hp, r.atk, 'atk'); },
-    intent: (g, me, r) => { const p = g.players[me]; return ((p.rs.ban || 0) + 1) % r.every === 0 && packCount(p, r.hp) < r.max ? `Planta un estandarte (+${r.atk} a sus ataques)` : null; } },
+    intent: (g, me, r) => { const p = g.players[me]; return ((p.rs.ban || 0) + 1) % r.every === 0 && packCount(p, r.hp) < r.max ? I('banners', { atk: r.atk }, 'Planta un estandarte (+{atk} a sus ataques)') : null; } },
   // Inquisidor: al empezar su turno prohíbe tu recurso más alto: en tu turno, las cartas que lo usan cuestan el doble
   inquisition: { text: (r) => `${r.every > 1 ? `Cada ${r.every} turnos` : 'Cada turno'} prohíbe tu recurso más alto: en tu turno, las cartas que lo usan cuestan el doble`,
     onTurnStart(g, me, r, info) { const p = g.players[me], o = g.players[1 - me]; if (info.seat !== me) return; p.rs.inq = (p.rs.inq || 0) + 1; o.inqRes = 0; if (p.rs.inq % (r.every || 1)) return; o.inqRes = RES_IDX[topRes(o)]; info.fx.push('rule:inquisition:' + topRes(o)); },
-    intent: (g, me, r) => { const p = g.players[me]; return ((p.rs.inq || 0) + 1) % (r.every || 1) ? null : `Prohíbe tus ${RES_NAME[topRes(g.players[1 - me])]} (te cuestan el doble)`; } },
+    intent: (g, me, r) => { const p = g.players[me]; return ((p.rs.inq || 0) + 1) % (r.every || 1) ? null : I('inquisition', { res: RES_NAME[topRes(g.players[1 - me])] }, 'Prohíbe tus {res} (te cuestan el doble)'); } },
   // Yunque Hueco: al empezar su turno recupera `pct` del muro que perdió desde su turno anterior
   hollowWall: { text: (r) => `Al empezar su turno recupera ${Math.round(r.pct * 100)} % del muro que le rompiste`,
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me], back = Math.floor((p.rs.wLost || 0) * r.pct); p.rs.wLost = 0; if (back > 0) { p.wall += back; info.fx.push('rule:hollowWall'); } },
     onDamage(g, me, r, info) { if (info.seat === me) g.players[me].rs.wLost = (g.players[me].rs.wLost || 0) + (info.wall || 0); },
-    intent: (g, me, r) => { const n = Math.floor((g.players[me].rs.wLost || 0) * r.pct); return n > 0 ? `Recupera ${n} de muro` : null; } },
+    intent: (g, me, r) => { const n = Math.floor((g.players[me].rs.wLost || 0) * r.pct); return n > 0 ? I('hollowWall', { n }, 'Recupera {n} de muro') : null; } },
   // Desenterrador: cada `every` turnos, derrumbe: te tira `dmg` de muro (solo muro) y te mete `debris` Escombros en el mazo
   cavein: { text: (r) => `Cada ${r.every} turnos, derrumbe: te tira ${r.dmg} de muro y te mete ${r.debris} Escombro${r.debris > 1 ? 's' : ''} en el mazo`,
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me], o = g.players[1 - me]; p.rs.cave = (p.rs.cave || 0) + 1; if (p.rs.cave % r.every) return; o.wall = Math.max(0, o.wall - r.dmg); for (let i = 0; i < r.debris; i++) o.deck.splice(Math.floor(g._rnd() * (o.deck.length + 1)), 0, DEBRIS); info.fx.push('rule:cavein'); },
-    intent: (g, me, r) => { const k = r.every - ((g.players[me].rs.cave || 0) % r.every); return k === 1 ? `¡Derrumbe! Te tira ${r.dmg} de muro y te mete Escombros` : `Derrumbe en ${k} turnos`; } },
+    intent: (g, me, r) => { const k = r.every - ((g.players[me].rs.cave || 0) % r.every); return k === 1 ? I('cavein', { dmg: r.dmg }, '¡Derrumbe! Te tira {dmg} de muro y te mete Escombros') : I('caveinIn', { k }, 'Derrumbe en {k} turnos'); } },
   // Forjador de Cadenas: cada turno encadena una carta de tu mano (hasta `max`): soltarla cuesta `cost` más (en su recurso más caro)
   chains: { text: (r) => `${r.every > 1 ? `Cada ${r.every} turnos` : 'Cada turno'} encadena una carta de tu mano (hasta ${r.max}): jugarla cuesta ${r.cost} más`,
     onBattleStart(g, me, r) { g.players[1 - me].chainCost = r.cost; g.players[1 - me].chains = []; },
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me], o = g.players[1 - me]; p.rs.chn = (p.rs.chn || 0) + 1; o.chains = (o.chains || []).filter((id) => o.hand.includes(id)); if (p.rs.chn % (r.every || 1) || o.chains.length >= r.max) return;
       const free = o.hand.filter((id) => !o.chains.includes(id) && !CAMP_STUCK.has(id) && id < 300); if (!free.length) return; const id = free[Math.floor(g._rnd() * free.length)]; o.chains.push(id); info.fx.push('rule:chain:' + id); },
     onCardPlayed(g, me, r, info) { if (info.seat === me) return; const o = g.players[info.seat]; const i = (o.chains || []).indexOf(info.id); if (i >= 0) o.chains.splice(i, 1); },
-    intent: (g, me, r) => { const p = g.players[me], o = g.players[1 - me]; return ((p.rs.chn || 0) + 1) % (r.every || 1) || (o.chains || []).length >= r.max ? null : 'Encadena una carta de tu mano'; } },
+    intent: (g, me, r) => { const p = g.players[me], o = g.players[1 - me]; return ((p.rs.chn || 0) + 1) % (r.every || 1) || (o.chains || []).length >= r.max ? null : I('chains', {}, 'Encadena una carta de tu mano'); } },
   // Carnicero: se cura `heal` de lo que te pega; cada golpe tuyo de menos de `small` lo enfurece (+`rage` a su próximo ataque)
   butcher: { text: (r) => `Se cura ${Math.round(r.heal * 100)} % de lo que te pega${r.small ? `; cada golpe tuyo de menos de ${r.small} lo enfurece (+${r.rage} a su próximo ataque)` : ''}`,
     onBattleStart(g, me) { g.players[me].rs.c0 = g.players[me].castle; },
     onDamage(g, me, r, info) { const p = g.players[me], d = (info.wall || 0) + (info.castle || 0);
       if (info.seat !== me && info.from === me && d > 0) { const h = Math.floor(d * r.heal); if (h > 0) { p.castle = Math.min(p.rs.c0 || p.castle + h, p.castle + h); info.fx.push('rule:butcher'); } }
       else if (info.seat === me && r.small && d > 0 && d < r.small) { p.rage = (p.rage || 0) + r.rage; info.fx.push('rule:enrage'); } },
-    intent: (g, me, r) => (g.players[me].rage ? `Enfurecido: su próximo ataque +${g.players[me].rage}` : null) },
+    intent: (g, me, r) => (g.players[me].rage ? I('butcher', { n: g.players[me].rage }, 'Enfurecido: su próximo ataque +{n}') : null) },
   // Señor de las Bestias: huargos (secuaz de `hp` cada uno, hasta `max`): cada uno te muerde `bite` directo al empezar su turno; cada `every` turnos llega otro
   pack: { text: (r) => `Huargos (vida ${r.hp} cada uno, hasta ${r.max}): cada uno te muerde ${r.bite} directo al castillo por turno; cada ${r.every} turnos llega otro. Tus ataques les pegan primero`,
     onBattleStart(g, me, r) { packSet(g.players[me], 'Huargos', r.hp, r.start || 0); },
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me], o = g.players[1 - me], n = packCount(p, r.hp); if (n > 0) { E.campHit(g, o, 0, n * r.bite, info.fx); info.fx.push('rule:pack:' + n); }
       p.rs.pk = (p.rs.pk || 0) + 1; if (p.rs.pk % r.every === 0 && n < r.max) { packSet(p, 'Huargos', r.hp, n + 1); info.fx.push('rule:packAdd'); } },
-    intent: (g, me, r) => { const p = g.players[me], n = packCount(p, r.hp), add = ((p.rs.pk || 0) + 1) % r.every === 0 && n < r.max; return n || add ? `${n ? `Sus ${n} huargo${n > 1 ? 's' : ''} te muerden ${n * r.bite} directo` : ''}${n && add ? ' y ' : ''}${add ? 'llega otro huargo' : ''}` : null; } },
+    intent: (g, me, r) => { const p = g.players[me], n = packCount(p, r.hp), add = ((p.rs.pk || 0) + 1) % r.every === 0 && n < r.max; const a = n ? I('packBite', { n, d: n * r.bite }, (v) => `Sus ${v.n} huargo${v.n > 1 ? 's' : ''} te muerden ${v.d} directo`) : '', b = add ? I('packAdd', {}, 'llega otro huargo') : ''; return a || b ? [a, b].filter(Boolean).join(I('and', {}, ' y ')) : null; } },
   // Tambor de Guerra: cuenta `count`-…-1 y descarga un golpe enorme (`dmg`, primero al muro); después vuelve a contar
   drum: { text: (r) => `Tambor de guerra: cuenta ${Array.from({ length: r.count }, (_, i) => r.count - i).join('-')} y descarga un golpe de ${r.dmg}; después vuelve a contar`,
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.rs.drum = (p.rs.drum ?? r.count) - 1; if (p.rs.drum > 0) { info.fx.push('rule:drum:' + p.rs.drum); return; } p.rs.drum = r.count; E.campHit(g, g.players[1 - me], r.dmg, 0, info.fx); info.fx.push('rule:drumHit'); },
-    intent: (g, me, r) => { const k = (g.players[me].rs.drum ?? r.count) - 1; return k > 0 ? `Tambor: ${k}… (golpe de ${r.dmg} en ${k} turno${k > 1 ? 's' : ''})` : `¡TAMBOR! Golpe de ${r.dmg}`; } },
+    intent: (g, me, r) => { const k = (g.players[me].rs.drum ?? r.count) - 1; return k > 0 ? I('drum', { k, dmg: r.dmg }, (v) => `Tambor: ${v.k}… (golpe de ${v.dmg} en ${v.k} turno${v.k > 1 ? 's' : ''})`) : I('drumHit', { dmg: r.dmg }, '¡TAMBOR! Golpe de {dmg}'); } },
   // Cazadora Pálida: al empezar su turno tira `n` flechas de `dmg` que ignoran tu muro; cada `grow` turnos, una flecha más
   paleArrows: { text: (r) => `Al empezar su turno te tira ${r.n} flecha${r.n > 1 ? 's' : ''} de ${r.dmg} que ${r.n > 1 ? 'ignoran' : 'ignora'} el muro${r.grow ? `; cada ${r.grow} turnos, una más` : ''}`,
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.rs.arw = (p.rs.arw || 0) + 1; const n = arrowsOf(p, r); E.campHit(g, g.players[1 - me], 0, n * r.dmg, info.fx); info.fx.push('rule:paleArrows:' + n); },
-    intent: (g, me, r) => { const p = { rs: { arw: (g.players[me].rs.arw || 0) + 1 } }, n = arrowsOf(p, r); return `${n} flecha${n > 1 ? 's' : ''} de ${r.dmg} (ignoran tu muro)`; } },
+    intent: (g, me, r) => { const p = { rs: { arw: (g.players[me].rs.arw || 0) + 1 } }, n = arrowsOf(p, r); return I('paleArrows', { n, dmg: r.dmg }, (v) => `${v.n} flecha${v.n > 1 ? 's' : ''} de ${v.dmg} (ignoran tu muro)`); } },
   // Tejedor de Raíces: crece cada turno: castillo +`hp` (y su máximo) y sus ataques +`atk` (acumulativo)
   roots: { text: (r) => `Crece cada turno: castillo +${r.hp}${r.atk ? ` y sus ataques +${r.atk} (acumulativo)` : ''}`,
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.castle += r.hp; if (p.rs.c0) p.rs.c0 += r.hp; if (p.rs.castle0) p.rs.castle0 += r.hp; if (r.atk) p.atkPlus = (p.atkPlus || 0) + r.atk; info.fx.push('rule:roots'); },
-    intent: (g, me, r) => `Crece: castillo +${r.hp}${r.atk ? `, ataques +${r.atk}` : ''}` },
+    intent: (g, me, r) => (r.atk ? I('rootsAtk', { hp: r.hp, atk: r.atk }, 'Crece: castillo +{hp}, ataques +{atk}') : I('roots', { hp: r.hp }, 'Crece: castillo +{hp}')) },
   // Espejo de la Luna: el primer ataque tuyo de cada turno te vuelve `pct` del daño que hizo (primero a tu muro)
   mirror: { text: (r) => `El primer ataque tuyo de cada turno te vuelve el ${Math.round(r.pct * 100)} % del daño${r.once ? ' (una vez por pelea)' : ''}`,
     onTurnStart(g, me, r, info) { if (info.seat !== me) g.players[me].rs.mir = false; },
     onDamage(g, me, r, info) { const p = g.players[me], d = (info.wall || 0) + (info.castle || 0); if (info.seat !== me || info.from === me || g.turn === me || p.rs.mir || p.rs.mirDone || d <= 0) return; p.rs.mir = true; if (r.once) p.rs.mirDone = true; const back = Math.floor(d * r.pct); if (back > 0) { E.campHit(g, g.players[1 - me], back, 0, info.fx); info.fx.push('rule:mirror:' + back); } },
-    intent: (g, me, r) => (g.players[me].rs.mirDone ? null : `Espejo: tu primer ataque te vuelve el ${Math.round(r.pct * 100)} %`) },
+    intent: (g, me, r) => (g.players[me].rs.mirDone ? null : I('mirror', { pct: Math.round(r.pct * 100) }, 'Espejo: tu primer ataque te vuelve el {pct} %')) },
   // Relojero: cada `every` turnos rebobina su castillo y su muro a como estaban hace `back` turnos (si eran más)
   rewind: { text: (r) => `Cada ${r.every} turnos rebobina su castillo y su muro a como estaban hace ${r.back} turnos`,
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me], h = (p.rs.hist ||= []); p.rs.rw = (p.rs.rw || 0) + 1;
       if (p.rs.rw % r.every === 0 && h.length >= r.back) { const [c, w] = h[h.length - r.back]; if (c > p.castle || w > p.wall) { p.castle = Math.max(p.castle, c); p.wall = Math.max(p.wall, w); info.fx.push('rule:rewind'); } }
       h.push([p.castle, p.wall]); if (h.length > 8) h.shift(); },
-    intent: (g, me, r) => { const p = g.players[me], k = r.every - ((p.rs.rw || 0) % r.every), h = p.rs.hist || []; if (k > 1) return `Rebobina en ${k} turnos`; const t = h[h.length - r.back]; return t ? `¡Rebobina! Vuelve a castillo ${Math.max(p.castle, t[0])} y muro ${Math.max(p.wall, t[1])}` : null; } },
+    intent: (g, me, r) => { const p = g.players[me], k = r.every - ((p.rs.rw || 0) % r.every), h = p.rs.hist || []; if (k > 1) return I('rewindIn', { k }, 'Rebobina en {k} turnos'); const t = h[h.length - r.back]; return t ? I('rewind', { c: Math.max(p.castle, t[0]), w: Math.max(p.wall, t[1]) }, '¡Rebobina! Vuelve a castillo {c} y muro {w}') : null; } },
   // Ingeniero Loco: arma una torreta cada `every` turnos (hasta `max`): cada una te dispara `dmg` por turno (primero al muro). Están en su muro: si se lo rompés, se caen todas
   turrets: { text: (r) => `Arma una torreta cada ${r.every} turnos (hasta ${r.max}): cada una te dispara ${r.dmg} por turno. Si le rompés el muro, se caen todas`,
     onBattleStart(g, me, r) { if (r.start) g.players[me].rs.tur = r.start; },
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me], n = p.rs.tur || 0; if (n) { E.campHit(g, g.players[1 - me], n * r.dmg, 0, info.fx); info.fx.push('rule:turrets:' + n); }
       p.rs.tt = (p.rs.tt || 0) + 1; if (p.rs.tt % r.every === 0 && n < r.max) { p.rs.tur = n + 1; info.fx.push('rule:turretAdd'); } },
     onDamage(g, me, r, info) { const p = g.players[me]; if (info.seat === me && p.wall <= 0 && p.rs.tur) { p.rs.tur = 0; info.fx.push('rule:turretsDown'); } },
-    intent: (g, me, r) => { const p = g.players[me], n = p.rs.tur || 0, add = ((p.rs.tt || 0) + 1) % r.every === 0 && n < r.max; return n || add ? `${n ? `${n} torreta${n > 1 ? 's' : ''}: ${n * r.dmg} de daño` : ''}${n && add ? ' y ' : ''}${add ? 'arma otra torreta' : ''}` : null; } },
+    intent: (g, me, r) => { const p = g.players[me], n = p.rs.tur || 0, add = ((p.rs.tt || 0) + 1) % r.every === 0 && n < r.max; const a = n ? I('turrets', { n, d: n * r.dmg }, (v) => `${v.n} torreta${v.n > 1 ? 's' : ''}: ${v.d} de daño`) : '', b = add ? I('turretAdd', {}, 'arma otra torreta') : ''; return a || b ? [a, b].filter(Boolean).join(I('and', {}, ' y ')) : null; } },
   // Alquimista: al empezar su turno cambia tu recurso más alto por el más bajo
   transmute: { text: (r) => `${r.every > 1 ? `Cada ${r.every} turnos` : 'Al empezar su turno'} cambia tu recurso más alto por el más bajo`,
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me], o = g.players[1 - me]; p.rs.tm = (p.rs.tm || 0) + 1; if (p.rs.tm % (r.every || 1)) return; const hi = topRes(o), lo = lowRes(o); if (o[hi] === o[lo]) return; [o[hi], o[lo]] = [o[lo], o[hi]]; info.fx.push(`rule:transmute:${hi}:${lo}`); },
-    intent: (g, me, r) => { const p = g.players[me], o = g.players[1 - me]; if (((p.rs.tm || 0) + 1) % (r.every || 1)) return null; const hi = topRes(o), lo = lowRes(o); return o[hi] === o[lo] ? null : `Cambia tus ${RES_NAME[hi]} (${o[hi]}) por tus ${RES_NAME[lo]} (${o[lo]})`; } },
+    intent: (g, me, r) => { const p = g.players[me], o = g.players[1 - me]; if (((p.rs.tm || 0) + 1) % (r.every || 1)) return null; const hi = topRes(o), lo = lowRes(o); return o[hi] === o[lo] ? null : I('transmute', { hi: RES_NAME[hi], a: o[hi], lo: RES_NAME[lo], b: o[lo] }, 'Cambia tus {hi} ({a}) por tus {lo} ({b})'); } },
   // Araña Madre: veneno que no baja (`venom` por turno) y huevos (secuaz de `hp` cada uno) cada `every` turnos: a los `hatch` turnos se abren (arañas: sus ataques +`atk`)
   brood: { text: (r) => `Te pone ${r.venom} de veneno por turno y su veneno no baja${r.every ? `; cada ${r.every} turnos pone un huevo (vida ${r.hp}): si no lo rompés en ${r.hatch} turnos, nace una araña (sus ataques +${r.atk})` : ''}`,
     onBattleStart(g, me) { g.players[me].venomNoDecay = true; },
@@ -351,22 +353,23 @@ export const RULES = {
       if (born) { p.atkPlus = (p.atkPlus || 0) + born * r.atk; info.fx.push('rule:hatch:' + born); }
       p.rs.egg = (p.rs.egg || 0) + 1; if (p.rs.egg % r.every === 0) { left.push(0); info.fx.push('rule:egg'); }
       p.rs.eggs = left; packSet(p, 'Huevos', r.hp, left.length); },
-    intent: (g, me, r) => { const p = g.players[me], eggs = (p.rs.eggs || []).slice(-packCount(p, r.hp)), born = eggs.filter((a) => a + 1 >= r.hatch).length; return `Veneno +${r.venom}${born ? `; nace${born > 1 ? 'n' : ''} ${born} araña${born > 1 ? 's' : ''} (+${born * r.atk} a sus ataques)` : ''}${r.every && ((p.rs.egg || 0) + 1) % r.every === 0 ? '; pone un huevo' : ''}`; } },
+    intent: (g, me, r) => { const p = g.players[me], eggs = (p.rs.eggs || []).slice(-packCount(p, r.hp)), born = eggs.filter((a) => a + 1 >= r.hatch).length; return [I('broodVenom', { n: r.venom }, 'Veneno +{n}'), born ? I('broodHatch', { n: born, atk: born * r.atk }, (v) => `nace${v.n > 1 ? 'n' : ''} ${v.n} araña${v.n > 1 ? 's' : ''} (+${v.atk} a sus ataques)`) : '', r.every && ((p.rs.egg || 0) + 1) % r.every === 0 ? I('broodEgg', {}, 'pone un huevo') : ''].filter(Boolean).join('; '); } },
   // Sin Rostro: al empezar su turno juega copias de hasta `max` cartas que jugaste en tu turno anterior (sus números de base, del lado de él)
   faceless: { text: (r) => `${r.every > 1 ? `Cada ${r.every} turnos` : 'Al empezar su turno'} juega ${r.max > 1 ? `copias de hasta ${r.max} cartas` : 'una copia de una carta'} que jugaste en tu turno anterior`,
     onTurnStart(g, me, r, info) { const p = g.players[me]; if (info.seat !== me) { p.rs.seen = []; return; } p.rs.fc = (p.rs.fc || 0) + 1; if (p.rs.fc % (r.every || 1)) return; const o = g.players[1 - me];
       for (const id of (p.rs.seen || []).slice(-r.max)) { const v = CARDS[id]; if (!v) continue; const [, s, op] = v; for (const [k, i] of [['builder', 0], ['recruit', 2], ['mage', 4]]) p[k] += Math.max(0, s[i]); p.wall += Math.max(0, s[6]); p.castle += Math.max(0, s[7]); E.campHit(g, o, op[6], op[7], info.fx); info.fx.push('rule:copy:' + id); }
       p.rs.seen = []; },
     onCardPlayed(g, me, r, info) { if (info.seat === me || CAMP_STUCK.has(info.id)) return; const p = g.players[me]; (p.rs.seen ||= []).push(info.id); },
-    intent: (g, me, r) => { const p = g.players[me]; if (((p.rs.fc || 0) + 1) % (r.every || 1)) return null; const L = (p.rs.seen || []).slice(-r.max); return L.length ? `Copia ${L.map((id) => NAMES[id]?.[0]).join(' y ')}` : 'Copia lo que juegues este turno'; } },
+    intent: (g, me, r) => { const p = g.players[me]; if (((p.rs.fc || 0) + 1) % (r.every || 1)) return null; const L = (p.rs.seen || []).slice(-r.max); if (!L.length) return I('facelessNext', {}, 'Copia lo que juegues este turno'); const cards = L.map((id) => cardNameI(id, NAMES[id]?.[0])).join(I('and', {}, ' y ')); return I('faceless', { cards }, 'Copia {cards}'); } },
   // Voz del Pozo: cada `every` turnos te mete `curses` maldiciones en el mazo; al empezar su turno, muro +`shield` por cada maldición en tu mano
   pitVoice: { text: (r) => `${r.every > 1 ? `Cada ${r.every} turnos` : 'Cada turno'} te mete ${r.curses > 1 ? r.curses + ' maldiciones' : 'una maldición'} en el mazo${r.shield ? `; muro +${r.shield} por cada maldición en tu mano` : ''}`,
     onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me], o = g.players[1 - me]; if (r.shield) { const n = o.hand.filter((id) => CAMP_STUCK.has(id)).length; if (n) { p.wall += n * r.shield; info.fx.push('rule:pitShield:' + n); } }
       p.rs.pv = (p.rs.pv || 0) + 1; if (p.rs.pv % (r.every || 1)) return; for (let i = 0; i < r.curses; i++) { const id = PIT_CURSES[(p.rs.pv + i) % PIT_CURSES.length]; o.deck.splice(Math.floor(g._rnd() * (o.deck.length + 1)), 0, id); info.fx.push('curse:' + id); } },
-    intent: (g, me, r) => { const p = g.players[me], o = g.players[1 - me], n = r.shield ? o.hand.filter((id) => CAMP_STUCK.has(id)).length : 0, add = ((p.rs.pv || 0) + 1) % (r.every || 1) === 0; return n || add ? [n ? `Escudo +${n * r.shield} (tus maldiciones)` : '', add ? `te mete ${r.curses > 1 ? r.curses + ' maldiciones' : 'una maldición'} en el mazo` : ''].filter(Boolean).join(' y ') : null; } },
+    intent: (g, me, r) => { const p = g.players[me], o = g.players[1 - me], n = r.shield ? o.hand.filter((id) => CAMP_STUCK.has(id)).length : 0, add = ((p.rs.pv || 0) + 1) % (r.every || 1) === 0; return n || add ? [n ? I('pitShield', { n: n * r.shield }, 'Escudo +{n} (tus maldiciones)') : '', add ? I('pitCurse', { n: r.curses }, (v) => `te mete ${v.n > 1 ? v.n + ' maldiciones' : 'una maldición'} en el mazo`) : ''].filter(Boolean).join(I('and', {}, ' y ')) : null; } },
 };
 // helpers de los Heraldos
-const RES_NAME = { brick: 'ladrillos', weapon: 'armas', crystal: 'cristales' }, RES_IDX = { brick: 1, weapon: 3, crystal: 5 };
+const I = (key, vars, base) => tr('intents', key, vars, base); // aviso traducible (campaign-i18n.js)
+const RES_NAME = new Proxy({ brick: 'ladrillos', weapon: 'armas', crystal: 'cristales' }, { get: (t, k) => word(k, t[k]) }), RES_IDX = { brick: 1, weapon: 3, crystal: 5 };
 const topRes = (o) => ['brick', 'weapon', 'crystal'].sort((a, b) => (o[b] || 0) - (o[a] || 0))[0];
 const lowRes = (o) => ['brick', 'weapon', 'crystal'].sort((a, b) => (o[a] || 0) - (o[b] || 0))[0];
 const DEBRIS = 207, PIT_CURSES = [190, 192, 191];
@@ -409,7 +412,47 @@ export function grietaSetup(race, freed = []) {
 }
 // Equipo nuevo (cartas.md §5): ids de regla → se pasan en player.rules como { k: 'wallGloves' } etc. EQUIP_RULES lista los 15 con nombre y rareza.
 export const EQUIP_RULES = ['colmilloArana', 'veloSombra', 'telarana', 'frascoSombra', 'pactoEterno', 'valvulaSeguridad', 'engrasador', 'engranajeMaestro', 'manometroLaton', 'calderaInestable', 'carcaj', 'plumaAguila', 'arcoLuna', 'cuerdaElfica', 'cuerdaPlata', 'collarColmillos', 'pinturaGuerra', 'tamborSangre', 'trofeoCampeon', 'ojosRojos', 'piedraAfilar', 'cuencoRunas', 'cincelRunico', 'yunqueEcos', 'coronaBasalto', 'wallGloves', 'goldBag', 'warHorn', 'leafTalisman', 'eternalGear', 'bloodCup', 'forestMantle', 'poisonVial', 'treasurerBag', 'runicAnvil', 'warCrown', 'stolenThrone', 'demonChalice', 'cartographer', 'watcherEye'];
-export const ruleText = (r) => RULES[r.k]?.text(r) ?? r.k;
+// (S03 12/11) texto de una regla en el idioma actual (campData.rules[r.k]); la base es el castellano de RULES[k].text
+
+/* ---------- (S03 12/11, pedido de S01/S06) plantillas para traducir las reglas que hacen cuentas o eligen palabras ----------
+   RULES[k].tpl = plantilla castellana con {datos}; RULES[k].vars(r) = los datos ya calculados (porcentajes, valores por defecto, nombres de carta).
+   Si la frase cambia según los datos (recurso, partes opcionales, plurales), tpl es { variante: plantilla } y vars(r).v dice cuál usar;
+   cada idioma traduce en campaignRules la misma forma (string, o el mismo objeto de variantes). Lista: node tools/i18n/campana_textos.mjs */
+const RES3 = { brick: 'ladrillos', weapon: 'armas', crystal: 'cristales' };
+const amt = (r) => ({ amount: r.amount || 1 });
+const cardsList = (ids) => { const L = ids.map((i) => cardNameI(i, NAMES[i]?.[0])); return L.length > 1 ? L.slice(0, -1).join(', ') + tr('intents', 'and', {}, ' y ') + L.at(-1) : L[0] || ''; };
+// variantes sacadas del propio texto castellano: se llama text() con cada dato como {nombre} y las partes opcionales prendidas o apagadas
+const variants = (k, opts, fixed = {}) => Object.fromEntries(opts.map(([v, on]) => [v, RULES[k].text(new Proxy({ ...fixed }, { get: (t, p) => (p in t ? t[p] : typeof p !== 'string' ? undefined : on.includes(p) || !opts.some(([, o]) => o.includes(p)) ? `{${p}}` : undefined) }))]));
+const TPL = {
+  hollowWall: { tpl: 'Al empezar su turno recupera {pct} % del muro que le rompiste', vars: (r) => ({ pct: Math.round(r.pct * 100) }) },
+  butcher: { tpl: { base: 'Se cura {pct} % de lo que te pega', rage: 'Se cura {pct} % de lo que te pega; cada golpe tuyo de menos de {small} lo enfurece (+{rage} a su próximo ataque)' },
+    vars: (r) => ({ v: r.small ? 'rage' : 'base', pct: Math.round(r.heal * 100) }) },
+  mirror: { tpl: { base: 'El primer ataque tuyo de cada turno te vuelve el {pct} % del daño', once: 'El primer ataque tuyo de cada turno te vuelve el {pct} % del daño (una vez por pelea)' },
+    vars: (r) => ({ v: r.once ? 'once' : 'base', pct: Math.round(r.pct * 100) }) },
+  costUp: { tpl: { 1: 'Tus cartas de ladrillos cuestan {amount} más', 3: 'Tus cartas de armas cuestan {amount} más', 5: 'Tus cartas de cristales cuestan {amount} más' }, vars: (r) => ({ v: String(r.res) }) },
+  eatRes: { tpl: Object.fromEntries(Object.entries(RES3).flatMap(([k, n]) => [[k, `Cada turno se come {amount} de ${n}`], [k + 'N', `Cada {every} turnos se come {amount} de ${n}`]])), vars: (r) => ({ v: r.res + (r.every > 1 ? 'N' : '') }) },
+  steal: { tpl: { top: 'Cada golpe que llega a tu castillo te roba {amount} del recurso que más tenés', brick: 'Cada golpe que llega a tu castillo te roba {amount} ladrillos', weapon: 'Cada golpe que llega a tu castillo te roba {amount} armas', crystal: 'Cada golpe que llega a tu castillo te roba {amount} cristales', favor: 'Cada golpe que llega a tu castillo te roba {amount} de favor' },
+    vars: (r) => ({ v: r.res || 'top' }) },
+  curseEvery: { tpl: { one: 'Cada turno te mete {cards}', many: 'Cada {every} turnos te mete {cards}' }, vars: (r) => ({ v: r.every > 1 ? 'many' : 'one', cards: cardsList(r.ids || [r.id]) }) },
+  possess: { tpl: 'A media vida, el demonio lo posee: {rules}', vars: (r) => ({ rules: (r.rules || []).map((x) => ruleText(x)).join('; ') }) },
+  startWork: { tpl: 'Empezás con {card} construida', vars: (r) => ({ card: cardNameI(r.id, NAMES[r.id]?.[0]) }) },
+  runCurse: { tpl: '{card}: te mete una {curse} que se queda en tu mazo de la run', vars: (r) => ({ card: cardNameI(r.id, NAMES[r.id]?.[0]), curse: cardNameI(r.curse, NAMES[r.curse]?.[0]) }) },
+  tithe: { tpl: 'Cada {every} turnos te saca {amount} de cada recurso (no te deja con menos de {min})', vars: (r) => ({ min: r.min ?? 0 }) },
+  favorTax: { tpl: '−{amount} de favor por pelea', vars: amt },
+  weakStart: { tpl: 'Tus ataques −{amount} el primer turno', vars: amt },
+  kingWeak: { tpl: 'Cuando tu rey actúa, su efecto es {amount} menor', vars: amt },
+  workTax: { tpl: 'Cada Obra cuesta +{amount}', vars: amt },
+  runeStart: { tpl: Object.fromEntries(['piedra', 'fuego', 'oro', 'tormenta'].map((t) => [t, `Arrancás con {n} runa de ${t} grabada`])), vars: (r) => ({ v: r.t, n: r.n || 1 }) },
+  runeSlot: { tpl: '+{amount} ranura de runa', vars: amt },
+  hoard: { tpl: 'Al empezar su turno te roba {amount} de tu recurso más alto y se blinda: muro +{wall} por cada uno', vars: (r) => ({ wall: r.wall ?? 2 }) },
+  drum: { tpl: 'Tambor de guerra: cuenta {cuenta} y descarga un golpe de {dmg}; después vuelve a contar', vars: (r) => ({ cuenta: Array.from({ length: r.count }, (_, i) => r.count - i).join('-') }) },
+  malleable: { tpl: 'Cada golpe que recibe le da muro: {start}, después {s1}, {s2}…', vars: (r) => ({ s1: r.start + 1, s2: r.start + 2 }) },
+};
+for (const [k, x] of Object.entries(TPL)) Object.assign(RULES[k], x);
+// minion: 8 variantes (cura / ataque / furia al caer), sacadas del texto; el nombre del secuaz pasa por la traducción de textos de campaña
+RULES.minion.tpl = variants('minion', [['base', []], ['h', ['heal']], ['a', ['atk']], ['ha', ['heal', 'atk']], ['r', ['rage']], ['hr', ['heal', 'rage']], ['ar', ['atk', 'rage']], ['har', ['heal', 'atk', 'rage']]]);
+RULES.minion.vars = (r) => ({ v: (r.heal ? 'h' : '') + (r.atk ? 'a' : '') + (r.rage ? 'r' : '') || 'base', name: strI(r.name || 'torre') });
+export const ruleText = (r) => (RULES[r.k] ? tr('rules', r.k, r, () => RULES[r.k].text(r)) : r.k);
 export function ruleHooks(rules = []) {
   const h = {};
   for (const name of ['onBattleStart', 'onTurnStart', 'onCardPlayed', 'onDamage', 'onKingAct']) {
@@ -454,8 +497,9 @@ export const ENEMIES = {
         deck: deckOf({ 197: 4, 2: 3, 6: 3, 8: 1, 36: 2 }), minion: SACERDOTISA, rules: [{ k: 'minion', ...SACERDOTISA }] },
     ],
     t3: [
-      { name: 'Fortaleza de caballeros', tier: 3, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 2, atk: 1, res: U(1, 3, 1, 6, 12, 4, 30, 70),
-        deck: deckOf({ 198: 4, 8: 3, 37: 2, 6: 3, 34: 1, 36: 1, 60: 1 }), rules: [{ k: 'bigHit', every: 2 }] },
+      // (S03 12/11, informe de S10: mató 2 de 8 runs en el piso 2-3 de la región 1) muro 30 → 15, sin +1 de ataque, 1,5 jugadas, mejor ataque cada 3, 2 Cargas (eran 4)
+      { name: 'Fortaleza de caballeros', tier: 3, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 1.5, atk: 0, res: U(1, 3, 1, 6, 12, 4, 15, 70),
+        deck: deckOf({ 198: 2, 8: 3, 37: 2, 6: 3, 34: 2, 36: 2, 60: 1 }), rules: [{ k: 'bigHit', every: 3 }] },
       bug({ name: 'Ogro de las canteras', tier: 3, kind: 'campamento', res: U(1, 1, 1, 0, 0, 0, 0, 38), capWall: 0,
         pattern: [313, 314, 314, 315], rules: [{ k: 'buildRage', amount: 2 }] }),
       bug({ name: 'Libro maldito', tier: 3, kind: 'constructo', rare: true, res: U(1, 1, 1, 0, 0, 0, 10, 55), capWall: 10,
@@ -513,7 +557,8 @@ ENEMIES.orco = {
     bug({ name: 'Saqueadores orcos', tier: 1, kind: 'campamento', atk: 1, res: U(1, 2, 1, 0, 8, 0, 5, 30), capWall: 10, pattern: [338, 338, 338, 301], rules: [{ k: 'steal', amount: 2, res: 'weapon' }, { k: 'flee', turn: 5 }] }),
   ],
   t2: [
-    { name: 'Guarnición de colmillos', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 2, atk: 0, res: U(1, 3, 1, 4, 8, 2, 10, 40),
+    // (S03 12/11) 2 jugadas → 1,5: con la corrupción orca en +3 pasó a ser la que más mataba (11)
+    { name: 'Guarnición de colmillos', tier: 2, kind: 'castillo', race: null, king: false, ai: 'normal', hand: 3, plays: 1.5, atk: 0, res: U(1, 3, 1, 4, 8, 2, 10, 40),
       deck: deckOf({ 197: 4, 2: 3, 6: 3, 8: 1, 36: 2 }), rules: [] },
     bug({ name: 'Jabalí de guerra', tier: 2, kind: 'bestia', atk: 0, res: U(1, 1, 1, 0, 0, 0, 0, 50), capWall: 0, pattern: [339, 339, 340], rules: [] }),
     bug({ name: 'Negreros de la estepa', tier: 2, kind: 'campamento', atk: 0, res: U(1, 2, 1, 0, 8, 0, 10, 55), capWall: 15, pattern: [341, 343, 308], rules: [] }), // (S03 09/11) un solo Látigo por vuelta y hasta 2 Miedos: con 3 Miedos el turno quedaba muerto
@@ -617,7 +662,7 @@ ENEMIES.drow = {
    Uno de los 3 Heraldos corrompió al rey: vencer al rey da su botín; vencer al Heraldo rompe la corrupción (el rey queda libre).
    Misma forma que rey/lor + id, desc (una línea) y marca { text, rules }: la regla chica que el Heraldo le deja al rey que corrompió
    (el cliente la suma a la pelea del rey). Tier 5: FIGHT_LEN.hp[5] multiplica castillo y muro como al rey. Números en docs/campaña/enemigos.md. */
-const HER = (o) => ({ tier: 5, kind: 'castillo', king: false, ai: 'dificil', hand: 4, plays: 1.5, noPassive: true, atk: 0, ...o, marca: { ...o.marca, text: o.marca.rules.map((r) => ruleText(r)).join('; ') } });
+const HER = (o) => ({ tier: 5, kind: 'castillo', king: false, ai: 'dificil', hand: 4, plays: 1.5, noPassive: true, atk: 0, ...o, marca: { rules: o.marca.rules, text: o.marca.rules.map((r) => ruleText(r)).join('; ') } }); // (texto fijo: el cliente lo traduce con localizeCampaign de S01)
 export const HERALDOS = {
   humano: [
     HER({ id: 'tesorero', name: 'El Tesorero Negro', race: 'humano', desc: 'Te roba tu recurso más alto cada turno y se blinda con lo robado', res: U(2, 2, 2, 6, 8, 6, 10, 44),
@@ -645,7 +690,7 @@ export const HERALDOS = {
   ],
   elfo: [
     HER({ id: 'cazadora', name: 'La Cazadora Pálida', race: 'elfo', plays: 1, desc: 'Flechas que ignoran tu muro, cada vez más; tiene poca vida', res: U(1, 2, 2, 4, 8, 6, 0, 52), capWall: 5,
-      deck: deckOf({ 83: 2, 137: 1, 2: 2, 1: 2, 36: 2, 85: 1 }), rules: [{ k: 'paleArrows', n: 1, dmg: 2, grow: 3 }], marca: { rules: [{ k: 'paleArrows', n: 1, dmg: 1, grow: 0 }] } }),
+      deck: deckOf({ 83: 2, 2: 2, 1: 2, 36: 3, 85: 1 }), rules: [{ k: 'paleArrows', n: 1, dmg: 2, grow: 3 }], marca: { rules: [{ k: 'paleArrows', n: 1, dmg: 1, grow: 0 }] } }),
     HER({ id: 'tejedor', name: 'El Tejedor de Raíces', race: 'elfo', desc: 'Crece cada turno: más vida y más daño; cuanto más tardás, peor', res: U(2, 1, 2, 6, 4, 8, 10, 30),
       deck: deckOf({ 85: 2, 19: 1, 36: 2, 83: 2, 2: 2, 6: 2, 30: 1 }), rules: [{ k: 'roots', hp: 3, atk: 1 }], marca: { rules: [{ k: 'roots', hp: 2, atk: 0 }] } }),
     HER({ id: 'espejo', name: 'El Espejo de la Luna', race: 'elfo', desc: 'Tu primer ataque de cada turno te vuelve a la mitad', res: U(1, 2, 3, 4, 6, 10, 10, 36),
@@ -753,33 +798,33 @@ export function aiIntent(g, level = 'normal', rnd = Math.random) {
   const kingHit = tev?.king ? { dmg: Math.max(0, pre[0] - o.castle) + Math.max(0, pre[1] - o.wall), race: p.race } : null;
   E.aiMaybeCycle(c);
   const m = E.aiChooseLevel(c, level, rnd);
-  const it = { seat: enemy, turnNo: c.turnNo, type: m.type, card: null, name: null, kind: 'other', dmg: 0, direct: 0, wall: 0, castle: 0, text: 'Descarta' };
+  const it = { seat: enemy, turnNo: c.turnNo, type: m.type, card: null, name: null, kind: 'other', dmg: 0, direct: 0, wall: 0, castle: 0, text: tr('intents', 'discard', {}, 'Descarta') };
   if (m.type === 'play') {
-    const id = p.hand[m.index]; it.card = id; it.name = NAMES[id][0];
+    const id = p.hand[m.index]; it.card = id; it.name = cardNameI(id, NAMES[id][0]);
     const { s, op } = E.cardVectors(c, p, o, id);
     it.dmg = op[6]; it.direct = op[7]; it.wall = s[6]; it.castle = s[7];
     const k = FX[id]?.k;
-    if (op[6] + op[7] > 0) { it.kind = 'attack'; it.text = op[7] ? `Ataca ${op[6] + op[7]} (${op[7]} directo)` : `Ataca ${op[6]}`; }
-    else if (k === 'bug' && FX[id].intent) { it.kind = FX[id].kind || 'effect'; it.text = FX[id].intent; } // acción de bicho sin daño (enemigos.md)
-    else if (k === 'trap') { it.kind = 'trap'; it.text = 'Arma una trampa'; }
-    else if (k === 'giveCurse') { it.kind = 'curse'; it.text = 'Te maldice'; }
-    else if (k === 'effect') { it.kind = 'effect'; it.text = 'Lanza un efecto'; }
-    else if (s[6] > 0 && s[7] > 0) { it.kind = 'castle'; it.text = `Castillo +${s[7]}, muro +${s[6]}`; }
-    else if (s[7] > 0) { it.kind = 'castle'; it.text = `Castillo +${s[7]}`; }
-    else if (s[6] > 0) { it.kind = 'wall'; it.text = `Muro +${s[6]}`; }
-    else if (s[0] + s[2] + s[4] > 0) { it.kind = 'units'; it.text = 'Recluta'; }
-    else if (op.slice(0, 6).some((v) => v > 0)) { it.kind = 'steal'; it.text = 'Te saca recursos'; }
-    else if (s.slice(0, 6).some((v) => v > 0)) { it.kind = 'build'; it.text = 'Junta recursos'; }
+    if (op[6] + op[7] > 0) { it.kind = 'attack'; it.text = op[7] ? tr('intents', 'attackDirect', { n: op[6] + op[7], d: op[7] }, 'Ataca {n} ({d} directo)') : tr('intents', 'attack', { n: op[6] }, 'Ataca {n}'); }
+    else if (k === 'bug' && FX[id].intent) { it.kind = FX[id].kind || 'effect'; it.text = tr('bugIntents', id, {}, FX[id].intent); } // acción de bicho sin daño (enemigos.md)
+    else if (k === 'trap') { it.kind = 'trap'; it.text = tr('intents', 'trap', {}, 'Arma una trampa'); }
+    else if (k === 'giveCurse') { it.kind = 'curse'; it.text = tr('intents', 'curse', {}, 'Te maldice'); }
+    else if (k === 'effect') { it.kind = 'effect'; it.text = tr('intents', 'effect', {}, 'Lanza un efecto'); }
+    else if (s[6] > 0 && s[7] > 0) { it.kind = 'castle'; it.text = tr('intents', 'castleWall', { c: s[7], w: s[6] }, 'Castillo +{c}, muro +{w}'); }
+    else if (s[7] > 0) { it.kind = 'castle'; it.text = tr('intents', 'castle', { c: s[7] }, 'Castillo +{c}'); }
+    else if (s[6] > 0) { it.kind = 'wall'; it.text = tr('intents', 'wall', { w: s[6] }, 'Muro +{w}'); }
+    else if (s[0] + s[2] + s[4] > 0) { it.kind = 'units'; it.text = tr('intents', 'units', {}, 'Recluta'); }
+    else if (op.slice(0, 6).some((v) => v > 0)) { it.kind = 'steal'; it.text = tr('intents', 'steal', {}, 'Te saca recursos'); }
+    else if (s.slice(0, 6).some((v) => v > 0)) { it.kind = 'build'; it.text = tr('intents', 'build', {}, 'Junta recursos'); }
   }
   if (it.card != null && FX[it.card]?.k === 'bug') { const sp = FX[it.card]; // acciones de bicho con daño: golpes de Página y lo que te mete
-    if (sp.pages || sp.hits > 1) { const n = sp.pages ? Math.max(1, p.pageHits || 1) : sp.hits; it.text = `Ataca ${n} × ${it.dmg}`; it.dmg *= n; }
-    if (sp.give && it.kind === 'attack') it.text += ` y te mete ${NAMES[sp.give][0]}`; }
+    if (sp.pages || sp.hits > 1) { const n = sp.pages ? Math.max(1, p.pageHits || 1) : sp.hits; it.text = tr('intents', 'attackTimes', { n, d: it.dmg }, 'Ataca {n} × {d}'); it.dmg *= n; }
+    if (sp.give && it.kind === 'attack') it.text += tr('intents', 'andGives', { card: cardNameI(sp.give, NAMES[sp.give][0]) }, ' y te mete {card}'); }
   { const pl = g.players[g.turn]; if (pl.hand.includes(195)) { if (pl.seeIntentAlways) {} else if (pl.seeIntent > 0) pl.seeIntent--; else it.hidden = true; } } // estado Humo: la UI no la muestra (la IA igual la cumple); Espía de la corte / Ojo del vigía la dejan ver
   // (S03 11/11) reglas de jefe con aviso (Heraldos y sus marcas): lo que hacen al empezar su próximo turno (cuenta del Tambor, rebobinado del Relojero…)
   { const rs = (g.enemy?.rules || []).flatMap((r) => (r.k === 'possess' ? (g.players[enemy].possessed ? r.rules || [] : []) : [r])), msgs = [];
     for (const r of rs) { const f = RULES[r.k]?.intent; if (!f) continue; try { const m = f(g, enemy, r); if (m) msgs.push(m); } catch { /* aviso opcional */ } }
     if (msgs.length) { it.rules = msgs; it.text = msgs.join('. ') + '. ' + it.text; } }
-  if (kingHit) { it.king = kingHit; it.text = (kingHit.dmg > 0 ? `¡Su rey actúa (${kingHit.dmg} de daño)! ` : '¡Su rey actúa! ') + it.text; }
+  if (kingHit) { it.king = kingHit; it.text = (kingHit.dmg > 0 ? tr('intents', 'kingHit', { n: kingHit.dmg }, '¡Su rey actúa ({n} de daño)! ') : tr('intents', 'king', {}, '¡Su rey actúa! ')) + it.text; }
   g.intent = it;
   return it;
 }
@@ -806,3 +851,21 @@ export function battleResult(g, seat = 0) {
 }
 // Para S10: la versión + de una carta (fogata, eventos, dorada) y sus datos de recompensa
 export { CAMP_INFO, CAMP_IDS, PLUS, plusOf, baseOf, isPlus, hasPlus } from './campaign-cards.js';
+
+// (S03 12/11, idiomas) todo lo traducible de los datos de campaña, para tools/i18n/campdata_base.mjs y la auditoría:
+// enemigos (con su nombre castellano como clave foeKey), Heraldos, y cada regla con todos los parámetros con que se usa
+export function campTextIndex(extraRules = []) {
+  const foes = new Map(), rules = new Map(), seen = new Set();
+  const walk = (x) => {
+    if (!x || typeof x !== 'object' || seen.has(x)) return; seen.add(x);
+    if (Array.isArray(x)) { for (const y of x) walk(y); return; }
+    if (typeof x.name === 'string' && !x.id && (x.res || x.pattern || x.deck || x.weights || 'hp' in x)) { const k = foeKey(x.name); if (!foes.has(k)) foes.set(k, { name: x.name, ...(x.desc ? { desc: x.desc } : {}) }); }
+    if (typeof x.k === 'string' && RULES[x.k]) { const L = rules.get(x.k) || []; const j = JSON.stringify(x); if (!L.some((y) => JSON.stringify(y) === j)) L.push({ ...x }); rules.set(x.k, L); }
+    for (const v of Object.values(x)) if (v && typeof v === 'object') walk(v);
+  };
+  walk(ENEMIES); walk(DEMON_RULES); walk(extraRules);
+  for (const n of ['Estandartes', 'Huargos', 'Huevos', 'Secuaz']) if (!foes.has(foeKey(n))) foes.set(foeKey(n), { name: n }); // nombres de secuaces que pone una regla
+  for (const k of EQUIP_RULES) if (!rules.has(k)) rules.set(k, [{ k }]);
+  const heralds = Object.fromEntries(Object.values(HERALDOS).flat().map((h) => [h.id, { name: h.name, desc: h.desc }]));
+  return { foes: Object.fromEntries(foes), heralds, rules: Object.fromEntries(rules) };
+}

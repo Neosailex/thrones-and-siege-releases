@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.79.0 · 2026-11-13
+
+- Campaña: el oro de peleas y cofres baja a un tercio, curva de regiones más pareja, Fortaleza de caballeros y Cazadora más blandas, arreglos de la segunda campaña jugada (agrandar carta, mazo pasado del tope, Corrupción 0 %, candado de edificios). Idiomas por dentro: inglés y español al día, chino simplificado completo (todavía no se ven en el juego).
+
 ## 0.78.0 · 2026-11-12
 
 - Campaña: regiones de 5 pisos con Heraldos, reyes y élites más blandos, mazo inicial más barato, botín con más raras, menos oro de jefes, sellos legibles y arreglos en celular. Base de idiomas (el juego ya está preparado; el inglés sale cuando esté revisado). Arreglo del descarte después de arrastrar.

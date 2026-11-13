@@ -37,5 +37,11 @@ export const raceField = (race, field, chain = []) => first(chain, (d) => d.race
 export const kingField = (race, field, chain = []) => first(chain, (d) => d.kings?.[race]?.[field]) ?? KINGS[race]?.[field] ?? '';
 // mazo oficial: name, desc
 export const deckField = (race, style, field, chain = []) => first(chain, (d) => d.decks?.[race]?.[style]?.[field]) ?? STYLE_DECKS[race]?.[style]?.[field] ?? '';
+// (S01 12/11) campaña de shared/campaign.js (S03): nombres y textos fijos de enemigos, Heraldos, equipo y reliquias van
+// por su texto castellano ({ campaign: { 'Campamento rebelde': 'Rebel camp', … } }); las reglas con números, por su clave
+// con plantilla ({ campaignRules: { tithe: 'Every {every} turns …' } }, los datos son los de la regla). Lista para traducir:
+// node tools/i18n/campana_textos.mjs (S06).
+export const campStr = (s, chain = []) => (typeof s === 'string' && s ? first(chain, (d) => d.campaign?.[s]) ?? s : s);
+export const campRuleTpl = (k, chain = []) => first(chain, (d) => d.campaignRules?.[k]);
 // códigos del servidor (S08): { err: 'deck.tooMany', … } → texto
 export const codeText = (code, chain = []) => first(chain, (d) => d.codes?.[code]) ?? BASE.codes?.[code] ?? code;
