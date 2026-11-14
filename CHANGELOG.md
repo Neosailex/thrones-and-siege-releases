@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.80.1 · 2026-11-14
+
+- iPhone: arreglo del cierre al elegir el As en Safari.
+
 ## 0.80.0 · 2026-11-13
 
 - Idiomas: aparece el selector con banderas arriba a la derecha (y en Opciones). Ya se puede jugar en English, 简体中文, Español (Latinoamérica) y Español (España); el juego elige solo el idioma de tu compu. Campaña traducida completa. Arreglos de campaña.
