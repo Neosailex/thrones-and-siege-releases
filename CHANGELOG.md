@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.80.2 · 2026-11-14
+
+- Celular: tocá una carta y se ve grande para leerla (al elegir el As, en el botín de campaña y la carta jugada); vista previa de la mano más grande.
+
 ## 0.80.1 · 2026-11-14
 
 - iPhone: arreglo del cierre al elegir el As en Safari.
