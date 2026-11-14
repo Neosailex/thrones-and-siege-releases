@@ -12,6 +12,7 @@ import { ENG } from './version.mjs';
 import * as DIARIO from './diario.mjs';
 import * as NUBE from './nube.mjs';
 import * as CUENTA from './cuenta.mjs';
+import * as GH from './fantasmas.mjs';
 import { apiCodes } from './codigos.mjs';
 
 // Último instalador de Windows (Releases del repo público). Se consulta a GitHub como mucho 1 vez cada 15 min;
@@ -95,7 +96,25 @@ app.post('/api/admin/action', (q, r) => (adminOk(q.body?.key) ? r.json(DB.adminA
 app.get('/api/profile/:id', (q, r) => { const p = DB.profile(q.params.id); p ? r.json(p) : r.status(q.query.soft ? 200 : 404).json({ error: 'sin partidas' }); }); // soft: sin 404 en la consola del cliente
 app.get('/stats', async (_q, r) => {
   const rooms = await matchMaker.query({}); // públicas ('asedio') y privadas con código ('amigos')
-  r.json({ online: rooms.reduce((a, x) => a + x.clients, 0), waiting: rooms.filter((x) => x.name === 'asedio' && x.clients === 1 && !x.locked).length });
+  // partidas: contra persona / fantasma / bot y cuánto se espera rival (últimas 24 h y 7 días, S08 14/11)
+  r.json({ online: rooms.reduce((a, x) => a + x.clients, 0), waiting: rooms.filter((x) => x.name === 'asedio' && x.clients === 1 && !x.locked).length, partidas: GH.statsSummary() });
+});
+// Emparejamiento que se abre (S08 14/11): ¿hay alguien esperando en este rango de rating? El cliente arranca en ±100,
+// pasa a ±250 a los 10 s y a cualquiera a los 20 s. Con ?sala=<la suya> solo da salas que esperan desde ANTES que la suya
+// (así, si dos se encuentran, se mueve uno solo). Devuelve también cuántos hay conectados.
+// Lo que hizo tu fantasma mientras no estabas (una sola vez: queda marcado como visto)
+app.post('/api/fantasma/novedades', (q, r) => {
+  const b = q.body || {}, me = DB.auth(b.pid, b.ptoken, null);
+  if (!me) return r.status(403).json({ error: 'identidad', err: 'auth.identity' });
+  r.json({ ok: true, novedades: GH.ghostNews(me.id) });
+});
+app.get('/api/buscar', async (q, r) => {
+  const rating = Number(q.query.rating) || 1000, range = Math.max(0, Number(q.query.range) || 100), mine = String(q.query.sala || '');
+  const all = await matchMaker.query({}), online = all.reduce((a, x) => a + x.clients, 0);
+  const myRoom = all.find((x) => x.roomId === mine), mySince = myRoom?.metadata?.since ?? Infinity;
+  const c = all.filter((x) => x.name === 'asedio' && !x.locked && x.clients === 1 && x.roomId !== mine && x.metadata?.rating != null
+    && Math.abs(x.metadata.rating - rating) <= range && (x.metadata.since ?? 0) < mySince).sort((a, b) => (a.metadata.since ?? 0) - (b.metadata.since ?? 0));
+  r.json({ roomId: c[0]?.roomId || null, online });
 });
 
 const httpServer = http.createServer(app);

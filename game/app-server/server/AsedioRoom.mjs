@@ -6,6 +6,7 @@ import * as DB from './db.mjs';
 import { ENG } from './version.mjs';
 import { joinError, deckProblem } from './codigos.mjs';
 import { cleanName, ipOf, checkJoin, takeSeat, freeSeat } from './abuso.mjs';
+import * as GH from './fantasmas.mjs';
 
 // Estado público mínimo (las manos son secretas: cada jugador recibe su propia vista por mensaje).
 export const LobbyState = schema({ phase: t.string() }, 'LobbyState');
@@ -24,6 +25,12 @@ function pickDeck(o = {}) {
   const deck = padDeck(ok ? o.deck.map(Number) : (race ? STYLE_DECKS[race].equilibrado.deck : PRESETS.equilibrado.deck));
   const sleeve = Number.isInteger(o.sleeve) && CARDS[o.sleeve] && deck[o.sleeve - 1] > 0 ? o.sleeve : null;
   return { race, deck, sleeve, deckIssue: Array.isArray(o.deck) && !ok ? issue || { code: 'deck.invalid' } : null };
+}
+
+// Jugada "de novato" para el bot: una carta jugable al azar, o descartar una al azar
+function torpe(g) {
+  const p = g.players[g.turn], ok = p.hand.map((_, k) => k).filter((k) => E.playable(p, p.hand[k]));
+  return ok.length && Math.random() < 0.6 ? { type: 'play', index: ok[Math.floor(Math.random() * ok.length)] } : { type: 'discard', indexes: [Math.floor(Math.random() * p.hand.length)] };
 }
 
 export class AsedioRoom extends Room {
@@ -79,7 +86,10 @@ export class AsedioRoom extends Room {
       }
     });
     if (process.env.ASEDIO_TEST === '1') this.onMessage('__testSet', (c, m) => { const s = this.seatOf(c), p = this.g?.players[s]; if (!p) return; if (m.hand) p.hand[m.hand[0]] = m.hand[1]; Object.assign(p, m.set || {}); if (m.op) Object.assign(this.g.players[1 - s], m.op); this.sync([]); }); // solo pruebas: poner una carta en la mano / valores
-    if (process.env.ASEDIO_TEST === '1') this.onMessage('__testWin', (c) => { const s = this.seatOf(c); if (this.g && this.g.winner == null && s >= 0) { this.g.winner = s; this.sync([]); this.finish(s, 'normal'); } }); // solo pruebas: terminar la partida ya
+    if (process.env.ASEDIO_TEST === '1') this.onMessage('__testWin', (c, m) => { const s = this.seatOf(c); if (this.g && this.g.winner == null && s >= 0) { if (m?.turns) this.g.turnNo = Math.max(this.g.turnNo, m.turns); this.g.winner = s; this.sync([]); this.finish(s, 'normal'); } }); // solo pruebas: terminar la partida ya
+    // Sin rival (S08 14/11): el que espera pide jugar contra un fantasma de su nivel (si no hay, un bot "CPU entrenada").
+    // El lugar del rival lo juega el servidor con la IA del motor; se ve siempre como fantasma/CPU, nunca como persona.
+    this.onMessage('cpu', (c) => { if (this.seatOf(c) === 0) this.addAi(false); }); // "Jugar contra un fantasma" (a los 25 s)
     this.onMessage('emote', (c, m) => {
       const seat = this.seatOf(c), s = this.seats[seat]; if (!s) return;
       const i = Number(m?.i); if (!(i >= 0 && i < EMOTES)) return;
@@ -98,16 +108,36 @@ export class AsedioRoom extends Room {
     const { race, deck, sleeve, deckIssue } = pickDeck(o);
     if (deckIssue) client.send('notice', { ...deckIssue, replaced: true }); // mazo que no vale: se juega con el equilibrado
     this.ips ??= {}; this.ips[client.sessionId] = client.auth?.ip || '?'; takeSeat(this.ips[client.sessionId]); // por sessionId: sigue igual tras reconectar
-    this.seats.push({ sessionId: client.sessionId, pid: p.id, pub: p.pub || DB.pubOf(p.id), name, rating: p.rating, connected: true, deck, race, sleeve });
+    this.seats.push({ sessionId: client.sessionId, pid: p.id, pub: p.pub || DB.pubOf(p.id), name, rating: p.rating, connected: true, deck, race, sleeve,
+      since: Date.now() - Math.max(0, Math.min(600e3, Number(o.waitedMs) || 0)), games: p.games || 0 }); // cuánto viene esperando (aunque haya cambiado de sala)
+    if (this.seats.length === 1 && !this.priv) {
+      this.setMetadata({ rating: p.rating, since: Date.now() }); // para el emparejamiento por nivel (/api/buscar)
+      const d = GH.botDelayMs(p); // rangos bajos: si no aparece nadie, bot "CPU entrenada"
+      if (d != null) this.botTimer = this.clock.setTimeout(() => this.addAi(true), Math.max(500, d - (Date.now() - this.seats[0].since)));
+    }
     if (this.seats.length === 2) this.start();
+  }
+
+  // Rival manejado por el servidor: fantasma de tu nivel (o bot si no hay). bot = true: el bot de rangos bajos (a los 5-12 s)
+  addAi(bot) {
+    this.botTimer?.clear();
+    if (this.priv || this.state.phase !== 'waiting' || this.seats.length !== 1) return;
+    const me = this.seats[0], gh = (!bot && GH.pickGhost(me.pid, me.rating)) || GH.makeBot(me.rating, me.pid), kind = gh.owner ? 'fantasma' : 'bot';
+    const level = kind === 'bot' ? (me.games < 10 || me.rating < 1000 ? 'facil' : Math.random() < 0.5 ? 'facil' : 'normal') : GH.aiLevel(gh.rating);
+    this.seats.push({ sessionId: null, ai: true, kind, owner: gh.owner, pid: null, pub: null, name: gh.name, rating: gh.rating, connected: true, deck: gh.deck, race: gh.race, sleeve: gh.sleeve,
+      level, blunder: kind === 'bot' ? GH.botTorpeza(me.pid) : 0 });
+    this.aiSeat = 1; this.start();
   }
 
   seatOf(client) { return this.seats.findIndex((s) => s.sessionId === client.sessionId); }
   clientOf(seat) { return this.clients.find((c) => c.sessionId === this.seats[seat]?.sessionId); }
-  info(seat) { return { seat, pubs: this.seats.map((s) => s.pub), names: this.seats.map((s) => s.name), ratings: this.seats.map((s) => s.rating), races: this.seats.map((s) => s.race), priv: this.priv }; }
+  info(seat) { return { seat, pubs: this.seats.map((s) => s.pub), names: this.seats.map((s) => s.name), ratings: this.seats.map((s) => s.rating), races: this.seats.map((s) => s.race), priv: this.priv,
+    kinds: this.seats.map((s) => s.kind || 'persona'), botLabel: process.env.BOT_CARTEL !== '0' }; } // kinds: persona | fantasma | bot (el cliente muestra "Fantasma de X" / "CPU entrenada")
 
   start() {
     this.lock();
+    if (!this.priv) this.setMetadata({ rating: null, since: null }); // ya no espera: que /api/buscar no la ofrezca aunque alguien se vaya y quede 1
+    if (!this.priv && !this.started) { this.started = true; GH.stat(this.seats[1]?.kind || 'persona', Date.now() - (this.seats[0]?.since || Date.now())); } // para /stats
     this.state.phase = 'playing';
     this.g = E.newGame({ starter: Math.random() < 0.5 ? 0 : 1, decks: this.seats.map((x) => x.deck), races: this.seats.map((x) => x.race), setup: true }); // arranca en la fase de elegir el As
     for (const [seat] of this.seats.entries()) this.clientOf(seat)?.send('start', this.info(seat));
@@ -140,9 +170,41 @@ export class AsedioRoom extends Room {
       const evs = E.eventsFor(events, seat).map((e) => (e.type === 'discard' && e.seat !== seat ? { ...e, cards: e.cards.map(() => 0) } : e)); // trampas ocultas: la del rival llega tapada
       c.send('update', { view: E.viewFor(g, seat), events: evs, deadline: this.deadline });
     }
+    if (this.aiSeat != null && only == null) this.scheduleAi();
     if (only != null || keepTimer) return;
     this.timer?.clear();
     if (g.winner == null) this.timer = this.clock.setTimeout(() => this.timeout(), this.deadline - Date.now());
+  }
+
+  // ---- el rival de IA (fantasma o bot): juega cuando le toca, con un ritmo parecido al de una persona ----
+  aiNeeds() {
+    const g = this.g, ai = this.aiSeat; if (!g || g.winner != null || ai == null) return false;
+    if (g.phase === 'sleeve') return !g.players[ai].sleeveDone;
+    return g.pending ? g.pending.seat === ai : g.turn === ai;
+  }
+  scheduleAi() {
+    this.aiTimer?.clear(); if (!this.aiNeeds()) return;
+    const g = this.g, wait = g.phase === 'sleeve' ? 1500 + Math.random() * 2000 : g.pending ? 900 : 1200 + Math.random() * 1300;
+    this.aiTimer = this.clock.setTimeout(() => this.aiAct(), wait);
+  }
+  aiAct() {
+    const g = this.g, ai = this.aiSeat; if (!this.aiNeeds()) return;
+    if (g.phase === 'sleeve') { const ev = E.aiChooseSleeve(g, ai); if (ev) this.sync([ev], null, !ev.deal); return; }
+    const evs = [];
+    if (g.pending?.type === 'sabotage') evs.push(E.sabotage(g, E.aiSabotageSmart(g)));
+    else if (g.pending?.type === 'spy') evs.push(E.spyDone(g));
+    else {
+      const cy = E.aiMaybeCycle(g); if (cy) evs.push(cy);
+      let a = E.aiChooseLevel(g, this.seats[ai].level || 'normal');
+      if (this.seats[ai].blunder && Math.random() < this.seats[ai].blunder) a = torpe(g); // bot de rangos bajos: cada tanto una jugada cualquiera
+      let ev = a.type === 'play' ? E.play(g, a.index) : E.discard(g, a.indexes);
+      if (!ev) { a = E.aiChooseLevel(g, this.seats[ai].level || 'normal'); ev = a.type === 'play' ? E.play(g, a.index) : E.discard(g, a.indexes); }
+      if (!ev) return;
+      evs.push(ev);
+      if (g.pending?.type === 'sabotage' && g.pending.seat === ai) evs.push(E.sabotage(g, E.aiSabotageSmart(g)));
+      if (g.pending?.type === 'spy' && g.pending.seat === ai) evs.push(E.spyDone(g));
+    }
+    this.advance(evs); // igual que una jugada de persona (fin de turno, ganar)
   }
 
   // Si el jugador no juega a tiempo (o está desconectado), juega la IA Normal por él.
@@ -174,7 +236,17 @@ export class AsedioRoom extends Room {
     this.state.phase = 'over';
     let ratings = null;
     if (this.priv && (winner === 0 || winner === 1)) { this.score ??= [0, 0]; this.score[winner]++; } // (Juan 01/11) marcador entre amigos, a lo largo de las revanchas
-    if (!this.priv) try { ratings = DB.recordMatch({ ids: this.seats.map((s) => s.pid), winner, reason, turns: this.g?.turnNo ?? 0, plays: this.plays, races: this.seats.map((s) => s.race) }); } catch (e) { console.error('No se pudo guardar la partida', e); }
+    this.aiTimer?.clear();
+    if (!this.priv && this.aiSeat != null) try { // contra fantasma o bot: solo cuenta para la persona, a la mitad; el dueño del fantasma solo suma
+      const h = 1 - this.aiSeat, x = this.seats[this.aiSeat];
+      const r = DB.recordVsAi({ id: this.seats[h].pid, seat: h, aiRating: x.rating, owner: x.owner, kind: x.kind, winner, reason, turns: this.g?.turnNo ?? 0, plays: this.plays[h], races: this.seats.map((s) => s.race) });
+      ratings = [null, null]; ratings[h] = r;
+      if (x.kind === 'fantasma') GH.ownerResult(x.owner, this.seats[h].pid, winner === this.aiSeat);
+    } catch (e) { console.error('No se pudo guardar la partida', e); }
+    else if (!this.priv) try {
+      ratings = DB.recordMatch({ ids: this.seats.map((s) => s.pid), winner, reason, turns: this.g?.turnNo ?? 0, plays: this.plays, races: this.seats.map((s) => s.race) });
+      if ((this.g?.turnNo ?? 0) >= 4) GH.saveGhosts(this.seats); // cada partida con ranking deja el fantasma de los dos
+    } catch (e) { console.error('No se pudo guardar la partida', e); }
     this.broadcast('over', { winner, reason, ratings, ...(this.priv ? { score: this.score || [0, 0] } : {}) });
     this.closeTimer = this.clock.setTimeout(() => this.disconnect(), this.priv && reason !== 'abandon' ? REMATCH_WAIT_MS : 30000);
   }

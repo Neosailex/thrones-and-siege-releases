@@ -35,6 +35,8 @@ export const CARD_WORDS = {
   'zh-Hans': { now: '现在', base: '基础', bonus: '加上你的加成后为', direct: '直接对城堡', and: '和', gnome: '侏儒被动：对抗 25 或以上的城墙', race: { orco: '兽人', enano: '矮人', drow: '黑暗精灵', elfo: '精灵', gnomo: '侏儒', humano: '人类' }, drums: '战鼓', effects: '效果' },   // S06 12/11
   ru: { now: 'сейчас', base: 'База', bonus: 'с твоими бонусами', direct: 'прямо по замку', and: 'и', gnome: 'Пассивка гномов: против стены 25 и выше', race: { orco: 'орк', enano: 'дворф', drow: 'дроу', elfo: 'эльф', gnomo: 'гном', humano: 'человек' }, drums: 'Барабаны', effects: 'эффекты' },   // S06 13/11,
   'pt-BR': { now: 'agora', base: 'Base', bonus: 'com seus bônus fica', direct: 'direto no castelo', and: 'e', gnome: 'Passiva gnoma: contra uma muralha de 25 ou mais', race: { orco: 'orc', enano: 'anão', drow: 'drow', elfo: 'elfo', gnomo: 'gnomo', humano: 'humano' }, drums: 'Tambores', effects: 'efeitos' },   // S06 13/11
+  de: { now: 'jetzt', base: 'Basis', bonus: 'mit deinen Boni', direct: 'direkt auf die Burg', and: 'und', gnome: 'Gnom-Passive: gegen eine Mauer ab 25', race: { orco: 'Ork', enano: 'Zwerg', drow: 'Drow', elfo: 'Elf', gnomo: 'Gnom', humano: 'Mensch' }, drums: 'Trommeln', effects: 'Effekte' },   // S06 14/11
+  fr: { now: 'maintenant', base: 'Base', bonus: 'avec vos bonus', direct: 'directs au château', and: 'et', gnome: 'Passif gnome : contre une muraille de 25 ou plus', race: { orco: 'orc', enano: 'nain', drow: 'drow', elfo: 'elfe', gnomo: 'gnome', humano: 'humain' }, drums: 'Tambours', effects: 'effets' },   // S06 14/11
 };
 const wordsOf = (opt) => ({ ...CARD_WORDS.es, ...(CARD_WORDS[opt?.lang] || {}), ...(opt?.words || {}) });
 

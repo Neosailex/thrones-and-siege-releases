@@ -48,12 +48,21 @@ if (db) db.exec(`
   -- cuentas (S08, 09/11; lógica en cuenta.mjs): solo el id de la cuenta y el mail (sin nombre real ni foto)
   CREATE TABLE IF NOT EXISTS accounts (provider TEXT NOT NULL, subject TEXT NOT NULL, player TEXT NOT NULL, email TEXT, created INTEGER NOT NULL, PRIMARY KEY (provider, subject));
   CREATE INDEX IF NOT EXISTS accounts_player ON accounts (player);
+  -- rivales fantasma (S08, 14/11; lógica en fantasmas.mjs): el último mazo con el que jugó cada uno, para que lo juegue la IA
+  CREATE TABLE IF NOT EXISTS ghosts (player TEXT PRIMARY KEY, name TEXT NOT NULL, race TEXT, deck TEXT NOT NULL, sleeve INTEGER,
+    rating INTEGER NOT NULL, eng TEXT NOT NULL, created INTEGER NOT NULL);
+  CREATE INDEX IF NOT EXISTS ghosts_rating ON ghosts (eng, rating);
+  CREATE TABLE IF NOT EXISTS ghost_log (id INTEGER PRIMARY KEY AUTOINCREMENT, owner TEXT NOT NULL, rival TEXT, won INTEGER NOT NULL, bonus INTEGER NOT NULL, ts INTEGER NOT NULL, seen INTEGER NOT NULL DEFAULT 0);
+  CREATE INDEX IF NOT EXISTS ghost_log_owner ON ghost_log (owner, seen);
+  -- para medir (S08, 14/11): cada partida online que arranca, contra quién (persona / fantasma / bot) y cuánto se esperó
+  CREATE TABLE IF NOT EXISTS match_stats (ts INTEGER NOT NULL, kind TEXT NOT NULL, wait_ms INTEGER NOT NULL);
 `);
 // columnas nuevas en bases que ya existen (Fly): se agregan una sola vez
 if (db) {
   const add = (table, col, def) => { if (!db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`); };
   add('players', 'pub', 'TEXT'); add('players', 'name_locked', 'INTEGER NOT NULL DEFAULT 0'); add('players', 'hidden', 'INTEGER NOT NULL DEFAULT 0');
   add('matches', 'season', 'TEXT'); add('matches', 'race_a', 'TEXT'); add('matches', 'race_b', 'TEXT');
+  add('matches', 'kind', "TEXT NOT NULL DEFAULT 'persona'"); // persona | fantasma | bot (contra fantasma, b = el dueño; contra bot, b = 'bot')
   add('matches', 'sra', 'INTEGER'); add('matches', 'srb', 'INTEGER'); add('matches', 'sda', 'INTEGER'); add('matches', 'sdb', 'INTEGER');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS players_pub ON players (pub)');
   // 11/11: el nombre por defecto ya no es una palabra en castellano sino vacío (player.default en cada idioma)
@@ -93,6 +102,7 @@ const q = !db ? null : {
   upd: db.prepare(`UPDATE players SET rating = ?, peak = MAX(peak, ?), games = games + 1, wins = wins + ?, losses = losses + ?, abandons = abandons + ?,
     streak = ?, best_streak = MAX(best_streak, ?), fastest_win = CASE WHEN ? = 1 AND (fastest_win IS NULL OR fastest_win > ?) THEN ? ELSE fastest_win END, updated = ? WHERE id = ?`),
   match: db.prepare('INSERT INTO matches (a, b, winner, reason, turns, ra, rb, delta, ts, season, race_a, race_b, sra, srb, sda, sdb) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'),
+  matchK: db.prepare('INSERT INTO matches (a, b, winner, reason, turns, ra, rb, delta, ts, season, race_a, race_b, sra, srb, sda, sdb, kind) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'),
   sGet: db.prepare('SELECT * FROM season_stats WHERE season = ? AND player = ?'),
   sIns: db.prepare('INSERT INTO season_stats (season, player, rating, peak) VALUES (?, ?, ?, ?)'),
   sUpd: db.prepare('UPDATE season_stats SET rating = ?, peak = MAX(peak, ?), games = games + 1, wins = wins + ?, losses = losses + ?, abandons = abandons + ? WHERE season = ? AND player = ?'),
@@ -105,7 +115,7 @@ const q = !db ? null : {
   tok: db.prepare('SELECT * FROM tokens WHERE token_hash = ?'),
   tokUsed: db.prepare('UPDATE tokens SET used = ? WHERE token_hash = ?'),
   hist: db.prepare(`SELECT m.*, pa.name AS na, pa.pub AS pa, pb.name AS nb, pb.pub AS pb FROM matches m
-    LEFT JOIN players pa ON pa.id = m.a LEFT JOIN players pb ON pb.id = m.b WHERE m.a = ? OR m.b = ? ORDER BY m.ts DESC LIMIT ?`),
+    LEFT JOIN players pa ON pa.id = m.a LEFT JOIN players pb ON pb.id = m.b WHERE m.a = ? OR (m.b = ? AND m.kind = 'persona') ORDER BY m.ts DESC LIMIT ?`), // las de su fantasma no son partidas suyas
 };
 
 // Identidad de invitado: el cliente genera id + token y los guarda. Más adelante se reemplaza por la cuenta de Steam.
@@ -157,6 +167,37 @@ export function recordMatch({ ids, winner, reason, turns, plays, races = [] }) {
   return res;
 }
 
+// Partida contra la IA (fantasma o bot, S08 14/11): solo cuenta para el jugador de verdad y mueve la MITAD que contra una persona.
+// kind 'fantasma': owner = dueño del fantasma (su historial no la muestra; si el fantasma gana, el dueño suma un poco: fantasmas.mjs).
+export function recordVsAi({ id, seat, aiRating, owner = null, kind, winner, reason, turns, plays, races = [] }) {
+  if (!db) return null;
+  const a = q.get.get(id); if (!a) return null;
+  const season = seasonInfo().id, won = winner === seat ? 1 : 0;
+  const half = (r, g) => { const e = 1 / (1 + 10 ** ((aiRating - r) / 400)); return Math.round((kFactor(g, r) * (won - e)) / 2); };
+  let res;
+  db.exec('BEGIN');
+  try {
+    const sa = seasonRow(season, a), d = half(a.rating, a.games), sd = half(sa.rating, sa.games);
+    const r = Math.max(100, a.rating + d), sr = Math.max(100, sa.rating + sd), streak = won ? Math.max(0, a.streak) + 1 : 0, abandoned = reason === 'abandon' && !won ? 1 : 0;
+    q.upd.run(r, r, won, 1 - won, abandoned, streak, streak, won, turns, turns, now(), a.id);
+    q.sUpd.run(sr, sr, won, 1 - won, abandoned, season, a.id);
+    for (const [card, n] of Object.entries(plays || {})) q.addCard.run(a.id, Number(card), n);
+    const w = won ? 0 : 1; // en la tabla, a = el jugador y b = la IA
+    q.matchK.run(a.id, kind === 'bot' ? 'bot' : owner, w, reason, turns, a.rating, aiRating, d, now(), season, races[seat] ?? null, races[1 - seat] ?? null, sa.rating, aiRating, sd, 0, kind);
+    res = { before: sa.rating, after: sr, all: { before: a.rating, after: r }, half: true };
+    db.exec('COMMIT');
+  } catch (e) { db.exec('ROLLBACK'); throw e; }
+  return res;
+}
+// Sumarle al dueño de un fantasma (nunca restar): al histórico y a la temporada
+export function addRating(id, n) {
+  if (!db || !n) return; const p = q.get.get(id); if (!p) return;
+  const season = seasonInfo().id, s = seasonRow(season, p);
+  db.prepare('UPDATE players SET rating = rating + ?, peak = MAX(peak, rating + ?) WHERE id = ?').run(n, n, id);
+  db.prepare('UPDATE season_stats SET rating = rating + ?, peak = MAX(peak, rating + ?) WHERE season = ? AND player = ?').run(n, n, season, id);
+  return s;
+}
+
 // Ranking. season: 'AAAA-MM' (por defecto la actual) o 'all' (histórico).
 export function ranking(season = null, limit = 50) {
   limit = Math.max(1, Math.min(100, Number(limit) || 50));
@@ -179,7 +220,7 @@ export function profile(id) {
   const history = q.hist.all(p.id, p.id, 20).map((m) => {
     const me = m.a === p.id ? 0 : 1;
     return { ts: m.ts, won: m.winner === me, reason: m.reason, turns: m.turns, race: me ? m.race_b : m.race_a,
-      opp: { pub: me ? m.pa : m.pb, name: me ? m.na : m.nb, race: me ? m.race_a : m.race_b },
+      opp: { pub: me ? m.pa : m.kind === 'bot' ? null : m.pb, name: me ? m.na : m.kind === 'bot' ? '' : m.nb, race: me ? m.race_a : m.race_b, kind: m.kind || 'persona' },
       delta: m.sda == null ? null : me ? m.sdb : m.sda, season: m.season };
   });
   return {
@@ -212,7 +253,8 @@ const qr = !db ? null : {
     db.prepare('DELETE FROM reports WHERE target = ? OR reporter = ?'), db.prepare("UPDATE matches SET a = 'borrado' WHERE a = ?"),
     db.prepare("UPDATE matches SET b = 'borrado' WHERE b = ?"), db.prepare('DELETE FROM daily WHERE player = ?'),
     db.prepare('DELETE FROM saves WHERE player = ?'), db.prepare('DELETE FROM tokens WHERE player = ?'), db.prepare('DELETE FROM link_codes WHERE player = ?'),
-    db.prepare('DELETE FROM accounts WHERE player = ?'), db.prepare('DELETE FROM players WHERE id = ?')],
+    db.prepare('DELETE FROM accounts WHERE player = ?'), db.prepare('DELETE FROM ghosts WHERE player = ?'), db.prepare('DELETE FROM ghost_log WHERE owner = ?'),
+    db.prepare('DELETE FROM players WHERE id = ?')],
   oldMatches: db.prepare('DELETE FROM matches WHERE ts < ?'),
   oldReports: db.prepare('DELETE FROM reports WHERE done = 1 AND ts < ?'),
   oldCodes: db.prepare('DELETE FROM link_codes WHERE expires < ?'),

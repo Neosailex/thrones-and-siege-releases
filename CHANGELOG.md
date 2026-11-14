@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.80.3 · 2026-11-14
+
+- Celular: menú más grande; el fondo animado del menú ya no se queda quieto en iPhone.
+
 ## 0.80.2 · 2026-11-14
 
 - Celular: tocá una carta y se ve grande para leerla (al elegir el As, en el botín de campaña y la carta jugada); vista previa de la mano más grande.

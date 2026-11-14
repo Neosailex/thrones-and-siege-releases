@@ -1,5 +1,10 @@
 [
  {
+  "version": "0.80.3",
+  "date": "2026-11-14",
+  "notes": "Celular: menú más grande; el fondo animado del menú ya no se queda quieto en iPhone."
+ },
+ {
   "version": "0.80.2",
   "date": "2026-11-14",
   "notes": "Celular: tocá una carta y se ve grande para leerla (al elegir el As, en el botín de campaña y la carta jugada); vista previa de la mano más grande."
