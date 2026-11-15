@@ -2452,7 +2452,7 @@ export const camp = {
   "Armes +{s3}, cristaux +{s5}"
  ],
  "1063": [
-  "Récolte+",
+  "Moisson+",
   "Briques +{s1}, armes +{s3}"
  ],
  "1064": [
@@ -2460,7 +2460,7 @@ export const camp = {
   "Soldats +1, muraille +{s6}"
  ],
  "1210": [
-  "Lames à gages+",
+  "Lames à louer+",
   "Dégâts égaux à votre or ÷ 5 (minimum 5)"
  ],
  "1211": [
@@ -2480,7 +2480,7 @@ export const camp = {
   "Coûte 12 d'or. La prochaine attaque ennemie inflige la moitié"
  ],
  "1215": [
-  "Investissement+",
+  "Placement+",
   "Ouvrage : +5 d'or au début de chacun de vos tours"
  ],
  "1216": [
@@ -2488,7 +2488,7 @@ export const camp = {
   "Muraille +{s6} ; votre prochaine attaque ce tour inflige +3"
  ],
  "1217": [
-  "Banque de la Couronne+",
+  "Banque de la couronne+",
   "+8 d'or. Croît : +1 d'or par combat terminé avec elle dans votre deck"
  ],
  "1218": [
@@ -2500,7 +2500,7 @@ export const camp = {
   "Votre roi gagne une charge égale à votre or ÷ 18"
  ],
  "1220": [
-  "Mur en marche+",
+  "Mur qui avance+",
   "Dégâts égaux à 70 % de votre muraille"
  ],
  "1221": [
@@ -2516,11 +2516,11 @@ export const camp = {
   "Jusqu'à votre prochain tour et le suivant, votre muraille ne peut pas descendre sous sa valeur actuelle"
  ],
  "1224": [
-  "Coup de pierre+",
+  "Coup de masse+",
   "Dégâts 10 ; avec votre muraille à 30 ou plus, dégâts 17"
  ],
  "1225": [
-  "Effondrement contrôlé+",
+  "Effondrement+",
   "Abattez toute votre muraille : dégâts égaux à ce qu'elle avait + 20 %. Brûle"
  ],
  "1226": [
@@ -2528,7 +2528,7 @@ export const camp = {
   "Ouvrage : avec votre muraille à 20 ou plus, briques +3 au début de chacun de vos tours"
  ],
  "1227": [
-  "Bastion+",
+  "Rempart+",
   "Doublez votre muraille (jusqu'à +60). Brûle"
  ],
  "1228": [
@@ -2552,7 +2552,7 @@ export const camp = {
   "Dégâts 5 par attaque jouée ce tour, celle-ci comprise"
  ],
  "1233": [
-  "Soif de bataille+",
+  "Soif de combat+",
   "⚡ Rapide. Coûte 4 de château. Armes +{s3}"
  ],
  "1234": [
@@ -2592,7 +2592,7 @@ export const camp = {
   "Piochez 3 cartes"
  ],
  "1243": [
-  "Flèche sûre+",
+  "Flèche juste+",
   "Dégâts 9 ; si c'est la 3e carte jouée ce tour, dégâts 18"
  ],
  "1244": [
@@ -2640,7 +2640,7 @@ export const camp = {
   "Dégâts {o6}. Ouvrage : dégâts 3 au début de chacun de vos tours"
  ],
  "1255": [
-  "Casse+",
+  "Ferraille+",
   "Démontez votre Ouvrage le plus ancien : dégâts 4 par tour où il a tenu (minimum 4)"
  ],
  "1256": [
@@ -2784,7 +2784,7 @@ export const camp = {
   "Muraille {s6}, +2 par rune"
  ],
  "1406": [
-  "Fracas+",
+  "Briser+",
   "Brisez votre rune la plus ancienne (son effet x3)"
  ],
  "1407": [
@@ -2804,7 +2804,7 @@ export const camp = {
   "Ouvrage : au début de chacun de vos tours, gravez une rune de Pierre"
  ],
  "1411": [
-  "Effondrement runique+",
+  "Chute runique+",
   "Brisez toutes vos runes de Pierre : dégâts 6 pour chacune"
  ],
  "1412": [
@@ -2828,7 +2828,7 @@ export const camp = {
   "Muraille +{s6}"
  ],
  "1417": [
-  "Barbe-de-fer+",
+  "Barbe de fer+",
   "Muraille +{s6} ; si vous avez déjà monté 10 de muraille ou plus ce tour, gravez une rune de Pierre. Retenue"
  ],
  "1420": [
@@ -2840,7 +2840,7 @@ export const camp = {
   "Fureur +4"
  ],
  "1422": [
-  "Charge+",
+  "Coup de corne+",
   "Dégâts {o6}, deux fois"
  ],
  "1423": [
@@ -2856,7 +2856,7 @@ export const camp = {
   "Fureur +3, armes +{s3}"
  ],
  "1426": [
-  "Calme au combat+",
+  "Calme guerrier+",
   "Fureur −5 : muraille égale à la Fureur retirée x3 (sort de la Frénésie)"
  ],
  "1427": [
@@ -2868,7 +2868,7 @@ export const camp = {
   "Coûte 5 de vie. Dégâts {o6}"
  ],
  "1429": [
-  "Éveiller la bête+",
+  "Réveiller la bête+",
   "Vous entrez en Frénésie maintenant"
  ],
  "1430": [
@@ -2876,7 +2876,7 @@ export const camp = {
   "Ouvrage : Fureur +1 au début de chacun de vos tours"
  ],
  "1431": [
-  "Rituel des crocs+",
+  "Rite du croc+",
   "Coûte 6 de vie. Pour le reste du combat, vos attaques +3. Brûle"
  ],
  "1432": [
@@ -2932,7 +2932,7 @@ export const camp = {
   "Piochez 3"
  ],
  "1447": [
-  "Vent sylvestre+",
+  "Vent de la forêt+",
   "Muraille +{s6} et vous donne 1 Flèche"
  ],
  "1448": [
@@ -2944,7 +2944,7 @@ export const camp = {
   "Ouvrage : vous donne 1 Flèche au début de chacun de vos tours"
  ],
  "1450": [
-  "Tir juste+",
+  "Tir parfait+",
   "Visée +2 (ce combat) ; vous donne 1 Flèche. Brûle"
  ],
  "1451": [
@@ -2960,7 +2960,7 @@ export const camp = {
   "Vous donne 8 Flèches"
  ],
  "1454": [
-  "Œil de faucon+",
+  "Œil du faucon+",
   "Pour le reste du combat, Œil d'aigle 2 au début de chacun de vos tours. Brûle"
  ],
  "1455": [
@@ -2972,7 +2972,7 @@ export const camp = {
   "Muraille +{s6} ; si vous avez tiré 3 Flèches ou plus ce tour, muraille +4 de plus"
  ],
  "1457": [
-  "Lame acérée+",
+  "Feuille acérée+",
   "Vous donne 2 Flèches ; Visée +1 ce tour"
  ],
  "1458": [
@@ -3020,7 +3020,7 @@ export const camp = {
   "Ouvrage : vos Inventions +1 au début de chacun de vos tours"
  ],
  "1470": [
-  "Double chaudron+",
+  "Chaudron jumeau+",
   "Pour le reste du combat, le chaudron tient 6 de plus. Brûle"
  ],
  "1471": [
@@ -3068,7 +3068,7 @@ export const camp = {
   "Poison 6"
  ],
  "1484": [
-  "Toiles d'araignée+",
+  "Toiles+",
   "Poison 4 ; l'ennemi ne se soigne pas à son prochain tour"
  ],
  "1485": [
@@ -3128,7 +3128,7 @@ export const camp = {
   "Dégâts égaux à votre muraille x0,75"
  ],
  "1501": [
-  "Rempart gravé+",
+  "Mur gravé+",
   "Muraille +{s6} ; +2 par rune de Pierre"
  ],
  "1502": [
@@ -3292,7 +3292,7 @@ export const camp = {
   "Pour le reste du combat, chaque malédiction piochée vous donne muraille +3 et met 2 poison à l'ennemi. Brûle"
  ],
  "1546": [
-  "Cape d'ombre+",
+  "Manteau d'ombre+",
   "Muraille +{s6} ; le prochain coup ennemi vous inflige 4 de moins"
  ],
  "1547": [
@@ -3320,7 +3320,7 @@ export const camp = {
   "Dégâts 3 par soldat"
  ],
  "1554": [
-  "Remparts+",
+  "Remparts de la ville+",
   "Muraille +3 par bâtisseur"
  ],
  "1555": [

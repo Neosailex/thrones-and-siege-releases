@@ -2412,7 +2412,7 @@ export const camp = {
   "Pelo resto da luta, cada carta de unidade que você joga causa dano 3. Queima"
  ],
  "1002": [
-  "Salva+",
+  "Saraivada+",
   "Dano {o6}"
  ],
  "1006": [
@@ -2516,11 +2516,11 @@ export const camp = {
   "Até o seu próximo turno e o seguinte, sua muralha não pode cair abaixo do que tem agora"
  ],
  "1224": [
-  "Marretada de Pedra+",
+  "Martelada de Pedra+",
   "Dano 10; com sua muralha em 30 ou mais, dano 17"
  ],
  "1225": [
-  "Desmoronamento Controlado+",
+  "Desabamento Controlado+",
   "Derrube sua muralha inteira: dano igual ao que ela tinha + 20 %. Queima"
  ],
  "1226": [
@@ -2560,7 +2560,7 @@ export const camp = {
   "Dano 8; com seu castelo abaixo de 15, dano 20"
  ],
  "1235": [
-  "Tambor de Osso+",
+  "Tambor de Ossos+",
   "Obra: enquanto estiver de pé, seus ataques causam +3"
  ],
  "1236": [
@@ -2588,7 +2588,7 @@ export const camp = {
   "⚡ Rápida. Neste turno você pode trocar 3 cartas a mais"
  ],
  "1242": [
-  "Olho do Bosque+",
+  "Olho da Floresta+",
   "Compre 3 cartas"
  ],
  "1243": [
@@ -2596,7 +2596,7 @@ export const camp = {
   "Dano 9; se for a 3ª carta que você joga neste turno, dano 18"
  ],
  "1244": [
-  "Bosque que Responde+",
+  "Floresta que Responde+",
   "Obra: no início de cada turno seu, cristais +3 e você pode trocar 1 carta a mais"
  ],
  "1245": [
@@ -2604,11 +2604,11 @@ export const camp = {
   "Devolva à sua mão a última carta da sua pilha de descarte"
  ],
  "1246": [
-  "Lâmina que Volta+",
+  "Lâmina que Retorna+",
   "Dano {o6}. Retida"
  ],
  "1247": [
-  "Canto da Aurora+",
+  "Canção da Aurora+",
   "Neste turno você tem 2 jogadas a mais. Queima"
  ],
  "1248": [
@@ -2628,7 +2628,7 @@ export const camp = {
   "⚡ Rápida. Suas Obras agem duas vezes agora mesmo"
  ],
  "1252": [
-  "Fornalha+",
+  "Caldeira+",
   "Obra: armas +3 e cristais +3 no início de cada turno seu"
  ],
  "1253": [
@@ -2648,7 +2648,7 @@ export const camp = {
   "Obra: muralha +4 no início de cada turno seu"
  ],
  "1257": [
-  "Grande Invento+",
+  "Grande Invenção+",
   "Obra (ocupa 2 espaços): dano 8 no início de cada turno seu"
  ],
  "1258": [
@@ -2668,11 +2668,11 @@ export const camp = {
   "Dano {o6} e ponha 1 Brecha na mão do inimigo"
  ],
  "1262": [
-  "Festim das Sombras+",
+  "Banquete de Sombras+",
   "Dano 5 por cada estado na mão do inimigo"
  ],
  "1263": [
-  "Neblina+",
+  "Névoa+",
   "Ponha 1 Fumaça na mão do inimigo e compre 2 cartas"
  ],
  "1264": [
@@ -2692,7 +2692,7 @@ export const camp = {
   "Ponha 2 Pragas de Ratos no baralho do inimigo (pela batalha toda). Queima"
  ],
  "1268": [
-  "Roubo das Sombras+",
+  "Roubo Sombrio+",
   "Roube 4 de cada recurso por cada estado na mão dele (até 18 de cada)"
  ],
  "1269": [
@@ -2796,7 +2796,7 @@ export const camp = {
   "Suas runas agem de novo agora"
  ],
  "1409": [
-  "Cinzelar+",
+  "Cinzelada+",
   "Entalhe 2 runas iguais à última (se não tiver nenhuma, de Pedra)"
  ],
  "1410": [
@@ -2840,7 +2840,7 @@ export const camp = {
   "Fúria +4"
  ],
  "1422": [
-  "Investida+",
+  "Chifrada+",
   "Dano {o6}, duas vezes"
  ],
  "1423": [
@@ -2852,11 +2852,11 @@ export const camp = {
   "Custa 3 de vida. Dano {o6}; em Frenesi você se cura 5"
  ],
  "1425": [
-  "Grito de Guerra+",
+  "Brado de Guerra+",
   "Fúria +3, armas +{s3}"
  ],
  "1426": [
-  "Calma de Batalha+",
+  "Calma da Batalha+",
   "Fúria −5: muralha igual à Fúria que você baixou x3 (sai do Frenesi)"
  ],
  "1427": [
@@ -2916,7 +2916,7 @@ export const camp = {
   "Olho de Águia 4; compre 1"
  ],
  "1443": [
-  "Mira+",
+  "Mirar+",
   "Mira +1 (nesta luta) e dá 2 Flechas a você"
  ],
  "1444": [
@@ -2932,11 +2932,11 @@ export const camp = {
   "Compre 3"
  ],
  "1447": [
-  "Vento do Bosque+",
+  "Vento da Floresta+",
   "Muralha +{s6} e dá 1 Flecha a você"
  ],
  "1448": [
-  "Canto do Arvoredo+",
+  "Canção do Bosque+",
   "Castelo +{s7}; Olho de Águia 2"
  ],
  "1449": [
@@ -2956,7 +2956,7 @@ export const camp = {
   "Suas Flechas neste turno causam +3"
  ],
  "1453": [
-  "Tormenta de Flechas+",
+  "Tempestade de Flechas+",
   "Dá 8 Flechas a você"
  ],
  "1454": [
@@ -2972,7 +2972,7 @@ export const camp = {
   "Muralha +{s6}; se você atirou 3 Flechas ou mais neste turno, muralha +4 a mais"
  ],
  "1457": [
-  "Lâmina Afiada+",
+  "Folha Afiada+",
   "Dá 2 Flechas a você; Mira +1 neste turno"
  ],
  "1458": [
@@ -3020,7 +3020,7 @@ export const camp = {
   "Obra: suas Invenções +1 no início de cada turno seu"
  ],
  "1470": [
-  "Caldeira Dupla+",
+  "Caldeira Gêmea+",
   "Pelo resto da luta, a caldeira aguenta 6 a mais. Queima"
  ],
  "1471": [
@@ -3128,7 +3128,7 @@ export const camp = {
   "Dano igual à sua muralha x0,75"
  ],
  "1501": [
-  "Baluarte Entalhado+",
+  "Muralha Entalhada+",
   "Muralha +{s6}; +2 por cada runa de Pedra"
  ],
  "1502": [
@@ -3296,7 +3296,7 @@ export const camp = {
   "Muralha +{s6}; o próximo golpe inimigo causa 4 a menos em você"
  ],
  "1547": [
-  "Teia de Sombras+",
+  "Teia de Sombra+",
   "Muralha igual ao veneno do inimigo +3"
  ],
  "1548": [
@@ -3324,7 +3324,7 @@ export const camp = {
   "Muralha +3 por construtor"
  ],
  "1555": [
-  "Treinamento+",
+  "Treino+",
   "⚡ Rápida. Suas unidades produzem mais uma vez agora; compre 1"
  ],
  "1556": [
@@ -3356,7 +3356,7 @@ export const camp = {
   "Muralha +{s6}; sua próxima carta de muralha dá +3"
  ],
  "1563": [
-  "Toque de Clarim+",
+  "Toque de Corneta+",
   "Compre 2; seu próximo ataque +4"
  ],
  "1564": [

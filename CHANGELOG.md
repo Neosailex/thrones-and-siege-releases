@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.81.0 · 2026-11-15
+
+- Idiomas: suman francés, italiano, japonés y coreano al selector (ya estaban inglés, chino, ruso, portugués, alemán y los dos españoles). Arreglos de textos en todos los idiomas.
+
 ## 0.80.3 · 2026-11-14
 
 - Celular: menú más grande; el fondo animado del menú ya no se queda quieto en iPhone.

@@ -2432,15 +2432,15 @@ export const camp = {
   "⚡ Schnell. Mauer +{s6}"
  ],
  "1036": [
-  "Wall+",
+  "Wehrgang+",
   "Mauer +{s6}"
  ],
  "1037": [
-  "Trebuchet+",
+  "Tribok+",
   "Schaden {o6}"
  ],
  "1054": [
-  "Verwandlung+",
+  "Transmutation+",
   "Ziegel +{s1}, Waffen +{s3}"
  ],
  "1060": [
@@ -2468,11 +2468,11 @@ export const camp = {
   "+12 Gold (Feldzug). Verbrennt"
  ],
  "1212": [
-  "Bezahlte Truppe+",
+  "Bezahlte Aushebung+",
   "Kostet 10 Gold. Soldaten +1 (dieser Kampf)"
  ],
  "1213": [
-  "Königstruhe+",
+  "Königskasse+",
   "Burg +1 je 10 Gold"
  ],
  "1214": [
@@ -2492,7 +2492,7 @@ export const camp = {
   "+8 Gold. Wächst: +1 Gold für jeden Kampf, den du mit ihr im Deck beendest"
  ],
  "1218": [
-  "Goldenes Heer+",
+  "Goldene Armee+",
   "Schaden 3 je 15 Gold. Verbrennt"
  ],
  "1219": [
@@ -2516,7 +2516,7 @@ export const camp = {
   "Bis zu deiner übernächsten Runde kann deine Mauer nicht unter ihren jetzigen Wert fallen"
  ],
  "1224": [
-  "Steinhammer+",
+  "Steinhieb+",
   "Schaden 10; mit Mauer 30 oder mehr Schaden 17"
  ],
  "1225": [
@@ -2540,7 +2540,7 @@ export const camp = {
   "Mauer +{s6}. Wächst: Für jeden Kampf, den du mit Mauer 40 oder mehr beendest, beginnst du die nächsten mit Mauer +3 mehr"
  ],
  "1230": [
-  "Blutwut+",
+  "Blutrausch+",
   "Kostet 5 Burg. In dieser Runde machen deine Angriffe +6"
  ],
  "1231": [
@@ -2548,7 +2548,7 @@ export const camp = {
   "Schaden {o6}; du verlierst 2 Burg"
  ],
  "1232": [
-  "Clanheulen+",
+  "Clangeheul+",
   "Schaden 5 für jeden Angriff, den du in dieser Runde gespielt hast, diesen eingeschlossen"
  ],
  "1233": [
@@ -2556,7 +2556,7 @@ export const camp = {
   "⚡ Schnell. Kostet 4 Burg. Waffen +{s3}"
  ],
  "1234": [
-  "Verwundet+",
+  "Verwundet und gefährlich+",
   "Schaden 8; mit Burg unter 15 Schaden 20"
  ],
  "1235": [
@@ -2572,7 +2572,7 @@ export const camp = {
   "Schaden 3 je 4 Burg, die dir zum max. Leben fehlen. Verbrennt"
  ],
  "1238": [
-  "Eberhaut+",
+  "Keilerhaut+",
   "Mauer +{s6}; bis zu deiner nächsten Runde ist der nächste Schaden an deiner Burg 0"
  ],
  "1239": [
@@ -2588,11 +2588,11 @@ export const camp = {
   "⚡ Schnell. In dieser Runde kannst du 3 Karten mehr tauschen"
  ],
  "1242": [
-  "Waldauge+",
+  "Auge des Waldes+",
   "Ziehe 3 Karten"
  ],
  "1243": [
-  "Wahrer Pfeil+",
+  "Treuer Pfeil+",
   "Schaden 9; ist sie die 3. Karte, die du in dieser Runde spielst, Schaden 18"
  ],
  "1244": [
@@ -2600,11 +2600,11 @@ export const camp = {
   "Bauwerk: zu Beginn jeder deiner Runden Kristalle +3 und du kannst 1 Karte mehr tauschen"
  ],
  "1245": [
-  "Uraltes Gedächtnis+",
+  "Uralte Erinnerung+",
   "Nimm die letzte Karte deiner Ablage auf die Hand zurück"
  ],
  "1246": [
-  "Rückkehrklinge+",
+  "Kehrende Klinge+",
   "Schaden {o6}. Behalten"
  ],
  "1247": [
@@ -2620,7 +2620,7 @@ export const camp = {
   "Schaden 2 für jede Karte, die du in diesem Kampf gezogen oder getauscht hast (bis 40)"
  ],
  "1250": [
-  "Dampfgeschütz+",
+  "Dampfturm+",
   "Bauwerk: Schaden 4 zu Beginn jeder deiner Runden"
  ],
  "1251": [
@@ -2636,7 +2636,7 @@ export const camp = {
   "Wenn deine Bauwerke das nächste Mal wirken, geben sie doppelt"
  ],
  "1254": [
-  "Auto-Armbrust+",
+  "Automatikarmbrust+",
   "Schaden {o6}. Bauwerk: Schaden 3 zu Beginn jeder deiner Runden"
  ],
  "1255": [
@@ -2644,7 +2644,7 @@ export const camp = {
   "Zerlege dein ältestes Bauwerk: Schaden 4 für jede Runde, die es stand (mindestens 4)"
  ],
  "1256": [
-  "Mechanomauer+",
+  "Mechanische Mauer+",
   "Bauwerk: Mauer +4 zu Beginn jeder deiner Runden"
  ],
  "1257": [
@@ -2680,7 +2680,7 @@ export const camp = {
   "Bauwerk: lege zu Beginn jeder deiner Runden 1 Panik auf die Hand des Gegners und alle 2 Runden 1 Bresche"
  ],
  "1265": [
-  "Schleichgift+",
+  "Langsames Gift+",
   "In diesem Kampf verliert der Gegner am Ende seiner Runde 3 Burg für jeden Zustand auf seiner Hand"
  ],
  "1266": [
@@ -2780,7 +2780,7 @@ export const camp = {
   "Ritze eine Sturmrune ein"
  ],
  "1405": [
-  "Runenwall+",
+  "Runenmauer+",
   "Mauer {s6}, +2 für jede Rune"
  ],
  "1406": [
@@ -2816,11 +2816,11 @@ export const camp = {
   "Für den Rest des Kampfes wirken deine Runen zu Beginn deiner Runde 2 Mal. Verbrennt"
  ],
  "1414": [
-  "Bergesgesetz+",
+  "Gesetz des Berges+",
   "Brich alle deine Runen (je x3) und ritze dieselben neu ein"
  ],
  "1415": [
-  "Lebende Esse+",
+  "Lebende Schmiede+",
   "Ritze eine Steinrune und eine Feuerrune ein. Wächst: Für jeden Kampf, den du mit ihr im Deck beendest, ritzt sie eine Rune mehr ein (bis 3)"
  ],
  "1416": [
@@ -2836,11 +2836,11 @@ export const camp = {
   "Kostet 2 Leben. Schaden {o6}"
  ],
  "1421": [
-  "Brüllen+",
+  "Gebrüll+",
   "Wut +4"
  ],
  "1422": [
-  "Ansturm+",
+  "Rammen+",
   "Schaden {o6}, zweimal"
  ],
  "1423": [
@@ -2852,7 +2852,7 @@ export const camp = {
   "Kostet 3 Leben. Schaden {o6}; in Raserei heilst du 5"
  ],
  "1425": [
-  "Kriegsschrei+",
+  "Kriegsruf+",
   "Wut +3, Waffen +{s3}"
  ],
  "1426": [
@@ -2876,7 +2876,7 @@ export const camp = {
   "Bauwerk: Wut +1 zu Beginn jeder deiner Runden"
  ],
  "1431": [
-  "Fangritual+",
+  "Reißzahnritual+",
   "Kostet 6 Leben. Für den Rest des Kampfes deine Angriffe +3. Verbrennt"
  ],
  "1432": [
@@ -2884,7 +2884,7 @@ export const camp = {
   "Schaden gleich dem seit deiner letzten Runde verlorenen Leben x2 (max. 30)"
  ],
  "1433": [
-  "Ewige Raserei+",
+  "Endlose Raserei+",
   "Für den Rest des Kampfes dauert Raserei 1 Runde länger. Verbrennt"
  ],
  "1434": [
@@ -2940,11 +2940,11 @@ export const camp = {
   "Burg +{s7}; Adlerauge 2"
  ],
  "1449": [
-  "Altschütze+",
+  "Alter Bogenschütze+",
   "Bauwerk: gibt dir zu Beginn jeder deiner Runden 1 Pfeil"
  ],
  "1450": [
-  "Meisterschuss+",
+  "Sicherer Schuss+",
   "Zielen +2 (dieser Kampf); gibt dir 1 Pfeil. Verbrennt"
  ],
  "1451": [
@@ -2952,7 +2952,7 @@ export const camp = {
   "Mauer +3 für jeden Pfeil auf deiner Hand"
  ],
  "1452": [
-  "Pfeilkette+",
+  "Kettenpfeile+",
   "Deine Pfeile machen in dieser Runde +3"
  ],
  "1453": [
@@ -2972,7 +2972,7 @@ export const camp = {
   "Mauer +{s6}; hast du in dieser Runde 3 oder mehr Pfeile geschossen, Mauer +4 mehr"
  ],
  "1457": [
-  "Scharfe Klinge+",
+  "Scharfes Blatt+",
   "Gibt dir 2 Pfeile; Zielen +1 in dieser Runde"
  ],
  "1458": [
@@ -3020,7 +3020,7 @@ export const camp = {
   "Bauwerk: deine Erfindungen +1 zu Beginn jeder deiner Runden"
  ],
  "1470": [
-  "Doppelkessel+",
+  "Zwillingskessel+",
   "Für den Rest des Kampfes fasst der Kessel 6 mehr. Verbrennt"
  ],
  "1471": [
@@ -3068,11 +3068,11 @@ export const camp = {
   "Gift 6"
  ],
  "1484": [
-  "Spinnweben+",
+  "Netze+",
   "Gift 4; der Gegner heilt in seiner nächsten Runde nicht"
  ],
  "1485": [
-  "Abgrundflüstern+",
+  "Flüstern des Abgrunds+",
   "Spiele einen Fluch aus deiner Hand gratis (sein Pakt)"
  ],
  "1486": [
@@ -3128,7 +3128,7 @@ export const camp = {
   "Schaden gleich deiner Mauer x0,75"
  ],
  "1501": [
-  "Runenwall+",
+  "Runenmauer+",
   "Mauer +{s6}; +2 für jede Steinrune"
  ],
  "1502": [
@@ -3300,7 +3300,7 @@ export const camp = {
   "Mauer gleich dem Gift des Gegners +3"
  ],
  "1548": [
-  "Königin der Nacht+",
+  "Nachtkönigin+",
   "Für den Rest des Kampfes geben deine Giftkarten doppelt, solange du Schleier hast; Schleier 6. Verbrennt"
  ],
  "1550": [
@@ -3336,7 +3336,7 @@ export const camp = {
   "+18 Gold (für den Feldzug); ziehe 1"
  ],
  "1558": [
-  "Sold+",
+  "Truppensold+",
   "Zahle 15 Gold: Soldaten +2 (dieser Kampf) und Schaden {o6}"
  ],
  "1559": [
@@ -3364,7 +3364,7 @@ export const camp = {
   "Solange sie auf der Hand ist: deine Angriffe +2. Gespielt: Mauer +{s6}. Behalten"
  ],
  "1565": [
-  "König an der Front+",
+  "König voran+",
   "Für den Rest des Kampfes wird die erste Karte jeder Runde zweimal gespielt. Verbrennt"
  ],
  "1566": [
