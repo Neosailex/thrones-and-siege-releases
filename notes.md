@@ -1,1 +1,1 @@
-Idiomas: suman francés, italiano, japonés y coreano al selector (ya estaban inglés, chino, ruso, portugués, alemán y los dos españoles). Arreglos de textos en todos los idiomas.
+Sets de fondo (en prueba, todavía no visibles): batalla de fondo con arqueros y magos. Idiomas: árabe, hebreo y urdu traducidos (todavía fuera del selector).

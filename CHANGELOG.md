@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.81.1 · 2026-11-15
+
+- Sets de fondo (en prueba, todavía no visibles): batalla de fondo con arqueros y magos. Idiomas: árabe, hebreo y urdu traducidos (todavía fuera del selector).
+
 ## 0.81.0 · 2026-11-15
 
 - Idiomas: suman francés, italiano, japonés y coreano al selector (ya estaban inglés, chino, ruso, portugués, alemán y los dos españoles). Arreglos de textos en todos los idiomas.
