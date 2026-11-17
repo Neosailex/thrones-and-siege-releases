@@ -1188,6 +1188,43 @@
     "quieto",
     "liberado"
    ]
+  },
+  "heraldo_tesorero": {
+   "tipo": "suelo",
+   "w": 457,
+   "h": 760,
+   "cx": 239.9,
+   "cy": 448.7,
+   "piso": 756,
+   "poses": [
+    "quieto",
+    "alza",
+    "ataca",
+    "golpe",
+    "muere"
+   ]
+  },
+  "estandarte": {
+   "tipo": "secuaz",
+   "w": 156,
+   "h": 520,
+   "cx": 60.8,
+   "cy": 247.4,
+   "piso": 516,
+   "poses": [
+    "entera"
+   ]
+  },
+  "huevo": {
+   "tipo": "secuaz",
+   "w": 549,
+   "h": 420,
+   "cx": 277.2,
+   "cy": 212.6,
+   "piso": 417,
+   "poses": [
+    "entera"
+   ]
   }
  },
  "minero/entera": {
@@ -2185,5 +2222,33 @@
  "poseido_gorrak/liberado": {
   "w": 510,
   "h": 900
+ },
+ "heraldo_tesorero/quieto": {
+  "w": 457,
+  "h": 760
+ },
+ "heraldo_tesorero/alza": {
+  "w": 457,
+  "h": 760
+ },
+ "heraldo_tesorero/ataca": {
+  "w": 457,
+  "h": 760
+ },
+ "heraldo_tesorero/golpe": {
+  "w": 457,
+  "h": 760
+ },
+ "heraldo_tesorero/muere": {
+  "w": 457,
+  "h": 760
+ },
+ "estandarte/entera": {
+  "w": 156,
+  "h": 520
+ },
+ "huevo/entera": {
+  "w": 549,
+  "h": 420
  }
 }

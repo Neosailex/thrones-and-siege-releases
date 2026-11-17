@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.82.0 · 2026-11-17
+
+- Fondos: 7 sets (humano, enano, orco, elfo, gnomo, drow, Grieta) con su versión corrompida; se desbloquean jugando la campaña y se eligen en Personalizar (tocá tu retrato); en PvP cada uno ve su fondo y el del rival unidos. Campaña: los Heraldos y todo lo que es figura ahora son mobs (vida y armadura, sin castillo ni recursos); el Tesorero Negro con dibujos. 32 íconos de palabras clave y el tipo de carta en las cartas.
+
 ## 0.81.1 · 2026-11-15
 
 - Sets de fondo (en prueba, todavía no visibles): batalla de fondo con arqueros y magos. Idiomas: árabe, hebreo y urdu traducidos (todavía fuera del selector).

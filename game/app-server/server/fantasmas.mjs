@@ -16,8 +16,8 @@ let S = null;
 const st = () => {
   if (S) return S; const db = DB.rawDb(); if (!db) return null;
   return (S = {
-    put: db.prepare(`INSERT INTO ghosts (player, name, race, deck, sleeve, rating, eng, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(player) DO UPDATE SET name = excluded.name, race = excluded.race, deck = excluded.deck, sleeve = excluded.sleeve, rating = excluded.rating, eng = excluded.eng, created = excluded.created`),
+    put: db.prepare(`INSERT INTO ghosts (player, name, race, deck, sleeve, rating, eng, created, fondo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(player) DO UPDATE SET name = excluded.name, race = excluded.race, deck = excluded.deck, sleeve = excluded.sleeve, rating = excluded.rating, eng = excluded.eng, created = excluded.created, fondo = excluded.fondo`),
     near: db.prepare(`SELECT g.* FROM ghosts g JOIN players p ON p.id = g.player WHERE g.eng = ? AND g.created > ? AND g.player != ? AND p.hidden = 0
       ORDER BY ABS(g.rating - ?) LIMIT 12`),
     log: db.prepare('INSERT INTO ghost_log (owner, rival, won, bonus, ts) VALUES (?, ?, ?, ?, ?)'),
@@ -38,7 +38,7 @@ export function saveGhosts(seats) {
   for (const x of seats) {
     if (!x?.pid || x.ai || !x.race || validateDeck(x.deck, x.race)) continue;
     const p = DB.profile(x.pid); if (!p) continue;
-    st().put.run(x.pid, x.name || '', x.race, JSON.stringify(x.deck), x.sleeve ?? null, p.rating, ENG, Date.now());
+    st().put.run(x.pid, x.name || '', x.race, JSON.stringify(x.deck), x.sleeve ?? null, p.rating, ENG, Date.now(), x.fondo || 'a');
   }
 }
 
@@ -53,7 +53,7 @@ export function pickGhost(pid, rating) {
   if (!list.length) return null;
   const g = list[Math.floor(Math.random() * Math.min(5, list.length))];
   LAST.set(pid, [g.player, ...last].slice(0, 2));
-  return { owner: g.player, name: g.name, race: g.race, deck: padDeck(JSON.parse(g.deck)), sleeve: g.sleeve, rating: g.rating };
+  return { owner: g.player, name: g.name, race: g.race, deck: padDeck(JSON.parse(g.deck)), sleeve: g.sleeve, rating: g.rating, fondo: g.fondo || 'a' };
 }
 
 // ---- Bots de rangos bajos, estilo Marvel Snap (14/11, tanda b) ----

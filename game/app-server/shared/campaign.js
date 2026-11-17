@@ -270,7 +270,7 @@ export const RULES = {
      Cada regla tiene `intent(g, me, r)`: lo que va a hacer al empezar su próximo turno (aiIntent lo antepone a la intención). ---- */
   // Tesorero Negro: al empezar su turno te roba `amount` de tu recurso más alto y se blinda con lo robado (muro +2 por cada uno)
   hoard: { text: (r) => `Al empezar su turno te roba ${r.amount} de tu recurso más alto y se blinda: muro +${r.wall ?? 2} por cada uno`,
-    onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me], o = g.players[1 - me], k = topRes(o), n = Math.min(r.amount, o[k]); if (n <= 0) return; o[k] -= n; p[k] += n; p.wall += n * (r.wall ?? 2); p.rs.stolen = (p.rs.stolen || 0) + n; info.fx.push('rule:hoard'); },
+    onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me], o = g.players[1 - me], k = topRes(o), n = Math.min(r.amount, o[k]); if (n <= 0) return; o[k] -= n; if (!p.mob) p[k] += n; p.wall += n * (r.wall ?? 2); /* (S03 16/11) un mob no se queda lo robado: solo armadura */ p.rs.stolen = (p.rs.stolen || 0) + n; info.fx.push('rule:hoard'); },
     intent: (g, me, r) => { const o = g.players[1 - me], k = topRes(o), n = Math.min(r.amount, o[k]); return n > 0 ? I('hoard', { n, res: RES_NAME[k], w: n * (r.wall ?? 2) }, 'Te roba {n} {res} y se blinda (+{w} muro)') : null; } },
   // Dama de los Estandartes: planta un estandarte cada `every` turnos (hasta `max`): +`atk` a sus ataques cada uno. Los estandartes son su secuaz (vida `hp` cada uno): tus ataques los rompen primero
   banners: { text: (r) => `Planta un estandarte cada ${r.every} turnos (hasta ${r.max}; vida ${r.hp} cada uno): sus ataques +${r.atk} por estandarte en pie. Tus ataques rompen primero los estandartes`,
@@ -357,7 +357,7 @@ export const RULES = {
   // Sin Rostro: al empezar su turno juega copias de hasta `max` cartas que jugaste en tu turno anterior (sus números de base, del lado de él)
   faceless: { text: (r) => `${r.every > 1 ? `Cada ${r.every} turnos` : 'Al empezar su turno'} juega ${r.max > 1 ? `copias de hasta ${r.max} cartas` : 'una copia de una carta'} que jugaste en tu turno anterior`,
     onTurnStart(g, me, r, info) { const p = g.players[me]; if (info.seat !== me) { p.rs.seen = []; return; } p.rs.fc = (p.rs.fc || 0) + 1; if (p.rs.fc % (r.every || 1)) return; const o = g.players[1 - me];
-      for (const id of (p.rs.seen || []).slice(-r.max)) { const v = CARDS[id]; if (!v) continue; const [, s, op] = v; for (const [k, i] of [['builder', 0], ['recruit', 2], ['mage', 4]]) p[k] += Math.max(0, s[i]); p.wall += Math.max(0, s[6]); p.castle += Math.max(0, s[7]); E.campHit(g, o, op[6], op[7], info.fx); info.fx.push('rule:copy:' + id); }
+      for (const id of (p.rs.seen || []).slice(-r.max)) { const v = CARDS[id]; if (!v) continue; const [, s, op] = v; if (!p.mob) for (const [k, i] of [['builder', 0], ['recruit', 2], ['mage', 4]]) p[k] += Math.max(0, s[i]); /* (S03 16/11) un mob no copia unidades */ p.wall += Math.max(0, s[6]); p.castle += Math.max(0, s[7]); E.campHit(g, o, op[6], op[7], info.fx); info.fx.push('rule:copy:' + id); }
       p.rs.seen = []; },
     onCardPlayed(g, me, r, info) { if (info.seat === me || CAMP_STUCK.has(info.id)) return; const p = g.players[me]; (p.rs.seen ||= []).push(info.id); },
     intent: (g, me, r) => { const p = g.players[me]; if (((p.rs.fc || 0) + 1) % (r.every || 1)) return null; const L = (p.rs.seen || []).slice(-r.max); if (!L.length) return I('facelessNext', {}, 'Copia lo que juegues este turno'); const cards = L.map((id) => cardNameI(id, NAMES[id]?.[0])).join(I('and', {}, ' y ')); return I('faceless', { cards }, 'Copia {cards}'); } },
@@ -472,7 +472,12 @@ const U = (bu, so, ma, b, w, cr, wall, castle) => ({ builder: bu, recruit: so, m
 // Bichos (bestia/constructo, y campamentos con acciones): noProd (no producen), pattern/patternLoop o weights (acciones de bicho 300-316,
 // costo 0; la intención las muestra), capWall (empalizada con tope bajo; 0 = sin muro). minion: secuaz con vida propia (segundo muro).
 const BUG = { race: null, king: false, ai: 'facil', hand: 2, plays: 1, noProd: true, deck: deckOf({ 300: 1 }) }; // base de los bichos (el mazo real lo arma `actions`)
-const bug = (o) => ({ ...BUG, ...o, deck: deckOf(Object.fromEntries([...new Set([...(o.pattern || []), ...Object.keys(o.weights || {}).map(Number)])].map((id) => [id, 3]))) });
+// (S03 16/11, Juan) todo lo que se dibuja como figura (bestia, constructo, Heraldos, Apóstol, Demonio) es MOB: sin unidades, sin producción y sin
+// recursos; su castillo es su VIDA y su muro, armadura. Solo los castillos y los campamentos (asentamientos) tienen economía.
+// Unidades: el motor nunca deja menos de 1 (validate, regla del PvP) y con 0 algunas cartas tuyas cambian de valor (medido: las peleas contra bichos
+// quedaban 5-15 puntos más difíciles); así que quedan en 1, sin producir (noProd) y la pantalla no las muestra. Recursos en 0.
+const MOB_RES = { builder: 1, recruit: 1, mage: 1, brick: 0, weapon: 0, crystal: 0 };
+const bug = (o) => { const mob = o.kind !== 'campamento' && o.kind !== 'castillo'; return { ...BUG, ...o, ...(mob ? { mob: true, res: { ...o.res, ...MOB_RES } } : {}), deck: deckOf(Object.fromEntries([...new Set([...(o.pattern || []), ...Object.keys(o.weights || {}).map(Number)])].map((id) => [id, 3]))) }; };
 const SACERDOTISA = { name: 'Torre de la Sacerdotisa', hp: 10, heal: 1, atk: 1, rage: 1 }; // (doc: vida 18, cura 3: la pelea no terminaba, 40 % cortadas)
 export const ENEMIES = {
   humano: {
@@ -663,7 +668,15 @@ ENEMIES.drow = {
    Uno de los 3 Heraldos corrompió al rey: vencer al rey da su botín; vencer al Heraldo rompe la corrupción (el rey queda libre).
    Misma forma que rey/lor + id, desc (una línea) y marca { text, rules }: la regla chica que el Heraldo le deja al rey que corrompió
    (el cliente la suma a la pelea del rey). Tier 5: FIGHT_LEN.hp[5] multiplica castillo y muro como al rey. Números en docs/campaña/enemigos.md. */
-const HER = (o) => ({ tier: 5, kind: 'castillo', king: false, ai: 'dificil', hand: 4, plays: 1.5, noPassive: true, atk: 0, ...o, marca: { rules: o.marca.rules, text: o.marca.rules.map((r) => ruleText(r)).join('; ') } }); // (texto fijo: el cliente lo traduce con localizeCampaign de S01)
+// (S03 16/11, Juan) los Heraldos son MOBS: vida = su castillo de antes, armadura = su muro (tope 2× o el suyo), acciones 600-635 en orden fijo
+// (mismo daño por turno que su mazo de antes, más o menos), heraldo: true (el cliente los dibuja como figura). Su regla y su marca no cambian.
+const HER_PAT = { tesorero: [600, 600, 601], dama: [602, 602, 603], inquisidor: [604, 605, 604], yunque: [606, 607, 606], desenterrador: [608, 609, 608], forjador: [610, 611, 610],
+  carnicero: [612, 612, 613], bestias: [614, 615, 614], tambor: [616, 617, 616], cazadora: [618, 619, 618], tejedor: [620, 621, 620], espejo: [622, 623, 622],
+  relojero: [624, 625, 624], ingeniero: [626, 627, 626], alquimista: [628, 628, 629], arana: [630, 630, 631], sinrostro: [632], voz: [634, 635, 634] };
+// acciones por turno (como bichos): 1 o 1,5 según la región, medido con camp_critica para que cada región quede como con el mazo de antes
+const HER_PLAYS = { humano: 1, enano: 1.5, orco: 1.5, elfo: 1.5, gnomo: 1.5, drow: 1 };
+const HER = (o) => ({ ...bug({ ai: 'dificil', atk: 0, ...o, plays: o.mobPlays ?? HER_PLAYS[o.race] ?? 1, kind: 'bestia', heraldo: true, pattern: HER_PAT[o.id], res: U(0, 0, 0, 0, 0, 0, o.res.wall, o.res.castle), capWall: o.capWall ?? Math.max(10, 2 * o.res.wall) }),
+  tier: 5, king: false, noPassive: true, marca: { rules: o.marca.rules, text: o.marca.rules.map((r) => ruleText(r)).join('; ') } }); // (marca: texto fijo; el cliente lo traduce con localizeCampaign de S01)
 export const HERALDOS = {
   humano: [
     HER({ id: 'tesorero', name: 'El Tesorero Negro', race: 'humano', desc: 'Te roba tu recurso más alto cada turno y se blinda con lo robado', res: U(2, 2, 2, 6, 8, 6, 10, 44),
@@ -702,7 +715,7 @@ export const HERALDOS = {
       deck: deckOf({ 102: 2, 109: 3, 103: 2, 107: 2, 108: 2, 6: 1, 36: 1 }), rules: [{ k: 'rewind', every: 4, back: 2 }], marca: { rules: [{ k: 'rewind', every: 6, back: 2 }] } }),
     HER({ id: 'ingeniero', name: 'El Ingeniero Loco', race: 'gnomo', desc: 'Torretas que te disparan solas cada turno; si le rompés el muro, se caen', res: U(3, 2, 1, 10, 8, 4, 15, 34),
       deck: deckOf({ 102: 2, 109: 1, 105: 1, 103: 3, 107: 2, 108: 2, 36: 1 }), rules: [{ k: 'turrets', every: 2, max: 4, dmg: 3, start: 1 }], marca: { rules: [{ k: 'turrets', every: 4, max: 1, dmg: 2, start: 0 }] } }),
-    HER({ id: 'alquimista', name: 'El Alquimista', race: 'gnomo', desc: 'Cada turno cambia tu recurso más alto por el más bajo', res: U(2, 2, 3, 6, 6, 8, 10, 46),
+    HER({ id: 'alquimista', name: 'El Alquimista', race: 'gnomo', mobPlays: 1, desc: 'Cada turno cambia tu recurso más alto por el más bajo', res: U(2, 2, 3, 6, 6, 8, 10, 46),
       deck: deckOf({ 108: 3, 107: 3, 103: 2, 22: 1, 23: 1, 6: 1, 36: 1 }), rules: [{ k: 'transmute', every: 1 }], marca: { rules: [{ k: 'transmute', every: 3 }] } }),
   ],
   drow: [
@@ -737,7 +750,8 @@ ENEMIES.grieta = {
 };
 // (S03 11/11, Juan) el jefe de la Grieta antes del Demonio pasa a llamarse APÓSTOL (los Heraldos son ahora los 18 jefes de región).
 // Jerarquía: Rey Demonio → Apóstol → 18 Heraldos → reyes. apostolFor(reino) copia la regla del Lor de ese reino; heraldoFor queda como alias viejo.
-export function apostolFor(reino = 'drow') { const l = ENEMIES[reino]?.lor || ENEMIES.drow.lor; return { ...l, name: 'Apóstol del demonio', race: null, rules: (l.rules || []).map((r) => ({ ...r })) }; }
+// (S03 16/11) el Apóstol es MOB (figura): vida y armadura del Lor, su regla copiada, acciones 636/637
+export function apostolFor(reino = 'drow') { const l = ENEMIES[reino]?.lor || ENEMIES.drow.lor; return bug({ name: 'Apóstol del demonio', tier: l.tier, kind: 'bestia', heraldo: true, ai: 'dificil', plays: 1, atk: l.atk || 0, res: U(0, 0, 0, 0, 0, 0, l.res.wall, l.res.castle), capWall: l.capWall ?? Math.max(10, 2 * l.res.wall), pattern: [636, 637, 636], rules: (l.rules || []).map((r) => ({ ...r })) }); }
 export const heraldoFor = apostolFor;
 ENEMIES.grieta.lor = apostolFor('drow');
 export const BOSS_LOOT = { humano: [200, 201] };
@@ -763,7 +777,7 @@ export function makeBattle(player, enemy, { starter = 0, rnd = Math.random } = {
     seats: [
       { deck: player.deck, hand: Math.max(1, (player.hand ?? PLAYER_START.hand) + sum('hand')), res: { ...PLAYER_START.res, ...(player.res || {}) }, race: player.race || 'humano', king: player.king !== false, hooks: ruleHooks(pr), rules: pr,
         plays: (player.plays ?? CAMPAIGN.plays) + sum('plays'), discardHand: player.discardHand ?? CAMPAIGN.discardHand, gold: player.gold || 0, kills: player.kills || 0, grow: player.grow || {}, works: keepWorks ? player.works || [] : [], maxCastle: player.maxCastle ?? player.res?.castle ?? PLAYER_START.res.castle },
-      { deck: enemy.deck, hand: enemy.hand, res: shortRes(enemy), race: enemy.race, king: !!enemy.king, hooks: ruleHooks(er), rules: er, plays: enemy.plays || 1, discardHand: !!enemy.discardHand, ...(enemy.capWall != null ? { capWall: enemy.capWall } : {}), noProd: !!enemy.noProd, atk: enemy.atk || 0, pattern: enemy.pattern || null, patternLoop: enemy.patternLoop || 0, weights: enemy.weights || null, minion: enemy.minion || null, fly: enemy.fly || 0, immune: enemy.immune || 0, thorns: enemy.thorns || 0 },
+      { deck: enemy.deck, hand: enemy.hand, res: shortRes(enemy), race: enemy.race, king: !!enemy.king, hooks: ruleHooks(er), rules: er, plays: enemy.plays || 1, discardHand: !!enemy.discardHand, ...(enemy.capWall != null ? { capWall: enemy.capWall } : {}), noProd: !!enemy.noProd, mob: !!enemy.mob, atk: enemy.atk || 0, pattern: enemy.pattern || null, patternLoop: enemy.patternLoop || 0, weights: enemy.weights || null, minion: enemy.minion || null, fly: enemy.fly || 0, immune: enemy.immune || 0, thorns: enemy.thorns || 0 },
     ],
   });
   g.enemy = { name: enemy.name, tier: enemy.tier, ai: enemy.ai, kind: enemy.kind || 'castillo', rules: er.map((r) => ({ ...r, text: ruleText(r) })) };

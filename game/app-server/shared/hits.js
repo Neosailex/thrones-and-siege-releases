@@ -15,6 +15,10 @@ export const HITS = {
   16: h('rayo', 'alto'), 17: h('rayo', 'alto'), 37: h('piedra', 'alto'), 38: h('piedra', 'medio'), 39: h('asalto', 'base'), 46: h('fuego', 'alto'), 47: h('asalto', 'medio'),
   48: h('asalto', 'medio'), 49: h('magia', 'medio'), 50: h('asalto', 'alto'), 56: h('rayo', 'alto'), 60: h('asalto', 'medio'),
   // acciones de bicho de campaña (S03 01/11, enemigos.md)
+  // (S03 16/11) acciones de Heraldos y Apóstol (mobs)
+  600: h('asalto', 'medio'), 601: h('asalto', 'alto'), 602: h('asalto', 'medio'), 603: h('asalto', 'alto'), 604: h('fuego', 'alto'), 605: h('magia', 'medio'), 606: h('piedra', 'medio'), 608: h('asalto', 'base'), 609: h('asalto', 'base'), 610: h('asalto', 'medio'), 611: h('asalto', 'base'),
+  612: h('asalto', 'medio'), 613: h('asalto', 'alto'), 614: h('asalto', 'medio'), 615: h('asalto', 'base'), 616: h('asalto', 'medio'), 618: h('flechas', 'alto'), 619: h('flechas', 'medio'), 620: h('asalto', 'base'), 622: h('magia', 'alto'), 624: h('piedra', 'medio'), 626: h('asalto', 'medio'),
+  628: h('magia', 'medio'), 629: h('explosion', 'alto'), 630: h('asalto', 'base'), 632: h('asalto', 'medio'), 634: h('magia', 'alto'), 635: h('magia', 'medio'), 636: h('magia', 'alto'),
   300: h('asalto', 'medio'), 303: h('asalto', 'medio'), 305: h('asalto', 'base'), 307: h('asalto', 'medio'), 309: h('asalto', 'base'), 311: h('asalto', 'base'),
   314: h('asalto', 'medio'), 315: h('asalto', 'alto'), 316: h('magia', 'medio', 'drow'),
   362: h('explosion', 'alto'), 363: h('piedra', 'medio'), 364: h('asalto', 'base'), 366: h('asalto', 'base'), 367: h('piedra', 'alto'), 368: h('asalto', 'medio'), 370: h('rayo', 'alto'), 372: h('asalto', 'medio'),

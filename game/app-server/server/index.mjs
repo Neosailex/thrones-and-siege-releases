@@ -8,6 +8,7 @@ import { Server, matchMaker } from '@colyseus/core';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { AsedioRoom } from './AsedioRoom.mjs';
 import * as DB from './db.mjs';
+import * as FD from './fondos.mjs';
 import { ENG } from './version.mjs';
 import * as DIARIO from './diario.mjs';
 import * as NUBE from './nube.mjs';
@@ -102,6 +103,11 @@ app.get('/stats', async (_q, r) => {
 // Emparejamiento que se abre (S08 14/11): ¿hay alguien esperando en este rango de rating? El cliente arranca en ±100,
 // pasa a ±250 a los 10 s y a cualquiera a los 20 s. Con ?sala=<la suya> solo da salas que esperan desde ANTES que la suya
 // (así, si dos se encuentran, se mueve uno solo). Devuelve también cuántos hay conectados.
+// Sets de fondo del perfil (16/11): ver fondos.mjs
+const conId = (fn) => (q, r) => { const b = q.body || {}, me = DB.auth(b.pid, b.ptoken, null); if (!me) return r.status(403).json({ error: 'identidad', err: 'auth.identity' }); const out = fn(me.id, b); r.status(out?.error ? 400 : 200).json(out?.error ? out : { ok: true, ...out }); };
+app.post('/api/fondos', conId((id) => FD.estado(id)));
+app.post('/api/fondos/desbloquear', conId((id, b) => FD.desbloquear(id, b.sets)));
+app.post('/api/fondos/elegir', conId((id, b) => FD.elegir(id, String(b.fondo || ''))));
 // Lo que hizo tu fantasma mientras no estabas (una sola vez: queda marcado como visto)
 app.post('/api/fantasma/novedades', (q, r) => {
   const b = q.body || {}, me = DB.auth(b.pid, b.ptoken, null);

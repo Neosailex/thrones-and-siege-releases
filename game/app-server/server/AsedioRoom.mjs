@@ -7,6 +7,7 @@ import { ENG } from './version.mjs';
 import { joinError, deckProblem } from './codigos.mjs';
 import { cleanName, ipOf, checkJoin, takeSeat, freeSeat } from './abuso.mjs';
 import * as GH from './fantasmas.mjs';
+import * as FD from './fondos.mjs';
 
 // Estado público mínimo (las manos son secretas: cada jugador recibe su propia vista por mensaje).
 export const LobbyState = schema({ phase: t.string() }, 'LobbyState');
@@ -108,7 +109,7 @@ export class AsedioRoom extends Room {
     const { race, deck, sleeve, deckIssue } = pickDeck(o);
     if (deckIssue) client.send('notice', { ...deckIssue, replaced: true }); // mazo que no vale: se juega con el equilibrado
     this.ips ??= {}; this.ips[client.sessionId] = client.auth?.ip || '?'; takeSeat(this.ips[client.sessionId]); // por sessionId: sigue igual tras reconectar
-    this.seats.push({ sessionId: client.sessionId, pid: p.id, pub: p.pub || DB.pubOf(p.id), name, rating: p.rating, connected: true, deck, race, sleeve,
+    this.seats.push({ sessionId: client.sessionId, pid: p.id, pub: p.pub || DB.pubOf(p.id), name, rating: p.rating, connected: true, deck, race, sleeve, fondo: FD.paraPartida(p.id, o.fondo), // set de fondo (validado: solo si lo tiene)
       since: Date.now() - Math.max(0, Math.min(600e3, Number(o.waitedMs) || 0)), games: p.games || 0 }); // cuánto viene esperando (aunque haya cambiado de sala)
     if (this.seats.length === 1 && !this.priv) {
       this.setMetadata({ rating: p.rating, since: Date.now() }); // para el emparejamiento por nivel (/api/buscar)
@@ -124,7 +125,7 @@ export class AsedioRoom extends Room {
     if (this.priv || this.state.phase !== 'waiting' || this.seats.length !== 1) return;
     const me = this.seats[0], gh = (!bot && GH.pickGhost(me.pid, me.rating)) || GH.makeBot(me.rating, me.pid), kind = gh.owner ? 'fantasma' : 'bot';
     const level = kind === 'bot' ? (me.games < 10 || me.rating < 1000 ? 'facil' : Math.random() < 0.5 ? 'facil' : 'normal') : GH.aiLevel(gh.rating);
-    this.seats.push({ sessionId: null, ai: true, kind, owner: gh.owner, pid: null, pub: null, name: gh.name, rating: gh.rating, connected: true, deck: gh.deck, race: gh.race, sleeve: gh.sleeve,
+    this.seats.push({ sessionId: null, ai: true, kind, owner: gh.owner, pid: null, pub: null, name: gh.name, rating: gh.rating, connected: true, deck: gh.deck, race: gh.race, sleeve: gh.sleeve, fondo: gh.fondo || 'a',
       level, blunder: kind === 'bot' ? GH.botTorpeza(me.pid) : 0 });
     this.aiSeat = 1; this.start();
   }
@@ -132,7 +133,7 @@ export class AsedioRoom extends Room {
   seatOf(client) { return this.seats.findIndex((s) => s.sessionId === client.sessionId); }
   clientOf(seat) { return this.clients.find((c) => c.sessionId === this.seats[seat]?.sessionId); }
   info(seat) { return { seat, pubs: this.seats.map((s) => s.pub), names: this.seats.map((s) => s.name), ratings: this.seats.map((s) => s.rating), races: this.seats.map((s) => s.race), priv: this.priv,
-    kinds: this.seats.map((s) => s.kind || 'persona'), botLabel: process.env.BOT_CARTEL !== '0' }; } // kinds: persona | fantasma | bot (el cliente muestra "Fantasma de X" / "CPU entrenada")
+    kinds: this.seats.map((s) => s.kind || 'persona'), fondos: this.seats.map((s) => s.fondo || 'a'), botLabel: process.env.BOT_CARTEL !== '0' }; } // kinds: persona | fantasma | bot (el cliente muestra "Fantasma de X" / "CPU entrenada")
 
   start() {
     this.lock();

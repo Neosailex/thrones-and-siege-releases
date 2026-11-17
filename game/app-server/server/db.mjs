@@ -56,13 +56,16 @@ if (db) db.exec(`
   CREATE INDEX IF NOT EXISTS ghost_log_owner ON ghost_log (owner, seen);
   -- para medir (S08, 14/11): cada partida online que arranca, contra quién (persona / fantasma / bot) y cuánto se esperó
   CREATE TABLE IF NOT EXISTS match_stats (ts INTEGER NOT NULL, kind TEXT NOT NULL, wait_ms INTEGER NOT NULL);
+  -- sets de fondo (S08, 16/11; lógica en fondos.mjs): los que desbloqueó cada jugador (el A no se guarda: es de todos)
+  CREATE TABLE IF NOT EXISTS fondos (player TEXT NOT NULL, set_id TEXT NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (player, set_id));
 `);
 // columnas nuevas en bases que ya existen (Fly): se agregan una sola vez
 if (db) {
   const add = (table, col, def) => { if (!db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`); };
   add('players', 'pub', 'TEXT'); add('players', 'name_locked', 'INTEGER NOT NULL DEFAULT 0'); add('players', 'hidden', 'INTEGER NOT NULL DEFAULT 0');
   add('matches', 'season', 'TEXT'); add('matches', 'race_a', 'TEXT'); add('matches', 'race_b', 'TEXT');
-  add('matches', 'kind', "TEXT NOT NULL DEFAULT 'persona'"); // persona | fantasma | bot (contra fantasma, b = el dueño; contra bot, b = 'bot')
+  add('matches', 'kind', "TEXT NOT NULL DEFAULT 'persona'");
+  add('players', 'fondo', "TEXT NOT NULL DEFAULT 'a'"); add('ghosts', 'fondo', "TEXT NOT NULL DEFAULT 'a'"); // set de fondo elegido (16/11) // persona | fantasma | bot (contra fantasma, b = el dueño; contra bot, b = 'bot')
   add('matches', 'sra', 'INTEGER'); add('matches', 'srb', 'INTEGER'); add('matches', 'sda', 'INTEGER'); add('matches', 'sdb', 'INTEGER');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS players_pub ON players (pub)');
   // 11/11: el nombre por defecto ya no es una palabra en castellano sino vacío (player.default en cada idioma)
@@ -254,7 +257,7 @@ const qr = !db ? null : {
     db.prepare("UPDATE matches SET b = 'borrado' WHERE b = ?"), db.prepare('DELETE FROM daily WHERE player = ?'),
     db.prepare('DELETE FROM saves WHERE player = ?'), db.prepare('DELETE FROM tokens WHERE player = ?'), db.prepare('DELETE FROM link_codes WHERE player = ?'),
     db.prepare('DELETE FROM accounts WHERE player = ?'), db.prepare('DELETE FROM ghosts WHERE player = ?'), db.prepare('DELETE FROM ghost_log WHERE owner = ?'),
-    db.prepare('DELETE FROM players WHERE id = ?')],
+    db.prepare('DELETE FROM fondos WHERE player = ?'), db.prepare('DELETE FROM players WHERE id = ?')],
   oldMatches: db.prepare('DELETE FROM matches WHERE ts < ?'),
   oldReports: db.prepare('DELETE FROM reports WHERE done = 1 AND ts < ?'),
   oldCodes: db.prepare('DELETE FROM link_codes WHERE expires < ?'),

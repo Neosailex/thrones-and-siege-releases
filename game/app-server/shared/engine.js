@@ -276,6 +276,7 @@ export function playable(p, id, sleeve = false) {
   if (CARDS[id][1][6] < 0 && p.wall < -CARDS[id][1][6]) return false; // "tu muro −3" (Berserker, Sacrificio, Pacto): sin ese muro no se juega (Juan 26/10)
   if (c[8] && (p.favor || 0) < c[8]) return false;
   for (let i = 0; i < 8; i++) if (s[i] < c[i]) return false;
+  if (p.mob) return true; // (S03 16/11) un mob no tiene unidades: sus acciones (costo 0) siempre se pueden
   return !(s[0] <= c[0] || s[2] <= c[2] || s[4] <= c[4]);
 }
 
@@ -437,6 +438,7 @@ function playInner(g, i) {
       if (special.atkUp) { p.atkPlus = (p.atkPlus || 0) + special.atkUp; fx.push('rule:atkUp'); }
       if (special.selfDestruct) { p.castle = 0; fx.push('rule:selfDestruct'); } // Polvorín: explota y se va (ganás la pelea si aguantaste)
       if (special.wallUp) { p.wall += special.wallUp; validate(p); fx.push('rule:wallUp'); }
+      if (special.venom) { campVenom(o, special.venom); fx.push('venom:' + o.venom); } // (S03 16/11) acción de mob con veneno (Araña Madre)
       if (special.acid) { const x = Math.min(Math.max(0, o.wall), op[6]); if (x > 0) { o.wall -= x; fx.push('rule:acid'); } } // ácido (Lodos): le pega otra vez lo mismo a tu muro
       if (special.tempWall) { p.tempWall = (p.tempWall || 0) + special.tempWall; p.wall += special.tempWall; fx.push('rule:burrowWall'); }
       if (special.pages || special.hits > 1) { const n = special.pages ? Math.max(1, p.pageHits || 1) : special.hits; for (let h = 1; h < n; h++) { const pc = glCtx(g, 'normal', id); statRemove(g, o, [0, 0, 0, 0, 0, 0, op[6], 0], false, fx); glRestore(g, pc); } fx.push((special.pages ? 'pages:' : 'hits:') + n); }
@@ -473,6 +475,7 @@ const owns = (p, id) => [p.deck, p.hand, p.used, p.burned || []].some((l) => l.i
 function campSeat(p, c) {
   // (S03 01/11, docs/campaña/enemigos.md) cuerpos de bicho: noProd (no produce: bestias y construcciones), pattern/weights (acciones de bicho
   // en orden fijo o con pesos), minion (secuaz: segundo muro con vida propia, efecto mientras vive y al caer)
+  if (c.mob) p.mob = true; // (S03 16/11, Juan) MOB: figura, no castillo: sin unidades ni producción, su castillo es su vida, nunca gana llegando a 100
   if (c.noProd) p.noProd = true; if (c.atk) p.atkPlus = (p.atkPlus || 0) + c.atk; /* atk: +N a todos sus ataques (para afinar enemigos) */ if (c.pattern) { p.pattern = c.pattern.slice(); p.patternLoop = c.patternLoop || 0; } if (c.weights) p.weights = { ...c.weights };
   if (c.fly) p.flyLeft = c.fly; if (c.immune) p.immuneLeft = c.immune; if (c.thorns) p.thorns = c.thorns; // vuelo (mitad de daño N golpes), inmune a N efectos, espinas
   if (c.minion) { p.minionHp = c.minion.hp; p.minionMax = c.minion.hp; p.minionAtk = c.minion.atk || 0; p.minionHeal = c.minion.heal || 0; p.minionRage = c.minion.rage || 0; p.minionName = c.minion.name || 'Secuaz'; }
@@ -872,7 +875,7 @@ function endTurnInner(g) {
   if (g.phase === 'sleeve') return null; // todavía eligiendo el As
   const no100 = !!g.campaign?.noWin100; // campaña: no se gana llegando a 100
   if (!g.dev?.noWin) for (const [i, p] of g.players.entries()) {
-    if (p.castle >= 100 && !no100) { g.winner = i; return { type: 'win', winner: i, reason: 'castle100' }; }
+    if (p.castle >= 100 && !no100 && !p.mob) { g.winner = i; return { type: 'win', winner: i, reason: 'castle100' }; }
     if (p.castle <= 0) { p.castle = 0; g.winner = 1 - i; return { type: 'win', winner: 1 - i, reason: 'castle0' }; }
   }
   if (g.campaign && !g.passed && !g.freePlay && g.players[g.turn].aimOn) { const q = g.players[g.turn], n = q.hand.filter((h) => (h === ARROW || h === ARROW + PLUS) && playable(q, h)).length; if (n && g.arrowSeen !== n) { g.arrowSeen = n; g.freePlay = true; q.arrowOnly = true; } } // Flechas en la mano: siempre las podés tirar (no gastan jugada)
