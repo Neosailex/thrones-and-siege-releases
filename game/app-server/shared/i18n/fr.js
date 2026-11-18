@@ -1031,27 +1031,27 @@ export const cards = {
  ],
  "180": [
   "Charge d'Aldric",
-  "Frappe du roi : dégâts {o6} ; si elle brise la muraille, l'ennemi perd aussi 1 unité au hasard. Seulement avec votre roi éveillé et pas le tour où il a agi seul ; ensuite il est étourdi 2 tours"
+  "Frappe du roi : dégâts {o6}. Bénédiction de la lumière : pendant 3 tours, chacun de vos travailleurs produit +1. Seulement avec votre roi éveillé et pas le tour où il a agi seul ; ensuite il est étourdi 2 tours"
  ],
  "181": [
   "Marteau de Thorgrim",
-  "Frappe du roi : dégâts {o6} ; si elle brise la muraille, l'ennemi perd aussi 1 unité au hasard. Seulement avec votre roi éveillé et pas le tour où il a agi seul ; ensuite il est étourdi 2 tours"
+  "Frappe du roi : dégâts {o6}. Pluie de décombres : muraille +{s6}. Seulement avec votre roi éveillé et pas le tour où il a agi seul ; ensuite il est étourdi 2 tours"
  ],
  "182": [
   "Fureur d'Aelwyn",
-  "Frappe du roi : dégâts {o6} ; si elle brise la muraille, l'ennemi perd aussi 1 unité au hasard. Seulement avec votre roi éveillé et pas le tour où il a agi seul ; ensuite il est étourdi 2 tours"
+  "Frappe du roi : dégâts {o6}. Vol du balcon : choisissez une carte de la main ennemie et gardez-la (jouable une fois) ; contre une créature sans main, vous annulez sa prochaine action. Seulement avec votre roi éveillé et pas le tour où il a agi seul ; ensuite il est étourdi 2 tours"
  ],
  "183": [
   "Ombre de Vaelith",
-  "Frappe du roi : dégâts {o6} ; si elle brise la muraille, l'ennemi perd aussi 1 unité au hasard. Seulement avec votre reine éveillée et pas le tour où elle a agi seule ; ensuite elle est étourdie 2 tours"
+  "Frappe du roi : dégâts {o6}. Ombre de Vaelith : pendant 3 tours, au début de votre tour l'ennemi subit des dégâts égaux à 35 % de ses ressources (4 au maximum ; contre une créature sans ressources, 4). Seulement avec votre reine éveillée et pas le tour où elle a agi seule ; ensuite elle est étourdie 2 tours"
  ],
  "184": [
   "Génie de Fizzwick",
-  "Frappe du roi : dégâts {o6} ; si elle brise la muraille, l'ennemi perd aussi 1 unité au hasard. Seulement avec votre roi éveillé et pas le tour où il a agi seul ; ensuite il est étourdi 2 tours"
+  "Frappe du roi : dégâts {o6}. Fabrique industrielle : pendant 5 tours, au début de votre tour vous obtenez au hasard : +1 travailleur (2 au maximum en tout), +1 ou +2 de chaque ressource, un coup de canon de 8 ou un ballon-drone qui endort le roi ennemi 2 tours (sans passif de race ni Manche). Seulement avec votre roi éveillé et pas le tour où il a agi seul ; ensuite il est étourdi 2 tours"
  ],
  "185": [
   "Assaut de Gorrak",
-  "Frappe du roi : dégâts {o6} ; si elle brise la muraille, l'ennemi perd aussi 1 unité au hasard. Seulement avec votre roi éveillé et pas le tour où il a agi seul ; ensuite il est étourdi 2 tours"
+  "Frappe du roi : dégâts {o6}. Présence du roi : pendant 5 tours, vos cartes qui infligent des dégâts frappent +3. Seulement avec votre roi éveillé et pas le tour où il a agi seul ; ensuite il est étourdi 2 tours"
  ],
  "186": [
   "Œil du guetteur",
@@ -3734,7 +3734,7 @@ export const campaignRules = {
  "runeSlot": "+{amount} emplacement de rune",
  "startCharge": "Votre roi commence avec {amount} de charge",
  "dmgEvery": "Tous les {every} tours, il vous frappe pour {amount} directs au château",
- "freeStrike": "Une fois par combat, à votre premier tour : dégâts {dmg} (ne fait pas descendre un Roi ou un Héraut sous 1 PV)",
+ "freeStrike": "Une fois par combat, à votre premier tour : dégâts {dmg} (ne fait pas descendre un Roi ou un Héraut sous la moitié de ses PV)",
  "handPlus": "Main +{amount}",
  "steal": {
   "top": "Chaque coup qui atteint votre château vole {amount} de votre ressource la plus abondante",

@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.84.0 · 2026-11-18
+
+- Míticas nuevas: cada rey con su poder propio y efectos visibles. Campaña: rendición, veteranos, refuerzo de la aldea, llamar al rey y sellos del Demonio ya en pantalla, con íconos pintados. Online: si se corta la conexión juega la CPU por vos. Celular: pantalla completa en iPhone y modo Bajo de verdad para celulares lentos.
+
 ## 0.83.0 · 2026-11-18
 
 - Campaña: rendición de enemigos, veteranos, rey liberado que te ayuda, refuerzo de la aldea y sellos que despiertan al Demonio. Arreglos: tope del mazo con maldiciones, frontera sin cartas de otra raza, golpes gratis que no matan reyes, Planta carnívora. Arte nuevo para 66 cartas de campaña. Menús prolijos.

@@ -1031,27 +1031,27 @@ export const cards = {
  ],
  "180": [
   "Investida de Aldric",
-  "Golpe do Rei: dano {o6}; se derrubar a muralha, o inimigo também perde 1 unidade aleatória. Só com o seu rei acordado e não no turno em que ele agiu sozinho; depois ele fica atordoado por 2 turnos"
+  "Golpe do Rei: dano {o6}. Bênção da luz: por 3 turnos, cada trabalhador seu produz +1. Só com o seu rei acordado e não no turno em que ele agiu sozinho; depois ele fica atordoado por 2 turnos"
  ],
  "181": [
   "Martelo de Thorgrim",
-  "Golpe do Rei: dano {o6}; se derrubar a muralha, o inimigo também perde 1 unidade aleatória. Só com o seu rei acordado e não no turno em que ele agiu sozinho; depois ele fica atordoado por 2 turnos"
+  "Golpe do Rei: dano {o6}. Chuva de escombros: muralha +{s6}. Só com o seu rei acordado e não no turno em que ele agiu sozinho; depois ele fica atordoado por 2 turnos"
  ],
  "182": [
   "Fúria de Aelwyn",
-  "Golpe do Rei: dano {o6}; se derrubar a muralha, o inimigo também perde 1 unidade aleatória. Só com o seu rei acordado e não no turno em que ele agiu sozinho; depois ele fica atordoado por 2 turnos"
+  "Golpe do Rei: dano {o6}. Roubo da sacada: escolha uma carta da mão inimiga e fique com ela (joga-se uma vez); contra uma criatura sem mão, você cancela a próxima ação dela. Só com o seu rei acordado e não no turno em que ele agiu sozinho; depois ele fica atordoado por 2 turnos"
  ],
  "183": [
   "Sombra de Vaelith",
-  "Golpe do Rei: dano {o6}; se derrubar a muralha, o inimigo também perde 1 unidade aleatória. Só com a sua rainha acordada e não no turno em que ela agiu sozinha; depois ela fica atordoada por 2 turnos"
+  "Golpe do Rei: dano {o6}. Sombra de Vaelith: por 3 turnos, no início do seu turno o inimigo sofre dano igual a 35 % dos recursos dele (máximo 4; contra uma criatura sem recursos, 4). Só com a sua rainha acordada e não no turno em que ela agiu sozinha; depois ela fica atordoada por 2 turnos"
  ],
  "184": [
   "Engenho de Fizzwick",
-  "Golpe do Rei: dano {o6}; se derrubar a muralha, o inimigo também perde 1 unidade aleatória. Só com o seu rei acordado e não no turno em que ele agiu sozinho; depois ele fica atordoado por 2 turnos"
+  "Golpe do Rei: dano {o6}. Fábrica industrial: por 5 turnos, no início do seu turno sai ao acaso: +1 trabalhador (máximo 2 no total), +1 ou +2 de cada recurso, um tiro de canhão de 8 ou um balão drone que faz o rei inimigo dormir por 2 turnos (sem passiva de raça nem Manga). Só com o seu rei acordado e não no turno em que ele agiu sozinho; depois ele fica atordoado por 2 turnos"
  ],
  "185": [
   "Avanço de Gorrak",
-  "Golpe do Rei: dano {o6}; se derrubar a muralha, o inimigo também perde 1 unidade aleatória. Só com o seu rei acordado e não no turno em que ele agiu sozinho; depois ele fica atordoado por 2 turnos"
+  "Golpe do Rei: dano {o6}. Presença do rei: por 5 turnos, suas cartas que causam dano batem +3. Só com o seu rei acordado e não no turno em que ele agiu sozinho; depois ele fica atordoado por 2 turnos"
  ],
  "186": [
   "Olho do Vigia",
@@ -3734,7 +3734,7 @@ export const campaignRules = {
  "runeSlot": "+{amount} espaço de runa",
  "startCharge": "Seu rei começa com {amount} de carga",
  "dmgEvery": "A cada {every} turno acerta {amount} direto no seu castelo",
- "freeStrike": "Uma vez por luta, no seu primeiro turno: dano {dmg} (não deixa um Rei ou um Arauto com menos de 1 de vida)",
+ "freeStrike": "Uma vez por luta, no seu primeiro turno: dano {dmg} (não deixa um Rei ou um Arauto com menos da metade da vida)",
  "handPlus": "Mão +{amount}",
  "steal": {
   "top": "Cada golpe que chega ao seu castelo rouba {amount} do seu recurso mais abundante",

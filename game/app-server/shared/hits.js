@@ -60,6 +60,8 @@ export const HIT_FX = {
   ash: h('magia', 'medio', 'drow'),     // Ceniza (Juan 27/10): lo que el piso le frena al drow quema el muro rival
   poison: h('magia', 'base', 'drow'),   // campaña: Susurro venenoso (pierde castillo por estados en la mano)
   regla: h('asalto', 'medio'),          // campaña: equipo que pega (Guantes de albañil)
+  shadow: h('magia', 'medio', 'drow'),  // Sombra de Vaelith (mítica drow, S03 18/11): al empezar el turno
+  factory: h('explosion', 'alto'),      // Fábrica industrial (mítica gnoma): el cañonazo
 };
 // { arma, altura, color } para un golpe de daño; null si no hay tipo cargado (la auditoría lo marca)
 export function hitOf(origen, casterRace) {

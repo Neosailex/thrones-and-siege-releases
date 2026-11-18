@@ -1031,27 +1031,27 @@ export const cards = {
  ],
  "180": [
   "Carica di Aldric",
-  "Colpo del Re: danno {o6}; se abbatte le mura, il nemico perde anche 1 unità a caso. Solo con il tuo re sveglio e non nel turno in cui ha agito da solo; dopo resta stordito per 2 turni"
+  "Colpo del Re: danno {o6}. Benedizione della luce: per 3 turni, ogni tuo lavoratore produce +1. Solo con il tuo re sveglio e non nel turno in cui ha agito da solo; dopo resta stordito per 2 turni"
  ],
  "181": [
   "Martello di Thorgrim",
-  "Colpo del Re: danno {o6}; se abbatte le mura, il nemico perde anche 1 unità a caso. Solo con il tuo re sveglio e non nel turno in cui ha agito da solo; dopo resta stordito per 2 turni"
+  "Colpo del Re: danno {o6}. Pioggia di macerie: mura +{s6}. Solo con il tuo re sveglio e non nel turno in cui ha agito da solo; dopo resta stordito per 2 turni"
  ],
  "182": [
   "Furia di Aelwyn",
-  "Colpo del Re: danno {o6}; se abbatte le mura, il nemico perde anche 1 unità a caso. Solo con il tuo re sveglio e non nel turno in cui ha agito da solo; dopo resta stordito per 2 turni"
+  "Colpo del Re: danno {o6}. Furto dal balcone: scegli una carta dalla mano nemica e tienila (si gioca una volta); contro una creatura senza mano, annulli la sua prossima azione. Solo con il tuo re sveglio e non nel turno in cui ha agito da solo; dopo resta stordito per 2 turni"
  ],
  "183": [
   "Ombra di Vaelith",
-  "Colpo del Re: danno {o6}; se abbatte le mura, il nemico perde anche 1 unità a caso. Solo con la tua regina sveglia e non nel turno in cui ha agito da sola; dopo resta stordita per 2 turni"
+  "Colpo del Re: danno {o6}. Ombra di Vaelith: per 3 turni, all'inizio del tuo turno il nemico subisce danni pari al 35 % delle sue risorse (massimo 4; contro una creatura senza risorse, 4). Solo con la tua regina sveglia e non nel turno in cui ha agito da sola; dopo resta stordita per 2 turni"
  ],
  "184": [
   "Ingegno di Fizzwick",
-  "Colpo del Re: danno {o6}; se abbatte le mura, il nemico perde anche 1 unità a caso. Solo con il tuo re sveglio e non nel turno in cui ha agito da solo; dopo resta stordito per 2 turni"
+  "Colpo del Re: danno {o6}. Fabbrica industriale: per 5 turni, all'inizio del tuo turno esce a caso: +1 lavoratore (massimo 2 in tutto), +1 o +2 di ogni risorsa, una cannonata da 8 o un pallone drone che addormenta il re nemico per 2 turni (senza passiva di razza né Manica). Solo con il tuo re sveglio e non nel turno in cui ha agito da solo; dopo resta stordito per 2 turni"
  ],
  "185": [
   "Assalto di Gorrak",
-  "Colpo del Re: danno {o6}; se abbatte le mura, il nemico perde anche 1 unità a caso. Solo con il tuo re sveglio e non nel turno in cui ha agito da solo; dopo resta stordito per 2 turni"
+  "Colpo del Re: danno {o6}. Presenza del re: per 5 turni, le tue carte che fanno danno colpiscono +3. Solo con il tuo re sveglio e non nel turno in cui ha agito da solo; dopo resta stordito per 2 turni"
  ],
  "186": [
   "Occhio della vedetta",
@@ -3734,7 +3734,7 @@ export const campaignRules = {
  "runeSlot": "+{amount} spazio runa",
  "startCharge": "Il tuo re inizia con {amount} di carica",
  "dmgEvery": "Ogni {every} turno ti colpisce per {amount} diretti al castello",
- "freeStrike": "Una volta per scontro, al tuo primo turno: danno {dmg} (non porta un Re o un Araldo sotto 1 vita)",
+ "freeStrike": "Una volta per scontro, al tuo primo turno: danno {dmg} (non porta un Re o un Araldo sotto metà della vita)",
  "handPlus": "Mano +{amount}",
  "steal": {
   "top": "Ogni colpo che arriva al tuo castello ti ruba {amount} della risorsa più abbondante",

@@ -169,15 +169,27 @@ export const TACTIC_CARDS = {
 // castillo (rompe el muro), el rival pierde además 1 de cada unidad; si el muro aguanta, solo el daño (Juan 14/10). Con 30 rompe el muro ~59 %.
 const cm = (b, w, cr) => [0, b, 0, w, 0, cr, 0, 0, 5];
 const KA = { k: 'kingAttack', stun: 2, minCharge: 0 }; // Juan 26/10: ya no pide 2 de carga (antes minCharge 2)
-const KA_TX = 'Ataque del rey: daño 30; si rompe el muro, el rival pierde además 1 unidad al azar. Solo con tu rey despierto y no el turno en que actuó solo; después queda desmayado 2 turnos';
-const KO = [0, 0, 0, 0, 0, 0, 30, 0]; // las unidades se pierden solo si rompe el muro (engine: kingAttack)
+const KA_END = 'Solo con tu rey despierto y no el turno en que actuó solo; después queda desmayado 2 turnos';
+const KO = [0, 0, 0, 0, 0, 0, 30, 0];
+/* (S03 18/11, Juan + S00) Nuevas míticas: el "mata 1 trabajador" se reemplaza por un efecto propio de cada rey (engine: mythEffect).
+   El efecto va con la carta (el rey que baja), no con la raza del que la juega (rey invitado de la Grieta = el efecto de ese rey).
+   Efectos de varios turnos: viven en p.effects (como los tácticos de 3 turnos) y el motor emite 'effectStart:<e>' al jugarla y
+   'effectEnd:<e>' en el evento del turno en que se terminan. Números para balance en MYTH. */
+export const MYTH = {
+  humano: { e: 'blessing', turns: 3, per: 1 }, // Bendición de la luz: cada trabajador produce +1 (Juan: el doble por 5 turnos)
+  enano: { wall: 10 }, // Lluvia de escombros: +10 de muro (Juan 18/11; con +20 el enano 53 %, con +15 52,3 %, con +10 50,6 %) (va en el vector propio de la carta 181; el enano suma su +2 de muro)
+  orco: { e: 'presence', turns: 5, add: 3 }, // Presencia del rey: tus cartas que hacen daño pegan +3 (bal: +2 por 3 turnos dejaba al orco en 47 %)
+  elfo: { steal: true, n: 1 }, // Robo del balcón: elegís una carta de la mano rival y te la quedás (se juega una vez); bicho sin mano: le cancelás la próxima acción
+  gnomo: { e: 'factory', turns: 5, workerMax: 2, w: { worker: [25, 10], res: 35, cannon: 30, drone: 10 }, res: [1, 2], cannon: 8, sleep: 2 }, // Fábrica industrial
+  drow: { e: 'shadow', turns: 3, pct: 0.35, max: 4, flat: 4 }, // Sombra de Vaelith: 35 % de los recursos del rival (tope 4); bicho sin recursos: 4 (bal: 5 turnos con tope 6 dejaba al drow en 57 %)
+};
 export const MYTHIC_CARDS = {
-  180: ['Carga de Aldric', KA_TX, cm(10, 10, 0), Z, KO, KA],
-  181: ['Martillo de Thorgrim', KA_TX, cm(12, 0, 0), Z, KO, KA], // solo ladrillos: con 15+5 el enano la usaba 22 %, así 46 %
-  182: ['Furia de Aelwyn', KA_TX, cm(0, 10, 10), Z, KO, KA],
-  183: ['Sombra de Vaelith', KA_TX, cm(10, 0, 10), Z, KO, KA],
-  184: ['Ingenio de Fizzwick', KA_TX, cm(0, 12, 12), Z, KO, KA], // 12+12: con 10+10 el gnomo ganaba 55 %
-  185: ['Embestida de Gorrak', KA_TX, cm(5, 15, 0), Z, KO, KA],
+  180: ['Carga de Aldric', `Ataque del rey: daño 30. Bendición de la luz: ${MYTH.humano.turns} turnos, cada trabajador tuyo produce +${MYTH.humano.per}. ${KA_END}`, cm(10, 10, 0), Z, KO, { ...KA, myth: 'humano' }],
+  181: ['Martillo de Thorgrim', `Ataque del rey: daño 30. Lluvia de escombros: muro +${MYTH.enano.wall}. ${KA_END}`, cm(12, 0, 0), [0, 0, 0, 0, 0, 0, MYTH.enano.wall, 0], KO, { ...KA, myth: 'enano' }], // solo ladrillos: con 15+5 el enano la usaba 22 %, así 46 %
+  182: ['Furia de Aelwyn', `Ataque del rey: daño 30. Robo del balcón: elegís una carta de la mano rival y te la quedás (se juega una vez); contra un bicho sin mano, le cancelás su próxima acción. ${KA_END}`, cm(0, 8, 8), Z, KO, { ...KA, myth: 'elfo' }], // 8+8 (Juan 18/11): elfo 10+10 45,7 % · 9+9 46,6 % · 8+8 48,6 % · 7+7 49,6 %,
+  183: ['Sombra de Vaelith', `Ataque del rey: daño 30. Sombra de Vaelith: ${MYTH.drow.turns} turnos, al empezar tu turno el rival recibe daño igual al ${Math.round(MYTH.drow.pct * 100)} % de sus recursos (máximo ${MYTH.drow.max}; contra un bicho sin recursos, ${MYTH.drow.flat}). ${KA_END}`, cm(10, 0, 10), Z, KO, { ...KA, myth: 'drow' }],
+  184: ['Ingenio de Fizzwick', `Ataque del rey: daño 30. Fábrica industrial: ${MYTH.gnomo.turns} turnos, al empezar tu turno sale al azar: +1 trabajador (máximo ${MYTH.gnomo.workerMax} en total), +${MYTH.gnomo.res[0]} o +${MYTH.gnomo.res[1]} de cada recurso, un cañonazo de ${MYTH.gnomo.cannon} o un globo dron que duerme al rey rival ${MYTH.gnomo.sleep} turnos (sin pasiva de raza ni manga). ${KA_END}`, cm(0, 10, 10), Z, KO, { ...KA, myth: 'gnomo' }], // 10+10 (S03 18/11, con la Fábrica; con 12+12 quedaba en 47 %)
+  185: ['Embestida de Gorrak', `Ataque del rey: daño 30. Presencia del rey: ${MYTH.orco.turns} turnos, tus cartas que hacen daño pegan +${MYTH.orco.add}. ${KA_END}`, cm(4, 11, 0), Z, KO, { ...KA, myth: 'orco' }], // 4+11 (S03 18/11): con 5+15 el orco la jugaba 23 % y quedaba en 47 %,
 };
 export const MYTHIC = new Set([180, 181, 182, 183, 184, 185]);
 // grupos usados por reglas (trampas) y por las animaciones

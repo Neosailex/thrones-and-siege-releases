@@ -1031,27 +1031,27 @@ export const cards = {
  ],
  "180": [
   "Aldrics Ansturm",
-  "Königsschlag: Schaden {o6}; durchbricht er die Mauer, verliert der Gegner zusätzlich 1 zufällige Einheit. Nur mit wachem König und nicht in der Runde, in der er selbst gehandelt hat; danach ist er 2 Runden betäubt"
+  "Königsschlag: Schaden {o6}. Segen des Lichts: 3 Runden lang produziert jeder deiner Arbeiter +1. Nur mit wachem König und nicht in der Runde, in der er selbst gehandelt hat; danach ist er 2 Runden betäubt"
  ],
  "181": [
   "Thorgrims Hammer",
-  "Königsschlag: Schaden {o6}; durchbricht er die Mauer, verliert der Gegner zusätzlich 1 zufällige Einheit. Nur mit wachem König und nicht in der Runde, in der er selbst gehandelt hat; danach ist er 2 Runden betäubt"
+  "Königsschlag: Schaden {o6}. Trümmerregen: Mauer +{s6}. Nur mit wachem König und nicht in der Runde, in der er selbst gehandelt hat; danach ist er 2 Runden betäubt"
  ],
  "182": [
   "Aelwyns Zorn",
-  "Königsschlag: Schaden {o6}; durchbricht er die Mauer, verliert der Gegner zusätzlich 1 zufällige Einheit. Nur mit wachem König und nicht in der Runde, in der er selbst gehandelt hat; danach ist er 2 Runden betäubt"
+  "Königsschlag: Schaden {o6}. Balkondiebstahl: Wähle eine Karte aus der gegnerischen Hand und behalte sie (einmal spielbar); gegen eine Kreatur ohne Hand brichst du ihre nächste Aktion ab. Nur mit wachem König und nicht in der Runde, in der er selbst gehandelt hat; danach ist er 2 Runden betäubt"
  ],
  "183": [
   "Vaeliths Schatten",
-  "Königsschlag: Schaden {o6}; durchbricht er die Mauer, verliert der Gegner zusätzlich 1 zufällige Einheit. Nur mit wacher Königin und nicht in der Runde, in der sie selbst gehandelt hat; danach ist sie 2 Runden betäubt"
+  "Königsschlag: Schaden {o6}. Vaeliths Schatten: 3 Runden lang erleidet der Gegner zu Beginn deiner Runde Schaden in Höhe von 35 % seiner Ressourcen (höchstens 4; gegen eine Kreatur ohne Ressourcen 4). Nur mit wacher Königin und nicht in der Runde, in der sie selbst gehandelt hat; danach ist sie 2 Runden betäubt"
  ],
  "184": [
   "Fizzwicks Genie",
-  "Königsschlag: Schaden {o6}; durchbricht er die Mauer, verliert der Gegner zusätzlich 1 zufällige Einheit. Nur mit wachem König und nicht in der Runde, in der er selbst gehandelt hat; danach ist er 2 Runden betäubt"
+  "Königsschlag: Schaden {o6}. Industriefabrik: 5 Runden lang bekommst du zu Beginn deiner Runde zufällig: +1 Arbeiter (insgesamt höchstens 2), +1 oder +2 von jeder Ressource, einen Kanonenschuss von 8 oder einen Drohnenballon, der den gegnerischen König 2 Runden einschläfert (ohne Volkspassiv und ohne Ärmel). Nur mit wachem König und nicht in der Runde, in der er selbst gehandelt hat; danach ist er 2 Runden betäubt"
  ],
  "185": [
   "Gorraks Sturm",
-  "Königsschlag: Schaden {o6}; durchbricht er die Mauer, verliert der Gegner zusätzlich 1 zufällige Einheit. Nur mit wachem König und nicht in der Runde, in der er selbst gehandelt hat; danach ist er 2 Runden betäubt"
+  "Königsschlag: Schaden {o6}. Präsenz des Königs: 5 Runden lang treffen deine Schadenskarten mit +3. Nur mit wachem König und nicht in der Runde, in der er selbst gehandelt hat; danach ist er 2 Runden betäubt"
  ],
  "186": [
   "Wächterauge",
@@ -3734,7 +3734,7 @@ export const campaignRules = {
  "runeSlot": "+{amount} Runenplatz",
  "startCharge": "Dein König beginnt mit {amount} Ladung",
  "dmgEvery": "Alle {every} Runden trifft es dich mit {amount} direkt auf die Burg",
- "freeStrike": "Einmal pro Kampf, in deiner ersten Runde: Schaden {dmg} (bringt einen König oder Herold nicht unter 1 Leben)",
+ "freeStrike": "Einmal pro Kampf, in deiner ersten Runde: Schaden {dmg} (bringt einen König oder Herold nicht unter die Hälfte seines Lebens)",
  "handPlus": "Hand +{amount}",
  "steal": {
   "top": "Jeder Schlag, der deine Burg erreicht, stiehlt {amount} deiner häufigsten Ressource",

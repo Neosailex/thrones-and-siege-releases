@@ -11,6 +11,7 @@ import * as DB from './db.mjs';
 import * as FD from './fondos.mjs';
 import * as HO from './hora.mjs';
 import * as PA from './paises.mjs';
+import * as CPU from './cpu.mjs';
 import { ENG } from './version.mjs';
 import * as DIARIO from './diario.mjs';
 import * as NUBE from './nube.mjs';
@@ -116,6 +117,7 @@ const conId = (fn) => (q, r) => { const b = q.body || {}, me = DB.auth(b.pid, b.
 app.post('/api/fondos', conId((id) => FD.estado(id)));
 app.post('/api/fondos/desbloquear', conId((id, b) => FD.desbloquear(id, b.sets)));
 app.post('/api/fondos/elegir', conId((id, b) => FD.elegir(id, String(b.fondo || ''))));
+app.post('/api/cpu/novedades', conId((id) => ({ informes: CPU.novedades(id) }))); // (18/11) cómo le fue a la CPU mientras no estabas
 app.post('/api/pais', conId((id, b) => { const c = String(b.pais || '').toUpperCase(); return PA.esPais(c) ? { ...DB.setPais(id, c), region: PA.regionDe(c) } : { error: 'país', err: 'pais.invalid' }; }));
 // Hora del asedio (17/11): cuándo es y, con identidad, cuánto llevás
 app.get('/api/hora', (q, r) => r.json({ ok: true, ...HO.ventana(), meta: HO.META, jugando: HO.jugaronEsta() }));

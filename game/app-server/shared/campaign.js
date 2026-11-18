@@ -159,9 +159,9 @@ export const RULES = {
     onCardPlayed(g, me, r, info) { if (g.players[me].possessed) for (const x of r.rules || []) RULES[x.k]?.onCardPlayed?.(g, me, x, info); },
     onKingAct(g, me, r, info) { if (g.players[me].possessed) for (const x of r.rules || []) RULES[x.k]?.onKingAct?.(g, me, x, info); } },
   // Daño directo a tu castillo cada N turnos suyos (bombas, rayos del demonio)
-  dmgEvery: { text: (r) => `Cada ${r.every} turno${r.every > 1 ? 's' : ''} te pega ${r.amount} directo al castillo`, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.rs.dmg = (p.rs.dmg || 0) + 1; if (p.rs.dmg % r.every) return; hit(g.players[1 - me], 0, r.amount); info.fx.push('rule:dmgEvery'); } },
+  dmgEvery: { text: (r) => `Cada ${r.every} turno${r.every > 1 ? 's' : ''} te pega ${r.amount} directo al castillo`, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.rs.dmg = (p.rs.dmg || 0) + 1; if (p.rs.dmg % r.every) return; hit(g.players[1 - me], 0, r.amount, g); info.fx.push('rule:dmgEvery'); } },
   // Grieta: ayudas de los reyes liberados
-  freeStrike: { text: (r) => `Una vez por pelea, en tu primer turno: daño ${r.dmg} (a un Rey o a un Heraldo no lo baja de 1 de vida)`, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; if (p.rs.strike) return; p.rs.strike = true; E.campHit(g, g.players[1 - me], r.dmg, 0, info.fx); /* (S03 17/11) por el motor: a un Rey/Heraldo no lo baja de 1 */ info.fx.push('rule:freeStrike'); } },
+  freeStrike: { text: (r) => `Una vez por pelea, en tu primer turno: daño ${r.dmg} (a un Rey o a un Heraldo no lo baja de la mitad de su vida)`, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; if (p.rs.strike) return; p.rs.strike = true; E.campHit(g, g.players[1 - me], r.dmg, 0, info.fx); /* (S03 17/11) por el motor: a un Rey/Heraldo no lo baja del 50 % (E.bossGuard) */ info.fx.push('rule:freeStrike'); } },
   handPlus: { text: (r) => `Mano +${r.amount}`, onBattleStart(g, me, r) { const p = g.players[me]; p.handSize = (p.handSize || 0) + r.amount; for (let i = 0; i < r.amount && p.deck.length; i++) p.hand.push(p.deck.pop()); } },
   startWork: { text: (r) => `Empezás con ${NAMES[r.id][0]} construida`, onBattleStart(g, me, r) { const p = g.players[me]; if (p.works) p.works.push({ id: r.id, age: 0 }); } },
   /* ---- enemigos del reino humano (S03 01/11, docs/campaña/enemigos.md) ---- */
@@ -243,7 +243,7 @@ export const RULES = {
   // Dagas (Domadora): la acción `id` invoca un secuaz de vida `hp`; si sigue vivo a los `turns` turnos suyos, explota (daño `dmg`)
   daggers: { text: (r) => `Invoca dagas (vida ${r.hp}): si siguen vivas a los ${r.turns} turnos, explotan y te hacen ${r.dmg}`,
     onCardPlayed(g, me, r, info) { if (info.seat !== me || info.id !== r.id) return; const p = g.players[me]; if (p.minionHp > 0) return; p.minionHp = r.hp; p.minionMax = r.hp; p.minionName = 'Dagas'; p.minionAtk = 0; p.rs.dag = r.turns; info.fx.push('rule:daggers'); },
-    onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; if (!(p.minionHp > 0) || !p.rs.dag) return; if (--p.rs.dag > 0) return; p.minionHp = 0; const o = g.players[1 - me]; hit(o, r.dmg, 0); info.fx.push('rule:daggerBoom'); if (o.castle <= 0 && g.winner == null) g.winner = me; } },
+    onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; if (!(p.minionHp > 0) || !p.rs.dag) return; if (--p.rs.dag > 0) return; p.minionHp = 0; const o = g.players[1 - me]; hit(o, r.dmg, 0, g); info.fx.push('rule:daggerBoom'); if (o.castle <= 0 && g.winner == null) g.winner = me; } },
   /* ---- La Grieta (S03 04/11) ---- */
   // Se parte (Lodos): a media vida la mitad de la vida que le queda pasa a otro lodo (secuaz) y sus ataques +atk (no suma vida: si sumara, la IA dejaba de pegarle antes de la mitad)
   split: { text: (r) => `A media vida se parte en dos: la mitad de lo que le queda pasa a otro lodo (secuaz) y sus ataques +${r.atk}`, onBattleStart(g, me) { g.players[me].rs.c0 = g.players[me].castle; },
@@ -384,7 +384,7 @@ const packCount = (p, hp) => (p.minionHp > 0 ? Math.ceil(p.minionHp / hp) : 0);
 function packSet(p, name, hp, n, mode, atk) { p.minionName = name; p.minionMax = Math.max(p.minionMax || 0, hp * n, hp); p.minionHp = hp * n; p.minionHeal = 0; p.minionRage = 0; if (mode === 'atk') p.minionAtk = atk * n; }
 function packSync(p, hp, atk, mode) { if (mode === 'atk') p.minionAtk = atk * packCount(p, hp); }
 // daño de regla (sin carta): primero al muro, lo que sobra al castillo; `direct` va derecho al castillo
-function hit(q, dmg, direct) { q.wall -= dmg; if (q.wall < 0) { q.castle += q.wall; q.wall = 0; } q.castle = Math.max(0, q.castle - direct); }
+function hit(q, dmg, direct, g = null) { const c0 = q.castle; q.wall -= dmg; if (q.wall < 0) { q.castle += q.wall; q.wall = 0; } q.castle = Math.max(0, q.castle - direct); if (g) E.bossGuard(g, q, c0); } // (S03 17/11) también respeta el piso del jefe
 // Regla demoníaca de cada rey (fase poseída, Juan 27/10): lo que hace desde que el demonio lo posee
 export const DEMON_RULES = {
   humano: [{ k: 'curseEvery', every: 3, id: 192 }],                 // Aldric poseído: cada 3 turnos te mete Miedo en la mano (tus ataques −1). Medido: cada turno el jugador ganaba 12 %; así, 28 %
@@ -780,11 +780,18 @@ const shortRes = (e) => { const m = FIGHT_LEN.hp[e.tier] ?? 1; if (m === 1 || !e
                                                   pelea: g.surrender = { at, castle } y fx 'surrender' en el evento del turno. El cliente decide:
                                                   acceptSurrender(g) = pelea ganada (battleResult.surrendered: sin carta ni equipo). Solo comunes y élites
                                                   (castillo/campamento): en Reyes, Heraldos y mobs se ignora.
-   enemy.sellos = n (0-6)                         El Demonio despierta: castillo y muro ×(1 + 0,08·n) y +n de daño a cada carta suya que haga daño. */
+   enemy.sellos = n (0-6)                         El Demonio despierta: castillo y muro ×(1 + SEAL.hp·n) y +SEAL.atk·n de daño a cada carta suya que haga
+                                                  daño. En la Grieta NO se suman (ya tiene su corrupción): lo controla el cliente mandando sellos: 0.
+   (S03 17/11, crítica StS 3 §4) enemy.surrender = 0.40 (lo manda el cliente). Si el jugador la rechaza: declineSurrender(g) → el enemigo se
+                                                  enfurece: +SURR_RAGE de daño a cada carta suya que haga daño el resto de la pelea (como los sellos,
+                                                  vía atkPlus); g.surrender.declined = true y g.players[1].surrRage = SURR_RAGE (la vista lo trae en op.surrRage).
+                                                  Si no se llama a ninguna de las dos, no pasa nada (el cliente siempre llama a una). */
 export const SURRENDER_OK = (e) => !!e && !e.king && !e.heraldo && !e.mob;
-export const SEAL = { hp: 0.08, atk: 1 };
+export const SEAL = { hp: 0.10, atk: 2 };   // (S03 17/11, crítica StS 3 §4: antes 0.08 / 1)
+export const SURR_RAGE = 3;
 const sealRes = (r0, n) => { if (!n || !r0) return r0; const m = 1 + SEAL.hp * n, r = { ...r0 }; if (r.castle < 900) r.castle = Math.round(r.castle * m); if (r.wall) r.wall = Math.round(r.wall * m); return r; };
-export function acceptSurrender(g) { if (!g?.surrender || g.winner != null) return false; g.winner = 0; g.surrendered = true; g.surrender.accepted = true; return true; }
+export function acceptSurrender(g) { if (!g?.surrender || g.surrender.declined || g.winner != null) return false; g.winner = 0; g.surrendered = true; g.surrender.accepted = true; return true; }
+export function declineSurrender(g) { const s = g?.surrender; if (!s || s.accepted || s.declined || g.winner != null) return false; const O = g.players[1]; s.declined = true; O.surrRage = SURR_RAGE; O.atkPlus = (O.atkPlus || 0) + SURR_RAGE; return true; }
 export function makeBattle(player, enemy, { starter = 0, rnd = Math.random } = {}) {
   const pr = player.rules || [], er = enemy.rules || [];
   const seals = Math.max(0, Math.min(6, enemy.sellos | 0)), canSurr = enemy.surrender > 0 && SURRENDER_OK(enemy);

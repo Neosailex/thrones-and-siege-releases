@@ -61,6 +61,11 @@ if (db) db.exec(`
   CREATE TABLE IF NOT EXISTS hora_partidas (player TEXT NOT NULL, ventana INTEGER NOT NULL, ts INTEGER NOT NULL);
   CREATE INDEX IF NOT EXISTS hora_pv ON hora_partidas(player, ventana);
   CREATE TABLE IF NOT EXISTS premios (player TEXT NOT NULL, item TEXT NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (player, item));
+  -- CPU por el que se desconecta (18/11; cpu.mjs): cortes por jugador y el informe para cuando vuelve
+  CREATE TABLE IF NOT EXISTS caidas (player TEXT NOT NULL, ts INTEGER NOT NULL);
+  CREATE INDEX IF NOT EXISTS caidas_p ON caidas(player, ts);
+  CREATE TABLE IF NOT EXISTS cpu_informe (id INTEGER PRIMARY KEY AUTOINCREMENT, player TEXT NOT NULL, rival TEXT, turnos INTEGER NOT NULL,
+    total INTEGER NOT NULL, gano INTEGER NOT NULL, delta INTEGER, ts INTEGER NOT NULL, seen INTEGER NOT NULL DEFAULT 0);
   CREATE TABLE IF NOT EXISTS fondos (player TEXT NOT NULL, set_id TEXT NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (player, set_id));
 `);
 // columnas nuevas en bases que ya existen (Fly): se agregan una sola vez
@@ -148,7 +153,8 @@ function seasonRow(season, p) {
 }
 
 // Registra el resultado. Devuelve por asiento { before, after } de la TEMPORADA (lo que ve el jugador) + all: { before, after } histórico.
-export function recordMatch({ ids, winner, reason, turns, plays, races = [] }) {
+// scale (18/11): por asiento, cuánto de los puntos le cuentan (1 normal; 0,5 si la CPU jugó la mayor parte por él; 0 si ganó así y se viene cortando seguido)
+export function recordMatch({ ids, winner, reason, turns, plays, races = [], scale = [1, 1] }) {
   if (!db) return MEMAPI.recordMatch({ ids, winner, reason, turns, plays });
   const [a, b] = ids.map((id) => q.get.get(id));
   if (!a || !b) return null;
@@ -157,9 +163,10 @@ export function recordMatch({ ids, winner, reason, turns, plays, races = [] }) {
   const res = [];
   db.exec('BEGIN');
   try {
-    const [da, db2] = elo(a.rating, b.rating, a.games, b.games);
+    const sc = (x, i) => Math.round(x * (scale[i] ?? 1));
+    let [da, db2] = elo(a.rating, b.rating, a.games, b.games); da = sc(da, 0); db2 = sc(db2, 1);
     const sa = seasonRow(season, a), sb = seasonRow(season, b);
-    const [sda, sdb] = elo(sa.rating, sb.rating, sa.games, sb.games);
+    let [sda, sdb] = elo(sa.rating, sb.rating, sa.games, sb.games); sda = sc(sda, 0); sdb = sc(sdb, 1);
     for (const [i, p, d, s, sd] of [[0, a, da, sa, sda], [1, b, db2, sb, sdb]]) {
       const won = winner === i ? 1 : 0, r = Math.max(100, p.rating + d), sr = Math.max(100, s.rating + sd);
       const streak = won ? Math.max(0, p.streak) + 1 : 0;
@@ -167,7 +174,7 @@ export function recordMatch({ ids, winner, reason, turns, plays, races = [] }) {
       q.upd.run(r, r, won, 1 - won, abandoned, streak, streak, won, turns, turns, now(), p.id);
       q.sUpd.run(sr, sr, won, 1 - won, abandoned, season, p.id);
       for (const [card, n] of Object.entries(plays[i] || {})) q.addCard.run(p.id, Number(card), n);
-      res.push({ before: s.rating, after: sr, all: { before: p.rating, after: r } });
+      res.push({ before: s.rating, after: sr, all: { before: p.rating, after: r }, ...(scale[i] !== 1 && scale[i] != null ? { cpu: scale[i] } : {}) });
     }
     q.match.run(a.id, b.id, winner, reason, turns, a.rating, b.rating, da, now(), season, races[0] ?? null, races[1] ?? null, sa.rating, sb.rating, sda, sdb);
     db.exec('COMMIT');
@@ -287,7 +294,7 @@ const qr = !db ? null : {
     db.prepare("UPDATE matches SET b = 'borrado' WHERE b = ?"), db.prepare('DELETE FROM daily WHERE player = ?'),
     db.prepare('DELETE FROM saves WHERE player = ?'), db.prepare('DELETE FROM tokens WHERE player = ?'), db.prepare('DELETE FROM link_codes WHERE player = ?'),
     db.prepare('DELETE FROM accounts WHERE player = ?'), db.prepare('DELETE FROM ghosts WHERE player = ?'), db.prepare('DELETE FROM ghost_log WHERE owner = ?'),
-    db.prepare('DELETE FROM fondos WHERE player = ?'), db.prepare('DELETE FROM hora_partidas WHERE player = ?'), db.prepare('DELETE FROM premios WHERE player = ?'), db.prepare('DELETE FROM players WHERE id = ?')],
+    db.prepare('DELETE FROM fondos WHERE player = ?'), db.prepare('DELETE FROM caidas WHERE player = ?'), db.prepare('DELETE FROM cpu_informe WHERE player = ?'), db.prepare('DELETE FROM hora_partidas WHERE player = ?'), db.prepare('DELETE FROM premios WHERE player = ?'), db.prepare('DELETE FROM players WHERE id = ?')],
   oldMatches: db.prepare('DELETE FROM matches WHERE ts < ?'),
   oldReports: db.prepare('DELETE FROM reports WHERE done = 1 AND ts < ?'),
   oldCodes: db.prepare('DELETE FROM link_codes WHERE expires < ?'),

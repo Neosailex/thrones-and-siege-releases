@@ -1031,27 +1031,27 @@ export const cards = {
  ],
  "180": [
   "Daluhong ni Aldric",
-  "Hampas ng Hari: pinsala {o6}; kapag nasira ang pader, mawawalan din ang kalaban ng 1 random na yunit. Kapag gising lang ang hari mo at hindi sa turn na kusa siyang kumilos; pagkatapos, mahihimatay siya nang 2 turn"
+  "Hampas ng Hari: pinsala {o6}. Basbas ng Liwanag: sa loob ng 3 turn, bawat manggagawa mo ay gumagawa ng +1. Kapag gising lang ang hari mo at hindi sa turn na kusa siyang kumilos; pagkatapos, mahihimatay siya nang 2 turn"
  ],
  "181": [
   "Martilyo ni Thorgrim",
-  "Hampas ng Hari: pinsala {o6}; kapag nasira ang pader, mawawalan din ang kalaban ng 1 random na yunit. Kapag gising lang ang hari mo at hindi sa turn na kusa siyang kumilos; pagkatapos, mahihimatay siya nang 2 turn"
+  "Hampas ng Hari: pinsala {o6}. Ulan ng Guho: pader +{s6}. Kapag gising lang ang hari mo at hindi sa turn na kusa siyang kumilos; pagkatapos, mahihimatay siya nang 2 turn"
  ],
  "182": [
   "Poot ni Aelwyn",
-  "Hampas ng Hari: pinsala {o6}; kapag nasira ang pader, mawawalan din ang kalaban ng 1 random na yunit. Kapag gising lang ang hari mo at hindi sa turn na kusa siyang kumilos; pagkatapos, mahihimatay siya nang 2 turn"
+  "Hampas ng Hari: pinsala {o6}. Nakaw sa Balkonahe: pumili ng isang kard sa kamay ng kalaban at sa iyo na ito (isang beses lang malalaro); laban sa nilalang na walang kamay, kinakansela mo ang susunod nitong aksyon. Kapag gising lang ang hari mo at hindi sa turn na kusa siyang kumilos; pagkatapos, mahihimatay siya nang 2 turn"
  ],
  "183": [
   "Anino ni Vaelith",
-  "Hampas ng Hari: pinsala {o6}; kapag nasira ang pader, mawawalan din ang kalaban ng 1 random na yunit. Kapag gising lang ang reyna mo at hindi sa turn na kusa siyang kumilos; pagkatapos, mahihimatay siya nang 2 turn"
+  "Hampas ng Hari: pinsala {o6}. Anino ni Vaelith: sa loob ng 3 turn, sa simula ng turn mo ay tatamaan ang kalaban ng pinsalang katumbas ng 35 % ng mga yaman nito (hanggang 4; laban sa nilalang na walang yaman, 4). Kapag gising lang ang reyna mo at hindi sa turn na kusa siyang kumilos; pagkatapos, mahihimatay siya nang 2 turn"
  ],
  "184": [
   "Talino ni Fizzwick",
-  "Hampas ng Hari: pinsala {o6}; kapag nasira ang pader, mawawalan din ang kalaban ng 1 random na yunit. Kapag gising lang ang hari mo at hindi sa turn na kusa siyang kumilos; pagkatapos, mahihimatay siya nang 2 turn"
+  "Hampas ng Hari: pinsala {o6}. Industriyal na Pabrika: sa loob ng 5 turn, sa simula ng turn mo ay random na lalabas: +1 manggagawa (hanggang 2 sa kabuuan), +1 o +2 ng bawat yaman, kanyonasong 8, o drone na lobo na nagpapatulog sa hari ng kalaban nang 2 turn (walang passive ng lahi at walang Manggas). Kapag gising lang ang hari mo at hindi sa turn na kusa siyang kumilos; pagkatapos, mahihimatay siya nang 2 turn"
  ],
  "185": [
   "Lusob ni Gorrak",
-  "Hampas ng Hari: pinsala {o6}; kapag nasira ang pader, mawawalan din ang kalaban ng 1 random na yunit. Kapag gising lang ang hari mo at hindi sa turn na kusa siyang kumilos; pagkatapos, mahihimatay siya nang 2 turn"
+  "Hampas ng Hari: pinsala {o6}. Presensya ng Hari: sa loob ng 5 turn, ang mga kard mong pumipinsala ay tumatama nang +3. Kapag gising lang ang hari mo at hindi sa turn na kusa siyang kumilos; pagkatapos, mahihimatay siya nang 2 turn"
  ],
  "186": [
   "Mata ng Bantay",
@@ -3734,7 +3734,7 @@ export const campaignRules = {
  "runeSlot": "+{amount} puwesto ng rune",
  "startCharge": "Nagsisimula ang hari mo na may {amount} karga",
  "dmgEvery": "Bawat {every} turn, tinatamaan ka nito ng {amount} diretso sa kastilyo",
- "freeStrike": "Isang beses bawat laban, sa una mong turn: pinsala {dmg} (hindi nito maibababa ang Hari o Tagapagbalita sa ilalim ng 1 buhay)",
+ "freeStrike": "Isang beses bawat laban, sa una mong turn: pinsala {dmg} (hindi nito maibababa ang Hari o Tagapagbalita sa ilalim ng kalahati ng buhay)",
  "handPlus": "Kamay +{amount}",
  "steal": {
   "top": "Bawat tamang umaabot sa kastilyo mo ay nagnanakaw ng {amount} ng pinakamarami mong yaman",

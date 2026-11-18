@@ -9,11 +9,13 @@ import { cleanName, ipOf, checkJoin, takeSeat, freeSeat } from './abuso.mjs';
 import * as GH from './fantasmas.mjs';
 import * as FD from './fondos.mjs';
 import * as HO from './hora.mjs';
+import * as CPU from './cpu.mjs';
 
 // Estado público mínimo (las manos son secretas: cada jugador recibe su propia vista por mensaje).
 export const LobbyState = schema({ phase: t.string() }, 'LobbyState');
 
-const TURN_MS = 45000, PENDING_MS = 20000, SLEEVE_MS = 20000, RECONNECT_S = 40, EMOTES = 6; // SLEEVE_MS: tiempo para elegir el As al empezar
+const TURN_MS = 45000, PENDING_MS = 20000, SLEEVE_MS = 20000, RECONNECT_S = 40, EMOTES = 6;
+const CPU_RECONNECT_S = 30 * 60; // (18/11) mientras juega la CPU por él, puede volver hasta 30 min (o hasta que termine la partida) // SLEEVE_MS: tiempo para elegir el As al empezar
 const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', CODE_LEN = 5, PRIV_WAIT_MS = 15 * 60000; // sala privada: código sin letras que se confunden (I/1, O/0); se cierra si nadie entra en 15 min
 const newCode = () => Array.from({ length: CODE_LEN }, () => CODE_ABC[Math.floor(Math.random() * CODE_ABC.length)]).join('');
 const clean = cleanName; // nombres válidos (abuso.mjs)
@@ -141,6 +143,8 @@ export class AsedioRoom extends Room {
     if (!this.priv) this.setMetadata({ rating: null, since: null }); // ya no espera: que /api/buscar no la ofrezca aunque alguien se vaya y quede 1
     if (!this.priv && !this.started) { this.started = true; GH.stat(this.seats[1]?.kind || 'persona', Date.now() - (this.seats[0]?.since || Date.now())); } // para /stats
     this.state.phase = 'playing';
+    this.autoDispose = false;                       // (18/11) si se van los dos, la CPU termina igual la partida (la cierra finish)
+    this.cpu = [false, false]; this.cpuTurns = [0, 0]; this.turnos = [0, 0];
     this.g = E.newGame({ starter: Math.random() < 0.5 ? 0 : 1, decks: this.seats.map((x) => x.deck), races: this.seats.map((x) => x.race), setup: true }); // arranca en la fase de elegir el As
     for (const [seat] of this.seats.entries()) this.clientOf(seat)?.send('start', this.info(seat));
     const pre = []; for (const [seat, x] of this.seats.entries()) if (x.sleeve != null) { const ev = E.chooseSleeve(this.g, seat, x.sleeve); if (ev) pre.push(ev); } // "Guardar mítica siempre": el As ya viene elegido desde el cliente
@@ -159,7 +163,10 @@ export class AsedioRoom extends Room {
   advance(events) {
     const g = this.g;
     for (const e of events) if (e?.type === 'play') this.plays[e.seat][e.card] = (this.plays[e.seat][e.card] || 0) + 1;
-    if (!g.pending && !events.some((e) => e?.type === 'spyDone' && e.free)) events.push(E.endTurn(g)); // Red de espías: mirar no gasta el turno
+    if (!g.pending && !events.some((e) => e?.type === 'spyDone' && e.free)) { // Red de espías: mirar no gasta el turno
+      const t = g.turn; if (this.turnos) { this.turnos[t]++; if (this.cpu?.[t]) this.cpuTurns[t]++; } // turnos de cada uno (y cuántos jugó la CPU por él)
+      events.push(E.endTurn(g));
+    }
     this.sync(events);
     if (g.winner != null) this.finish(g.winner, 'normal');
   }
@@ -172,36 +179,39 @@ export class AsedioRoom extends Room {
       const evs = E.eventsFor(events, seat).map((e) => (e.type === 'discard' && e.seat !== seat ? { ...e, cards: e.cards.map(() => 0) } : e)); // trampas ocultas: la del rival llega tapada
       c.send('update', { view: E.viewFor(g, seat), events: evs, deadline: this.deadline });
     }
-    if (this.aiSeat != null && only == null) this.scheduleAi();
+    if (only == null) this.scheduleAi();
     if (only != null || keepTimer) return;
     this.timer?.clear();
     if (g.winner == null) this.timer = this.clock.setTimeout(() => this.timeout(), this.deadline - Date.now());
   }
 
-  // ---- el rival de IA (fantasma o bot): juega cuando le toca, con un ritmo parecido al de una persona ----
-  aiNeeds() {
-    const g = this.g, ai = this.aiSeat; if (!g || g.winner != null || ai == null) return false;
-    if (g.phase === 'sleeve') return !g.players[ai].sleeveDone;
-    return g.pending ? g.pending.seat === ai : g.turn === ai;
+  // ---- la IA: el rival fantasma/bot (aiSeat) o la CPU Normal por el que se desconectó (this.cpu[seat], 18/11) ----
+  aiLevel(seat) { const x = this.seats[seat]; return x?.ai ? x.level || 'normal' : this.cpu?.[seat] ? 'normal' : null; }
+  aiNeeds() { // el asiento al que le toca y lo maneja la IA, o -1
+    const g = this.g; if (!g || g.winner != null || this.finished) return -1;
+    if (g.phase === 'sleeve') { for (let s = 0; s < 2; s++) if (!g.players[s].sleeveDone && this.aiLevel(s)) return s; return -1; }
+    const s = g.pending ? g.pending.seat : g.turn; return this.aiLevel(s) ? s : -1;
   }
   scheduleAi() {
-    this.aiTimer?.clear(); if (!this.aiNeeds()) return;
-    const g = this.g, wait = g.phase === 'sleeve' ? 1500 + Math.random() * 2000 : g.pending ? 900 : 1200 + Math.random() * 1300;
+    this.aiTimer?.clear(); const ai = this.aiNeeds(); if (ai < 0) return;
+    const g = this.g, cpu = !this.seats[ai].ai; // la CPU por un desconectado juega un poco más rápido
+    const wait = g.phase === 'sleeve' ? (cpu ? 800 : 1500 + Math.random() * 2000) : g.pending ? 900 : cpu ? 900 + Math.random() * 600 : 1200 + Math.random() * 1300;
     this.aiTimer = this.clock.setTimeout(() => this.aiAct(), wait);
   }
   aiAct() {
-    const g = this.g, ai = this.aiSeat; if (!this.aiNeeds()) return;
+    const g = this.g, ai = this.aiNeeds(); if (ai < 0) return;
     if (g.phase === 'sleeve') { const ev = E.aiChooseSleeve(g, ai); if (ev) this.sync([ev], null, !ev.deal); return; }
-    const evs = [];
+    const evs = [], lvl = this.aiLevel(ai);
     if (g.pending?.type === 'sabotage') evs.push(E.sabotage(g, E.aiSabotageSmart(g)));
     else if (g.pending?.type === 'spy') evs.push(E.spyDone(g));
     else {
       const cy = E.aiMaybeCycle(g); if (cy) evs.push(cy);
-      let a = E.aiChooseLevel(g, this.seats[ai].level || 'normal');
+      let a = E.aiChooseLevel(g, lvl);
       if (this.seats[ai].blunder && Math.random() < this.seats[ai].blunder) a = torpe(g); // bot de rangos bajos: cada tanto una jugada cualquiera
       let ev = a.type === 'play' ? E.play(g, a.index) : E.discard(g, a.indexes);
-      if (!ev) { a = E.aiChooseLevel(g, this.seats[ai].level || 'normal'); ev = a.type === 'play' ? E.play(g, a.index) : E.discard(g, a.indexes); }
+      if (!ev) { a = E.aiChooseLevel(g, lvl); ev = a.type === 'play' ? E.play(g, a.index) : E.discard(g, a.indexes); }
       if (!ev) return;
+      if (!this.seats[ai].ai) ev.cpu = true; // jugada de la CPU por el desconectado (el cliente lo puede marcar)
       evs.push(ev);
       if (g.pending?.type === 'sabotage' && g.pending.seat === ai) evs.push(E.sabotage(g, E.aiSabotageSmart(g)));
       if (g.pending?.type === 'spy' && g.pending.seat === ai) evs.push(E.spyDone(g));
@@ -246,29 +256,40 @@ export class AsedioRoom extends Room {
       if (x.kind === 'fantasma') GH.ownerResult(x.owner, this.seats[h].pid, winner === this.aiSeat);
     } catch (e) { console.error('No se pudo guardar la partida', e); }
     else if (!this.priv) try {
-      ratings = DB.recordMatch({ ids: this.seats.map((s) => s.pid), winner, reason, turns: this.g?.turnNo ?? 0, plays: this.plays, races: this.seats.map((s) => s.race) });
+      const scale = this.seats.map((s, i) => CPU.escala({ cpuTurns: this.cpuTurns?.[i], myTurns: this.turnos?.[i], won: winner === i, pid: s.pid })); // (18/11) la CPU jugó la mayor parte por él: la mitad
+      ratings = DB.recordMatch({ ids: this.seats.map((s) => s.pid), winner, reason, turns: this.g?.turnNo ?? 0, plays: this.plays, races: this.seats.map((s) => s.race), scale });
       if ((this.g?.turnNo ?? 0) >= 4) GH.saveGhosts(this.seats); // cada partida con ranking deja el fantasma de los dos
     } catch (e) { console.error('No se pudo guardar la partida', e); }
     let hora = null; // Hora del asedio: progreso de cada persona (si la ventana está abierta)
-    if (!this.priv) try { hora = this.seats.map((s, i) => (s.ai ? null : HO.partida(s.pid, { turns: this.g?.turnNo ?? 0, abandono: reason === 'abandon' && winner === 1 - i }))); } catch (e) { console.error('Hora del asedio', e); }
+    if (!this.priv) try { hora = this.seats.map((s, i) => (s.ai ? null : HO.partida(s.pid, { turns: this.g?.turnNo ?? 0, abandono: (reason === 'abandon' && winner === 1 - i) || CPU.escala({ cpuTurns: this.cpuTurns?.[i], myTurns: this.turnos?.[i] }) < 1 }))); } catch (e) { console.error('Hora del asedio', e); }
+    for (const [i, x] of this.seats.entries()) if (this.cpu?.[i] && !x.ai && x.pid) { // terminó sin él: informe para cuando vuelva
+      const r = ratings?.[i]; CPU.informe({ pid: x.pid, rival: this.seats[1 - i]?.kind === 'fantasma' || this.seats[1 - i]?.kind === 'bot' ? '' : this.seats[1 - i]?.name, turnos: this.cpuTurns[i], total: this.turnos[i], gano: winner === i, delta: r ? r.after - r.before : null });
+    }
     this.broadcast('over', { winner, reason, ratings, ...(hora?.some(Boolean) ? { hora } : {}), ...(this.priv ? { score: this.score || [0, 0] } : {}) });
     this.closeTimer = this.clock.setTimeout(() => this.disconnect(), this.priv && reason !== 'abandon' ? REMATCH_WAIT_MS : 30000);
   }
 
   // Se cortó la conexión sin salir: se le guarda el lugar un rato.
+  // (18/11) Mientras tanto juega la CPU Normal por él, al instante: el rival no espera. Puede volver hasta que termine.
   onDrop(client) {
     const seat = this.seatOf(client);
     if (this.state.phase !== 'playing' || seat < 0) return;
     this.seats[seat].connected = false;
-    this.broadcast('status', { seat, connected: false, seconds: RECONNECT_S });
-    this.allowReconnection(client, RECONNECT_S);
+    const cpu = !!(this.g && this.g.winner == null && this.cpu);
+    if (cpu) { this.cpu[seat] = true; CPU.corte(this.seats[seat].pid); }
+    this.broadcast('status', { seat, connected: false, cpu, seconds: cpu ? 0 : RECONNECT_S });
+    this.allowReconnection(client, cpu ? CPU_RECONNECT_S : RECONNECT_S);
+    if (cpu) this.scheduleAi();
   }
 
   onReconnect(client) {
     const seat = this.seatOf(client); if (seat < 0) return;
     this.seats[seat].connected = true;
+    const tomo = this.cpu?.[seat] ? this.cpuTurns[seat] : 0;
+    if (this.cpu) this.cpu[seat] = false;            // retoma el control
     this.broadcast('status', { seat, connected: true });
-    client.send('start', { ...this.info(seat), resumed: true });
+    client.send('start', { ...this.info(seat), resumed: true, cpuTurnos: tomo });
+    if (this.g && this.g.winner == null) this.scheduleAi(); // si la CPU estaba por jugar su turno, ya no
     if (this.g) this.sync([], seat);
   }
 
@@ -276,7 +297,9 @@ export class AsedioRoom extends Room {
   onLeave(client) {
     const ip = this.ips?.[client.sessionId]; if (ip) { freeSeat(ip); delete this.ips[client.sessionId]; }
     const seat = this.seatOf(client);
-    if (this.state.phase === 'playing' && this.g && this.g.winner == null && seat >= 0) {
+    if (this.state.phase === 'playing' && this.g && this.g.winner == null && seat >= 0 && this.cpu?.[seat]) {
+      this.seats[seat].gone = true; // no volvió a tiempo: la CPU sigue hasta el final (18/11)
+    } else if (this.state.phase === 'playing' && this.g && this.g.winner == null && seat >= 0) {
       this.g.winner = 1 - seat;
       this.finish(1 - seat, 'abandon');
     } else if (this.priv && seat >= 0 && (this.state.phase === 'over' || this.state.phase === 'rematch')) { // se fue después del final: no hay revancha

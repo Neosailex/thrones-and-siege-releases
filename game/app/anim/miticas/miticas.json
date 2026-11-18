@@ -1,0 +1,38 @@
+{
+ "canon_bala": [
+  1024,
+  966
+ ],
+ "canon_base": [
+  1024,
+  750
+ ],
+ "canon_cano": [
+  1024,
+  263
+ ],
+ "dron_cuerpo": [
+  930,
+  850
+ ],
+ "dron_globo": [
+  630,
+  1024
+ ],
+ "dron_helice": [
+  1024,
+  1021
+ ],
+ "sombra_brazo": [
+  1024,
+  378
+ ],
+ "sombra_cola": [
+  1024,
+  519
+ ],
+ "sombra_cuerpo": [
+  886,
+  1024
+ ]
+}
