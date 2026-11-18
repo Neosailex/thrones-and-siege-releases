@@ -3734,7 +3734,7 @@ export const campaignRules = {
  "runeSlot": "+{amount} emplacement de rune",
  "startCharge": "Votre roi commence avec {amount} de charge",
  "dmgEvery": "Tous les {every} tours, il vous frappe pour {amount} directs au château",
- "freeStrike": "Une fois par combat, à votre premier tour : dégâts {dmg}",
+ "freeStrike": "Une fois par combat, à votre premier tour : dégâts {dmg} (ne fait pas descendre un Roi ou un Héraut sous 1 PV)",
  "handPlus": "Main +{amount}",
  "steal": {
   "top": "Chaque coup qui atteint votre château vole {amount} de votre ressource la plus abondante",
@@ -3761,7 +3761,7 @@ export const campaignRules = {
  "sleep": "Dort {turns} tours (gagne de la muraille) ; si vous le frappez, il se réveille",
  "guardian": "Quand vous lui retirez {threshold}, il se ferme pendant {turns} tours : il subit la moitié des dégâts et a épines {thorns} (vos attaques blessent votre muraille)",
  "sacrifice": "À chaque tour, il perd {hp} de vie et ses attaques frappent +{atk} (cumulatif)",
- "malleable": "Chaque coup subi lui donne de la muraille : {start}, puis {s1}, {s2}…",
+ "malleable": "Chaque coup subi lui donne de la muraille : {start}, puis {s1}, {s2}… (jusqu'à {max}) ; revient à {start} à chacun de tes tours",
  "regenCastle": "Se soigne de {amount} par tour",
  "plates": "Plaques : à chaque tour, il a de nouveau {n} de muraille ; chaque coup à sa vie retire une plaque",
  "timeEater": "Toutes les {every} cartes jouées, il écourte votre tour et ses attaques +{atk}",

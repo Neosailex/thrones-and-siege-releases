@@ -3734,7 +3734,7 @@ export const campaignRules = {
  "runeSlot": "ルーン枠 +{amount}",
  "startCharge": "王はチャージ {amount} で開始",
  "dmgEvery": "{every} ターンごとに城に直接 {amount}",
- "freeStrike": "戦闘中一度、最初のターンに：ダメージ {dmg}",
+ "freeStrike": "戦闘中一度、最初のターンに：ダメージ {dmg}（王や使者のライフは1未満にならない）",
  "handPlus": "手札 +{amount}",
  "steal": {
   "top": "城に届いた攻撃ごとに、最も多い資源を {amount} 奪う",
@@ -3761,7 +3761,7 @@ export const campaignRules = {
  "sleep": "{turns} ターン眠る（城壁を得る）。攻撃すると目を覚ます",
  "guardian": "{threshold} 奪われると {turns} ターン閉じこもる：受けるダメージ半減、トゲ {thorns}（攻撃するとあなたの城壁が傷つく）",
  "sacrifice": "毎ターン体力 −{hp}、攻撃 +{atk}（累積）",
- "malleable": "攻撃を受けるたびに城壁を得る：{start}、次に {s1}、{s2}…",
+ "malleable": "攻撃を受けるたびに城壁を得る：{start}、次に {s1}、{s2}…（最大 {max}）；あなたのターンごとに {start} に戻る",
  "regenCastle": "毎ターン {amount} 回復",
  "plates": "装甲板：毎ターン城壁が {n} に戻る。体力への攻撃ごとに装甲板が一枚外れる",
  "timeEater": "あなたがカードを {every} 枚プレイするたびにターンを打ち切り、攻撃 +{atk}",

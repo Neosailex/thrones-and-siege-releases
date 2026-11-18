@@ -3734,7 +3734,7 @@ export const campaignRules = {
  "runeSlot": "+{amount} Runenplatz",
  "startCharge": "Dein König beginnt mit {amount} Ladung",
  "dmgEvery": "Alle {every} Runden trifft es dich mit {amount} direkt auf die Burg",
- "freeStrike": "Einmal pro Kampf, in deiner ersten Runde: Schaden {dmg}",
+ "freeStrike": "Einmal pro Kampf, in deiner ersten Runde: Schaden {dmg} (bringt einen König oder Herold nicht unter 1 Leben)",
  "handPlus": "Hand +{amount}",
  "steal": {
   "top": "Jeder Schlag, der deine Burg erreicht, stiehlt {amount} deiner häufigsten Ressource",
@@ -3761,7 +3761,7 @@ export const campaignRules = {
  "sleep": "Schläft {turns} Runden (bekommt Mauer); triffst du es, wacht es auf",
  "guardian": "Nimmst du ihm {threshold}, schließt es sich für {turns} Runden: halber Schaden und Dornen {thorns} (deine Angriffe schaden deiner Mauer)",
  "sacrifice": "Jede Runde verliert es {hp} Leben und seine Angriffe treffen +{atk} (kumulativ)",
- "malleable": "Jeder Treffer gibt ihm Mauer: {start}, dann {s1}, {s2}…",
+ "malleable": "Jeder Treffer gibt ihm Mauer: {start}, dann {s1}, {s2}… (bis {max}); in jedem deiner Züge wieder {start}",
  "regenCastle": "Heilt {amount} pro Runde",
  "plates": "Platten: jede Runde hat es wieder {n} Mauer; jeder Schlag auf sein Leben entfernt eine Platte",
  "timeEater": "Alle {every} gespielten Karten beendet es deine Runde vorzeitig und seine Angriffe +{atk}",

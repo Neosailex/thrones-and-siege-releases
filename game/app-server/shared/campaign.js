@@ -161,7 +161,7 @@ export const RULES = {
   // Daño directo a tu castillo cada N turnos suyos (bombas, rayos del demonio)
   dmgEvery: { text: (r) => `Cada ${r.every} turno${r.every > 1 ? 's' : ''} te pega ${r.amount} directo al castillo`, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.rs.dmg = (p.rs.dmg || 0) + 1; if (p.rs.dmg % r.every) return; hit(g.players[1 - me], 0, r.amount); info.fx.push('rule:dmgEvery'); } },
   // Grieta: ayudas de los reyes liberados
-  freeStrike: { text: (r) => `Una vez por pelea, en tu primer turno: daño ${r.dmg}`, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; if (p.rs.strike) return; p.rs.strike = true; hit(g.players[1 - me], r.dmg, 0); info.fx.push('rule:freeStrike'); } },
+  freeStrike: { text: (r) => `Una vez por pelea, en tu primer turno: daño ${r.dmg} (a un Rey o a un Heraldo no lo baja de 1 de vida)`, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; if (p.rs.strike) return; p.rs.strike = true; E.campHit(g, g.players[1 - me], r.dmg, 0, info.fx); /* (S03 17/11) por el motor: a un Rey/Heraldo no lo baja de 1 */ info.fx.push('rule:freeStrike'); } },
   handPlus: { text: (r) => `Mano +${r.amount}`, onBattleStart(g, me, r) { const p = g.players[me]; p.handSize = (p.handSize || 0) + r.amount; for (let i = 0; i < r.amount && p.deck.length; i++) p.hand.push(p.deck.pop()); } },
   startWork: { text: (r) => `Empezás con ${NAMES[r.id][0]} construida`, onBattleStart(g, me, r) { const p = g.players[me]; if (p.works) p.works.push({ id: r.id, age: 0 }); } },
   /* ---- enemigos del reino humano (S03 01/11, docs/campaña/enemigos.md) ---- */
@@ -208,7 +208,11 @@ export const RULES = {
   // Esporas (Hongo): si lo matás, empezás la próxima pelea con Vulnerable (battleResult.carry)
   spores: { text: () => 'Al morir larga esporas: empezás la próxima pelea con Vulnerable' },
   // Maleable (Planta): cada golpe que recibe le da más muro que el anterior (start, start+1, …)
-  malleable: { text: (r) => `Cada golpe que recibe le da muro: ${r.start}, después ${r.start + 1}, ${r.start + 2}…`, onDamage(g, me, r, info) { const p = g.players[me]; if (info.seat !== me || !((info.wall || 0) + (info.castle || 0) > 0)) return; p.rs.mal = (p.rs.mal ?? r.start); p.wall += p.rs.mal; if (p.capWall != null) p.wall = Math.min(p.wall, p.capWall); p.rs.mal = Math.min(r.max || 99, p.rs.mal + 1); info.fx.push('rule:malleable'); } },
+  // (S03 17/11, Juan) como la Maleable de StS: la cuenta vuelve a {start} al empezar cada turno tuyo (antes seguía subiendo toda la pelea)
+  // (S03 17/11, S10) rendición: la agrega makeBattle (enemy.surrender), no se lista como regla
+  surrender: { text: (r) => `Se rinde si su castillo baja al ${Math.round(r.at * 100)} % o menos`,
+    onTurnStart(g, me, r, info) { const p = g.players[me]; if (info.seat === me || p.rs.surr || g.winner != null || p.castle > r.at * (p.castle0 || p.castle)) return; p.rs.surr = true; g.surrender = { at: r.at, castle: p.castle }; info.fx?.push('surrender'); if (info.ev) info.ev.surrender = true; } },
+  malleable: { text: (r) => `Cada golpe que recibe le da muro: ${r.start}, después ${r.start + 1}, ${r.start + 2}… (hasta ${r.max || 99}); en cada turno tuyo vuelve a ${r.start}`, onTurnStart(g, me, r, info) { if (info.seat !== me) g.players[me].rs.mal = r.start; }, onDamage(g, me, r, info) { const p = g.players[me]; if (info.seat !== me || !((info.wall || 0) + (info.castle || 0) > 0)) return; p.rs.mal = (p.rs.mal ?? r.start); p.wall += p.rs.mal; if (p.capWall != null) p.wall = Math.min(p.wall, p.capWall); p.rs.mal = Math.min(r.max || 99, p.rs.mal + 1); info.fx.push('rule:malleable'); } },
   // Cura de castillo por turno (Ent)
   regenCastle: { text: (r) => `Se cura ${r.amount} por turno`, onBattleStart(g, me) { g.players[me].rs.c0 = g.players[me].castle; }, onTurnStart(g, me, r, info) { if (info.seat !== me) return; const p = g.players[me]; p.castle = Math.min(p.rs.c0 || p.castle, p.castle + r.amount); info.fx.push('rule:regenCastle'); } },
   // Intangible un turno sí y uno no (Serpiente): el turno que juega "Se sumerge", hasta su próximo turno, cada golpe le hace 1
@@ -446,7 +450,7 @@ const TPL = {
   runeSlot: { tpl: '+{amount} ranura de runa', vars: amt },
   hoard: { tpl: 'Al empezar su turno te roba {amount} de tu recurso más alto y se blinda: muro +{wall} por cada uno', vars: (r) => ({ wall: r.wall ?? 2 }) },
   drum: { tpl: 'Tambor de guerra: cuenta {cuenta} y descarga un golpe de {dmg}; después vuelve a contar', vars: (r) => ({ cuenta: Array.from({ length: r.count }, (_, i) => r.count - i).join('-') }) },
-  malleable: { tpl: 'Cada golpe que recibe le da muro: {start}, después {s1}, {s2}…', vars: (r) => ({ s1: r.start + 1, s2: r.start + 2 }) },
+  malleable: { tpl: 'Cada golpe que recibe le da muro: {start}, después {s1}, {s2}… (hasta {max}); en cada turno tuyo vuelve a {start}', vars: (r) => ({ s1: r.start + 1, s2: r.start + 2, max: r.max || 99 }) },
 };
 for (const [k, x] of Object.entries(TPL)) Object.assign(RULES[k], x);
 // minion: 8 variantes (cura / ataque / furia al caer), sacadas del texto; el nombre del secuaz pasa por la traducción de textos de campaña
@@ -768,8 +772,23 @@ export function enemyFor(reino, tier, rnd = Math.random) { const l = enemyList(r
 // (S03 10/11, pedido de S10: la run completa en ~2 h) vida y muro de los enemigos según su tier, para peleas más cortas
 export const FIGHT_LEN = { hp: { 1: 0.6, 2: 0.55, 3: 0.7, 4: 0.65, 5: 0.7 } };   // medido con camp_sts (con el enfurecimiento): la run ganada pasó de ~600-800 a ~325 turnos tuyos (~2 h 15)
 const shortRes = (e) => { const m = FIGHT_LEN.hp[e.tier] ?? 1; if (m === 1 || !e.res) return e.res; return { ...e.res, castle: e.res.castle >= 900 ? e.res.castle : Math.max(5, Math.round(e.res.castle * m)), wall: Math.round((e.res.wall || 0) * m) }; };
+/* (S03 17/11, pedido de S10) campos nuevos de makeBattle:
+   player.prodBonus = { brick, weapon, crystal }  Veteranos: producción extra por recurso cada turno (+1 rango 1, +2 rango 2; lo calcula el cliente).
+   player.extraHand = [{ id, comoManga: true }]   cartas que arrancan en la mano (rey liberado: Ataque del rey 180-185); comoManga = se paga con
+                                                  el recargo de la manga, se usa una vez (no va al descarte; descartada se pierde). battleResult.extraPlayed dice si se jugó.
+   enemy.surrender = 0.30                         se rinde: al empezar tu turno, si su castillo está en el 30 % o menos del inicial, una vez por
+                                                  pelea: g.surrender = { at, castle } y fx 'surrender' en el evento del turno. El cliente decide:
+                                                  acceptSurrender(g) = pelea ganada (battleResult.surrendered: sin carta ni equipo). Solo comunes y élites
+                                                  (castillo/campamento): en Reyes, Heraldos y mobs se ignora.
+   enemy.sellos = n (0-6)                         El Demonio despierta: castillo y muro ×(1 + 0,08·n) y +n de daño a cada carta suya que haga daño. */
+export const SURRENDER_OK = (e) => !!e && !e.king && !e.heraldo && !e.mob;
+export const SEAL = { hp: 0.08, atk: 1 };
+const sealRes = (r0, n) => { if (!n || !r0) return r0; const m = 1 + SEAL.hp * n, r = { ...r0 }; if (r.castle < 900) r.castle = Math.round(r.castle * m); if (r.wall) r.wall = Math.round(r.wall * m); return r; };
+export function acceptSurrender(g) { if (!g?.surrender || g.winner != null) return false; g.winner = 0; g.surrendered = true; g.surrender.accepted = true; return true; }
 export function makeBattle(player, enemy, { starter = 0, rnd = Math.random } = {}) {
   const pr = player.rules || [], er = enemy.rules || [];
+  const seals = Math.max(0, Math.min(6, enemy.sellos | 0)), canSurr = enemy.surrender > 0 && SURRENDER_OK(enemy);
+  const erH = canSurr ? er.concat([{ k: 'surrender', at: enemy.surrender }]) : er; // la rendición no se muestra como regla del enemigo
   const sum = (k) => pr.reduce((a, r) => a + (RULES[r.k]?.[k] || 0), 0); // equipo que cambia jugadas/mano (Corona de guerra, Ojo del vigía)
   const keepWorks = pr.some((r) => RULES[r.k]?.keepWorks);
   const g = E.newGame({
@@ -777,7 +796,7 @@ export function makeBattle(player, enemy, { starter = 0, rnd = Math.random } = {
     seats: [
       { deck: player.deck, hand: Math.max(1, (player.hand ?? PLAYER_START.hand) + sum('hand')), res: { ...PLAYER_START.res, ...(player.res || {}) }, race: player.race || 'humano', king: player.king !== false, hooks: ruleHooks(pr), rules: pr,
         plays: (player.plays ?? CAMPAIGN.plays) + sum('plays'), discardHand: player.discardHand ?? CAMPAIGN.discardHand, gold: player.gold || 0, kills: player.kills || 0, grow: player.grow || {}, works: keepWorks ? player.works || [] : [], maxCastle: player.maxCastle ?? player.res?.castle ?? PLAYER_START.res.castle },
-      { deck: enemy.deck, hand: enemy.hand, res: shortRes(enemy), race: enemy.race, king: !!enemy.king, hooks: ruleHooks(er), rules: er, plays: enemy.plays || 1, discardHand: !!enemy.discardHand, ...(enemy.capWall != null ? { capWall: enemy.capWall } : {}), noProd: !!enemy.noProd, mob: !!enemy.mob, atk: enemy.atk || 0, pattern: enemy.pattern || null, patternLoop: enemy.patternLoop || 0, weights: enemy.weights || null, minion: enemy.minion || null, fly: enemy.fly || 0, immune: enemy.immune || 0, thorns: enemy.thorns || 0 },
+      { deck: enemy.deck, hand: enemy.hand, res: sealRes(shortRes(enemy), seals), race: enemy.race, king: !!enemy.king, hooks: ruleHooks(erH), rules: er, plays: enemy.plays || 1, discardHand: !!enemy.discardHand, ...(enemy.capWall != null ? { capWall: enemy.capWall } : {}), noProd: !!enemy.noProd, mob: !!enemy.mob, boss: !!(enemy.king || enemy.heraldo), atk: enemy.atk || 0, pattern: enemy.pattern || null, patternLoop: enemy.patternLoop || 0, weights: enemy.weights || null, minion: enemy.minion || null, fly: enemy.fly || 0, immune: enemy.immune || 0, thorns: enemy.thorns || 0 },
     ],
   });
   g.enemy = { name: enemy.name, tier: enemy.tier, ai: enemy.ai, kind: enemy.kind || 'castillo', rules: er.map((r) => ({ ...r, text: ruleText(r) })) };
@@ -793,6 +812,11 @@ export function makeBattle(player, enemy, { starter = 0, rnd = Math.random } = {
   if (g.players[0].venomStart) E.campVenom(g.players[1], g.players[0].venomStart); // Madre araña (Crece)
   if (CAMP_RACE[g.players[0].race]?.boiler) { g.players[0].boilerOn = true; g.players[0].pressure ||= 0; }
   if (CAMP_RACE[g.players[0].race]?.fury) { g.players[0].furyOn = true; g.players[0].fury ||= 0; } // el orco de campaña juega a la Furia (antes de las reglas de equipo: Pintura de guerra la sube) // (S03 08/11) el enano de campaña juega a las runas: sin la pasiva del PvP (muro +2)
+  { const P = g.players[0], O = g.players[1];
+    if (player.prodBonus) P.prodBonus = { brick: player.prodBonus.brick || 0, weapon: player.prodBonus.weapon || 0, crystal: player.prodBonus.crystal || 0 };
+    for (const x of player.extraHand || []) { if (!E.giveCard(g, P, x.id)) continue; if (x.comoManga) (P.handSleeve ||= []).push(x.id); }
+    if (seals) { O.seals = seals; O.atkPlus = (O.atkPlus || 0) + SEAL.atk * seals; }
+    P.castle0 = P.castleMin = P.castle; O.castle0 = O.castle; P.units0 = { builder: P.builder, recruit: P.recruit, mage: P.mage }; }
   g.players[1].campTurns ??= 0; // enfurecimiento (E.ENRAGE): la vista ya muestra cuánto falta
   g.rules = [pr, er];
   return g;
@@ -862,7 +886,9 @@ export function battleResult(g, seat = 0) {
   const curses = (g.players[1 - seat]?.rs?.rcs || '').split(',').filter(Boolean).map(Number); /* Masa de telaraña / retorcida: maldiciones que quedan en el mazo de la run (S10: addCurse) */
   const fled = !!g.fled, carry = g.winner === seat && (g.rules?.[1 - seat] || []).some((r) => r.k === 'spores') ? [205] : []; // esporas: la próxima pelea empezás con Vulnerable (player.startStates) // el enemigo huyó (Saqueadores): ganás, pero el cliente no da oro de recompensa
   const heal = g.winner === seat && !p.noHeal ? (p.furyOn ? Math.round((p.bloodPaid || 0) * E.FURY_CFG.bloodBack) + E.FURY_CFG.healWin : 0) + (p.pactOn ? E.VENOM_CFG.healWin : 0) : 0; /* (S03 08/11) orco, Sangre caliente: al ganar recuperás la vida que pagaste con cartas de sangre */
-  return { win: g.winner === seat, fled, noGold: fled, carry, curses, ...(p.hpMaxUp ? { hpMaxUp: p.hpMaxUp } : {}), castle: Math.min(p.maxCastle || 999, p.castle + heal), ...(heal ? { healed: heal } : {}), wall: p.wall, gold, goldGained: gold - (p.goldStart || 0), grown, works: (p.works || []).map((w) => w.id), burned: (p.burned || []).slice(), kills: g.winner === seat ? 1 : 0 };
+  const vet = { units: { builder: p.builder, recruit: p.recruit, mage: p.mage }, units0: p.units0 || null, castleStart: p.castle0 ?? null, castleMin: p.castleMin ?? null }; // (S03 17/11, S10) Veteranos: el cliente decide el rango
+  const surrendered = !!g.surrendered, extraPlayed = (p.extraPlayed || []).slice(); // rendición: ganada sin carta ni equipo (lo aplica el cliente)
+  return { ...vet, surrendered, extraPlayed, win: g.winner === seat, fled, noGold: fled, carry, curses, ...(p.hpMaxUp ? { hpMaxUp: p.hpMaxUp } : {}), castle: Math.min(p.maxCastle || 999, p.castle + heal), ...(heal ? { healed: heal } : {}), wall: p.wall, gold, goldGained: gold - (p.goldStart || 0), grown, works: (p.works || []).map((w) => w.id), burned: (p.burned || []).slice(), kills: g.winner === seat ? 1 : 0 };
 }
 // Para S10: la versión + de una carta (fogata, eventos, dorada) y sus datos de recompensa
 export { CAMP_INFO, CAMP_IDS, PLUS, plusOf, baseOf, isPlus, hasPlus } from './campaign-cards.js';

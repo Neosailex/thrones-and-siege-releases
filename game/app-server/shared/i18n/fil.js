@@ -3734,7 +3734,7 @@ export const campaignRules = {
  "runeSlot": "+{amount} puwesto ng rune",
  "startCharge": "Nagsisimula ang hari mo na may {amount} karga",
  "dmgEvery": "Bawat {every} turn, tinatamaan ka nito ng {amount} diretso sa kastilyo",
- "freeStrike": "Isang beses bawat laban, sa una mong turn: pinsala {dmg}",
+ "freeStrike": "Isang beses bawat laban, sa una mong turn: pinsala {dmg} (hindi nito maibababa ang Hari o Tagapagbalita sa ilalim ng 1 buhay)",
  "handPlus": "Kamay +{amount}",
  "steal": {
   "top": "Bawat tamang umaabot sa kastilyo mo ay nagnanakaw ng {amount} ng pinakamarami mong yaman",
@@ -3761,7 +3761,7 @@ export const campaignRules = {
  "sleep": "Natutulog nang {turns} turn (nagkakaroon ng pader); kung tatamaan mo, magigising ito",
  "guardian": "Kapag nabawasan mo ito ng {threshold}, nagsasara ito nang {turns} turn: kalahating pinsala lang ang tinatanggap at may tinik {thorns} (nasasaktan ng mga atake mo ang pader mo)",
  "sacrifice": "Bawat turn, nawawalan ito ng {hp} buhay at may +{atk} ang mga atake nito (naiipon)",
- "malleable": "Bawat tamang tinatanggap nito ay nagbibigay ng pader: {start}, tapos {s1}, {s2}…",
+ "malleable": "Bawat tamang tinatanggap nito ay nagbibigay ng pader: {start}, tapos {s1}, {s2}… (hanggang {max}); bumabalik sa {start} sa bawat turn mo",
  "regenCastle": "Gumagaling ng {amount} bawat turn",
  "plates": "Baluti: bawat turn, may {n} pader ulit ito; bawat tama sa buhay nito ay nag-aalis ng isang baluti",
  "timeEater": "Bawat {every} kard na laruin mo, pinaiikli nito ang turn mo at mga atake nito +{atk}",

@@ -57,6 +57,10 @@ if (db) db.exec(`
   -- para medir (S08, 14/11): cada partida online que arranca, contra quién (persona / fantasma / bot) y cuánto se esperó
   CREATE TABLE IF NOT EXISTS match_stats (ts INTEGER NOT NULL, kind TEXT NOT NULL, wait_ms INTEGER NOT NULL);
   -- sets de fondo (S08, 16/11; lógica en fondos.mjs): los que desbloqueó cada jugador (el A no se guarda: es de todos)
+  -- Hora del asedio (17/11; hora.mjs): partidas jugadas en cada ventana y premios cosméticos (marcos…)
+  CREATE TABLE IF NOT EXISTS hora_partidas (player TEXT NOT NULL, ventana INTEGER NOT NULL, ts INTEGER NOT NULL);
+  CREATE INDEX IF NOT EXISTS hora_pv ON hora_partidas(player, ventana);
+  CREATE TABLE IF NOT EXISTS premios (player TEXT NOT NULL, item TEXT NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (player, item));
   CREATE TABLE IF NOT EXISTS fondos (player TEXT NOT NULL, set_id TEXT NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (player, set_id));
 `);
 // columnas nuevas en bases que ya existen (Fly): se agregan una sola vez
@@ -65,6 +69,7 @@ if (db) {
   add('players', 'pub', 'TEXT'); add('players', 'name_locked', 'INTEGER NOT NULL DEFAULT 0'); add('players', 'hidden', 'INTEGER NOT NULL DEFAULT 0');
   add('matches', 'season', 'TEXT'); add('matches', 'race_a', 'TEXT'); add('matches', 'race_b', 'TEXT');
   add('matches', 'kind', "TEXT NOT NULL DEFAULT 'persona'");
+  add('players', 'pais', 'TEXT'); add('players', 'pais_season', 'TEXT'); // país elegido y en qué temporada (17/11; paises.mjs)
   add('players', 'fondo', "TEXT NOT NULL DEFAULT 'a'"); add('ghosts', 'fondo', "TEXT NOT NULL DEFAULT 'a'"); // set de fondo elegido (16/11) // persona | fantasma | bot (contra fantasma, b = el dueño; contra bot, b = 'bot')
   add('matches', 'sra', 'INTEGER'); add('matches', 'srb', 'INTEGER'); add('matches', 'sda', 'INTEGER'); add('matches', 'sdb', 'INTEGER');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS players_pub ON players (pub)');
@@ -98,7 +103,7 @@ const q = !db ? null : {
   getPub: db.prepare('SELECT * FROM players WHERE pub = ?'),
   ins: db.prepare('INSERT INTO players (id, token_hash, name, created, updated, pub) VALUES (?, ?, ?, ?, ?, ?)'),
   name: db.prepare('UPDATE players SET name = ?, updated = ? WHERE id = ?'),
-  top: db.prepare('SELECT id, pub, name, rating, games, wins FROM players WHERE games > 0 AND hidden = 0 ORDER BY rating DESC, wins DESC LIMIT ?'),
+  top: db.prepare('SELECT id, pub, name, rating, games, wins, pais FROM players WHERE games > 0 AND hidden = 0 ORDER BY rating DESC, wins DESC LIMIT ?'),
   rank: db.prepare('SELECT COUNT(*) AS n FROM players WHERE games > 0 AND hidden = 0 AND rating > ?'),
   cards: db.prepare('SELECT card, n FROM card_plays WHERE player = ? ORDER BY n DESC LIMIT 3'),
   addCard: db.prepare('INSERT INTO card_plays (player, card, n) VALUES (?, ?, ?) ON CONFLICT(player, card) DO UPDATE SET n = n + excluded.n'),
@@ -109,7 +114,7 @@ const q = !db ? null : {
   sGet: db.prepare('SELECT * FROM season_stats WHERE season = ? AND player = ?'),
   sIns: db.prepare('INSERT INTO season_stats (season, player, rating, peak) VALUES (?, ?, ?, ?)'),
   sUpd: db.prepare('UPDATE season_stats SET rating = ?, peak = MAX(peak, ?), games = games + 1, wins = wins + ?, losses = losses + ?, abandons = abandons + ? WHERE season = ? AND player = ?'),
-  sTop: db.prepare(`SELECT p.id, p.pub, p.name, s.rating, s.games, s.wins FROM season_stats s JOIN players p ON p.id = s.player
+  sTop: db.prepare(`SELECT p.id, p.pub, p.name, p.pais, s.rating, s.games, s.wins FROM season_stats s JOIN players p ON p.id = s.player
     WHERE s.season = ? AND s.games > 0 AND p.hidden = 0 ORDER BY s.rating DESC, s.wins DESC, s.games ASC LIMIT ?`),
   sRank: db.prepare(`SELECT COUNT(*) AS n FROM season_stats s JOIN players p ON p.id = s.player WHERE s.season = ? AND s.games > 0 AND p.hidden = 0 AND s.rating > ?`),
   sCount: db.prepare(`SELECT COUNT(*) AS n FROM season_stats s JOIN players p ON p.id = s.player WHERE s.season = ? AND s.games > 0 AND p.hidden = 0`),
@@ -202,14 +207,39 @@ export function addRating(id, n) {
 }
 
 // Ranking. season: 'AAAA-MM' (por defecto la actual) o 'all' (histórico).
-export function ranking(season = null, limit = 50) {
+// paises: null (global) o lista de códigos (Mi región / Mi país). Cada fila trae el país para la bandera.
+const FQ = new Map();
+const filtrada = (kind, n) => {
+  const k = kind + n; if (FQ.has(k)) return FQ.get(k);
+  const inn = Array(n).fill('?').join(',');
+  const st = kind === 'all'
+    ? db.prepare(`SELECT id, pub, name, rating, games, wins, pais FROM players WHERE games > 0 AND hidden = 0 AND pais IN (${inn}) ORDER BY rating DESC, wins DESC LIMIT ?`)
+    : kind === 'count'
+      ? db.prepare(`SELECT COUNT(*) AS n FROM season_stats s JOIN players p ON p.id = s.player WHERE s.season = ? AND s.games > 0 AND p.hidden = 0 AND p.pais IN (${inn})`)
+      : db.prepare(`SELECT p.id, p.pub, p.name, p.pais, s.rating, s.games, s.wins FROM season_stats s JOIN players p ON p.id = s.player
+          WHERE s.season = ? AND s.games > 0 AND p.hidden = 0 AND p.pais IN (${inn}) ORDER BY s.rating DESC, s.wins DESC LIMIT ?`);
+  FQ.set(k, st); return st;
+};
+const row = (p, i) => ({ pos: i + 1, id: p.id.slice(0, 6), pub: p.pub, name: p.name, rating: p.rating, games: p.games, wins: p.wins, pais: p.pais || null });
+export function ranking(season = null, limit = 50, paises = null) {
   limit = Math.max(1, Math.min(100, Number(limit) || 50));
   if (!db) { const rows = MEMAPI.leaderboard(limit); return { season: seasonInfo(), seasons: [seasonInfo().id], rows }; }
   const seasons = [...new Set([seasonInfo().id, ...q.sList.all().map((x) => x.season)])].sort().reverse();
-  if (season === 'all') return { season: { id: 'all', label: 'Histórico' }, seasons, rows: q.top.all(limit).map((p, i) => ({ pos: i + 1, id: p.id.slice(0, 6), pub: p.pub, name: p.name, rating: p.rating, games: p.games, wins: p.wins })) };
+  const pp = Array.isArray(paises) && paises.length ? paises : null;
+  if (season === 'all') return { season: { id: 'all', label: 'Histórico' }, seasons, rows: (pp ? filtrada('all', pp.length).all(...pp, limit) : q.top.all(limit)).map(row) };
   const info = seasonInfo(season);
-  return { season: info, seasons, players: q.sCount.get(info.id).n, rows: q.sTop.all(info.id, limit).map((p, i) => ({ pos: i + 1, id: p.id.slice(0, 6), pub: p.pub, name: p.name, rating: p.rating, games: p.games, wins: p.wins })) };
+  return { season: info, seasons, players: pp ? filtrada('count', pp.length).get(info.id, ...pp).n : q.sCount.get(info.id).n, rows: (pp ? filtrada('s', pp.length).all(info.id, ...pp, limit) : q.sTop.all(info.id, limit)).map(row) };
 }
+// País del jugador: se elige una vez por temporada (17/11)
+export function setPais(id, pais) {
+  if (!db) return { error: 'sin base' };
+  const p = q.get.get(id); if (!p) return { error: 'identidad' };
+  const cur = seasonInfo().id;
+  if (p.pais && p.pais !== pais && p.pais_season === cur) return { error: 'una vez por temporada', err: 'pais.locked', pais: p.pais };
+  if (p.pais !== pais) db.prepare('UPDATE players SET pais = ?, pais_season = ? WHERE id = ?').run(pais, cur, id);
+  return { ok: true, pais, cambiaDesde: seasonInfo().end };
+}
+export const paisDe = (id) => (db ? q.get.get(id) : null)?.pais || null;
 // compatibilidad (clientes viejos y la página): arreglo con el top de la temporada actual
 export const leaderboard = (limit = 20) => ranking(null, limit).rows;
 
@@ -227,7 +257,7 @@ export function profile(id) {
       delta: m.sda == null ? null : me ? m.sdb : m.sda, season: m.season };
   });
   return {
-    pub: p.pub, name: p.name, rating: p.rating, peak: p.peak, games: p.games, wins: p.wins, losses: p.losses, abandons: p.abandons,
+    pub: p.pub, name: p.name, pais: p.pais || null, paisCambia: p.pais && p.pais_season === seasonInfo().id ? seasonInfo().end : null, rating: p.rating, peak: p.peak, games: p.games, wins: p.wins, losses: p.losses, abandons: p.abandons,
     streak: p.streak, bestStreak: p.best_streak, fastestWin: p.fastest_win, rank: p.games && !p.hidden ? q.rank.get(p.rating).n + 1 : null,
     season: { ...cur, rating: sc?.rating ?? softStart(p.rating), peak: sc?.peak ?? null, games: sc?.games ?? 0, wins: sc?.wins ?? 0, rank: sc?.games && !p.hidden ? q.sRank.get(cur.id, sc.rating).n + 1 : null, of: q.sCount.get(cur.id).n },
     seasons, history,
@@ -257,7 +287,7 @@ const qr = !db ? null : {
     db.prepare("UPDATE matches SET b = 'borrado' WHERE b = ?"), db.prepare('DELETE FROM daily WHERE player = ?'),
     db.prepare('DELETE FROM saves WHERE player = ?'), db.prepare('DELETE FROM tokens WHERE player = ?'), db.prepare('DELETE FROM link_codes WHERE player = ?'),
     db.prepare('DELETE FROM accounts WHERE player = ?'), db.prepare('DELETE FROM ghosts WHERE player = ?'), db.prepare('DELETE FROM ghost_log WHERE owner = ?'),
-    db.prepare('DELETE FROM fondos WHERE player = ?'), db.prepare('DELETE FROM players WHERE id = ?')],
+    db.prepare('DELETE FROM fondos WHERE player = ?'), db.prepare('DELETE FROM hora_partidas WHERE player = ?'), db.prepare('DELETE FROM premios WHERE player = ?'), db.prepare('DELETE FROM players WHERE id = ?')],
   oldMatches: db.prepare('DELETE FROM matches WHERE ts < ?'),
   oldReports: db.prepare('DELETE FROM reports WHERE done = 1 AND ts < ?'),
   oldCodes: db.prepare('DELETE FROM link_codes WHERE expires < ?'),

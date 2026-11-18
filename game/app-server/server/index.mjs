@@ -9,6 +9,8 @@ import { WebSocketTransport } from '@colyseus/ws-transport';
 import { AsedioRoom } from './AsedioRoom.mjs';
 import * as DB from './db.mjs';
 import * as FD from './fondos.mjs';
+import * as HO from './hora.mjs';
+import * as PA from './paises.mjs';
 import { ENG } from './version.mjs';
 import * as DIARIO from './diario.mjs';
 import * as NUBE from './nube.mjs';
@@ -61,7 +63,13 @@ app.get('/health', (_q, r) => r.send('ok'));
 app.get('/version', (_q, r) => { r.setHeader('Access-Control-Allow-Origin', '*'); r.json({ eng: ENG }); }); // huella del motor (ver version.mjs)
 app.get('/api/leaderboard', (_q, r) => r.json(DB.leaderboard(20))); // compatibilidad: top 20 de la temporada actual
 // ranking con temporadas (S08, 25/10): ?season=AAAA-MM | all (histórico), ?limit=1..100
-app.get('/api/ranking', (q, r) => r.json(DB.ranking(q.query.season ? String(q.query.season) : null, q.query.limit)));
+// ?region=latam|europa|… o ?pais=AR filtran (Mi región / Mi país, 17/11); sin nada, global
+app.get('/api/ranking', (q, r) => {
+  const pais = String(q.query.pais || '').toUpperCase(), reg = String(q.query.region || '');
+  const paises = PA.esPais(pais) ? [pais] : PA.paisesDe(reg);
+  r.json({ ...DB.ranking(q.query.season ? String(q.query.season) : null, q.query.limit, paises), filtro: PA.esPais(pais) ? { pais } : paises ? { region: reg } : null });
+});
+app.get('/api/paises', (_q, r) => r.json({ regiones: PA.REGIONES }));
 // progreso en la nube y vinculación (S08, 09/11; API en docs/sesiones/S08 "Progreso en la nube")
 const nubeAns = (r, x) => r.status(x.ok ? 200 : x.error === 'identidad' ? 401 : x.error === 'demasiados' ? 429 : x.error === 'muy grande' ? 413 : 400).json(x);
 const reqIp = (q) => q.get('fly-client-ip') || q.ip || q.socket?.remoteAddress || '?';
@@ -108,6 +116,10 @@ const conId = (fn) => (q, r) => { const b = q.body || {}, me = DB.auth(b.pid, b.
 app.post('/api/fondos', conId((id) => FD.estado(id)));
 app.post('/api/fondos/desbloquear', conId((id, b) => FD.desbloquear(id, b.sets)));
 app.post('/api/fondos/elegir', conId((id, b) => FD.elegir(id, String(b.fondo || ''))));
+app.post('/api/pais', conId((id, b) => { const c = String(b.pais || '').toUpperCase(); return PA.esPais(c) ? { ...DB.setPais(id, c), region: PA.regionDe(c) } : { error: 'país', err: 'pais.invalid' }; }));
+// Hora del asedio (17/11): cuándo es y, con identidad, cuánto llevás
+app.get('/api/hora', (q, r) => r.json({ ok: true, ...HO.ventana(), meta: HO.META, jugando: HO.jugaronEsta() }));
+app.post('/api/hora', conId((id) => ({ ...HO.progreso(id), jugando: HO.jugaronEsta(), premios: HO.premios(id).map((x) => x.item) })));
 // Lo que hizo tu fantasma mientras no estabas (una sola vez: queda marcado como visto)
 app.post('/api/fantasma/novedades', (q, r) => {
   const b = q.body || {}, me = DB.auth(b.pid, b.ptoken, null);

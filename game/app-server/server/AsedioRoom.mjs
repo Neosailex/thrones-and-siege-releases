@@ -8,6 +8,7 @@ import { joinError, deckProblem } from './codigos.mjs';
 import { cleanName, ipOf, checkJoin, takeSeat, freeSeat } from './abuso.mjs';
 import * as GH from './fantasmas.mjs';
 import * as FD from './fondos.mjs';
+import * as HO from './hora.mjs';
 
 // Estado público mínimo (las manos son secretas: cada jugador recibe su propia vista por mensaje).
 export const LobbyState = schema({ phase: t.string() }, 'LobbyState');
@@ -248,7 +249,9 @@ export class AsedioRoom extends Room {
       ratings = DB.recordMatch({ ids: this.seats.map((s) => s.pid), winner, reason, turns: this.g?.turnNo ?? 0, plays: this.plays, races: this.seats.map((s) => s.race) });
       if ((this.g?.turnNo ?? 0) >= 4) GH.saveGhosts(this.seats); // cada partida con ranking deja el fantasma de los dos
     } catch (e) { console.error('No se pudo guardar la partida', e); }
-    this.broadcast('over', { winner, reason, ratings, ...(this.priv ? { score: this.score || [0, 0] } : {}) });
+    let hora = null; // Hora del asedio: progreso de cada persona (si la ventana está abierta)
+    if (!this.priv) try { hora = this.seats.map((s, i) => (s.ai ? null : HO.partida(s.pid, { turns: this.g?.turnNo ?? 0, abandono: reason === 'abandon' && winner === 1 - i }))); } catch (e) { console.error('Hora del asedio', e); }
+    this.broadcast('over', { winner, reason, ratings, ...(hora?.some(Boolean) ? { hora } : {}), ...(this.priv ? { score: this.score || [0, 0] } : {}) });
     this.closeTimer = this.clock.setTimeout(() => this.disconnect(), this.priv && reason !== 'abandon' ? REMATCH_WAIT_MS : 30000);
   }
 

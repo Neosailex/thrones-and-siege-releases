@@ -3734,7 +3734,7 @@ export const campaignRules = {
  "runeSlot": "+{amount} spazio runa",
  "startCharge": "Il tuo re inizia con {amount} di carica",
  "dmgEvery": "Ogni {every} turno ti colpisce per {amount} diretti al castello",
- "freeStrike": "Una volta per scontro, al tuo primo turno: danno {dmg}",
+ "freeStrike": "Una volta per scontro, al tuo primo turno: danno {dmg} (non porta un Re o un Araldo sotto 1 vita)",
  "handPlus": "Mano +{amount}",
  "steal": {
   "top": "Ogni colpo che arriva al tuo castello ti ruba {amount} della risorsa più abbondante",
@@ -3761,7 +3761,7 @@ export const campaignRules = {
  "sleep": "Dorme {turns} turni (guadagna mura); se lo colpisci, si sveglia",
  "guardian": "Quando gli togli {threshold}, si chiude per {turns} turni: subisce metà danno e ha spine {thorns} (i tuoi attacchi feriscono le tue mura)",
  "sacrifice": "Ogni turno perde {hp} vita e i suoi attacchi colpiscono +{atk} (cumulativo)",
- "malleable": "Ogni colpo che subisce gli dà mura: {start}, poi {s1}, {s2}…",
+ "malleable": "Ogni colpo che subisce gli dà mura: {start}, poi {s1}, {s2}… (fino a {max}); a ogni tuo turno torna a {start}",
  "regenCastle": "Si cura di {amount} per turno",
  "plates": "Placche: ogni turno ha di nuovo {n} di mura; ogni colpo alla sua vita toglie una placca",
  "timeEater": "Ogni {every} carte che giochi interrompe il tuo turno e i suoi attacchi +{atk}",

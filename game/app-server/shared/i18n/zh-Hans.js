@@ -1687,7 +1687,7 @@ export const campaignRules = {
  "runeSlot": "符文位 +{amount}",
  "startCharge": "你的国王开局有{amount}充能",
  "dmgEvery": "每{every}回合直接对你的城堡造成{amount}",
- "freeStrike": "每场战斗一次，在你的第一回合：伤害 {dmg}",
+ "freeStrike": "每场战斗一次，在你的第一回合：伤害 {dmg}（不会让国王或使者的生命低于1）",
  "handPlus": "手牌 +{amount}",
  "steal": {
   "top": "每次打到你城堡的攻击，都会偷走你最多的那种资源 {amount} 点",
@@ -1714,7 +1714,7 @@ export const campaignRules = {
  "sleep": "沉睡{turns}回合（获得城墙）；你攻击它就会醒来",
  "guardian": "你从它身上打掉{threshold}时，它闭合{turns}回合：受到的伤害减半，并有{thorns}荆棘（你的攻击会伤到你的城墙）",
  "sacrifice": "每回合它失去{hp}生命，攻击 +{atk}（累加）",
- "malleable": "每次受击都会获得城墙：{start}，然后{s1}、{s2}…",
+ "malleable": "每次受击都会获得城墙：{start}，然后{s1}、{s2}…（最多{max}）；你的每个回合开始时重置为{start}",
  "regenCastle": "每回合治疗{amount}",
  "plates": "甲片：每回合重新获得{n}城墙；每次打到它生命的攻击会去掉一片甲片",
  "timeEater": "你每打出{every}张牌，它就缩短你的回合，并且攻击 +{atk}",

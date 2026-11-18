@@ -1,0 +1,538 @@
+{
+ "aelwyn_derrota": {
+  "piezas": [
+   {
+    "f": "aelwyn_derrota.webp",
+    "w": 826,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   }
+  ]
+ },
+ "aelwyn_victoria": {
+  "piezas": [
+   {
+    "f": "aelwyn_victoria.webp",
+    "w": 473,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   }
+  ]
+ },
+ "aldric_derrota": {
+  "piezas": [
+   {
+    "f": "aldric_derrota_1.webp",
+    "w": 1024,
+    "h": 985,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "aldric_derrota_2.webp",
+    "w": 792,
+    "h": 93,
+    "x": 1094,
+    "y": 922
+   }
+  ]
+ },
+ "aldric_victoria": {
+  "piezas": [
+   {
+    "f": "aldric_victoria.webp",
+    "w": 436,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   }
+  ]
+ },
+ "efecto_cadenas": {
+  "piezas": [
+   {
+    "f": "efecto_cadenas_1.webp",
+    "w": 258,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "efecto_cadenas_2.webp",
+    "w": 226,
+    "h": 1024,
+    "x": 226,
+    "y": 0
+   },
+   {
+    "f": "efecto_cadenas_3.webp",
+    "w": 1024,
+    "h": 879,
+    "x": 672,
+    "y": 191
+   }
+  ]
+ },
+ "efecto_lluvia_piedras": {
+  "piezas": [
+   {
+    "f": "efecto_lluvia_piedras_1.webp",
+    "w": 491,
+    "h": 508,
+    "x": 0,
+    "y": 648
+   },
+   {
+    "f": "efecto_lluvia_piedras_2.webp",
+    "w": 1024,
+    "h": 396,
+    "x": 311,
+    "y": 0
+   },
+   {
+    "f": "efecto_lluvia_piedras_3.webp",
+    "w": 333,
+    "h": 309,
+    "x": 502,
+    "y": 537
+   },
+   {
+    "f": "efecto_lluvia_piedras_4.webp",
+    "w": 379,
+    "h": 311,
+    "x": 736,
+    "y": 869
+   },
+   {
+    "f": "efecto_lluvia_piedras_5.webp",
+    "w": 336,
+    "h": 250,
+    "x": 1078,
+    "y": 508
+   },
+   {
+    "f": "efecto_lluvia_piedras_6.webp",
+    "w": 166,
+    "h": 199,
+    "x": 1212,
+    "y": 840
+   },
+   {
+    "f": "efecto_lluvia_piedras_7.webp",
+    "w": 239,
+    "h": 206,
+    "x": 1465,
+    "y": 894
+   }
+  ]
+ },
+ "efecto_peste": {
+  "piezas": [
+   {
+    "f": "efecto_peste_1.webp",
+    "w": 922,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "efecto_peste_2.webp",
+    "w": 494,
+    "h": 185,
+    "x": 38,
+    "y": 1041
+   },
+   {
+    "f": "efecto_peste_3.webp",
+    "w": 472,
+    "h": 188,
+    "x": 506,
+    "y": 929
+   },
+   {
+    "f": "efecto_peste_4.webp",
+    "w": 400,
+    "h": 149,
+    "x": 930,
+    "y": 988
+   },
+   {
+    "f": "efecto_peste_5.webp",
+    "w": 844,
+    "h": 649,
+    "x": 972,
+    "y": 140
+   },
+   {
+    "f": "efecto_peste_6.webp",
+    "w": 482,
+    "h": 178,
+    "x": 1341,
+    "y": 959
+   }
+  ]
+ },
+ "efecto_tambores": {
+  "piezas": [
+   {
+    "f": "efecto_tambores_1.webp",
+    "w": 771,
+    "h": 322,
+    "x": 0,
+    "y": 887
+   },
+   {
+    "f": "efecto_tambores_2.webp",
+    "w": 1024,
+    "h": 918,
+    "x": 293,
+    "y": 0
+   },
+   {
+    "f": "efecto_tambores_3.webp",
+    "w": 771,
+    "h": 331,
+    "x": 1024,
+    "y": 874
+   }
+  ]
+ },
+ "espia": {
+  "piezas": [
+   {
+    "f": "espia_1.webp",
+    "w": 947,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "espia_2.webp",
+    "w": 501,
+    "h": 155,
+    "x": 1008,
+    "y": 881
+   }
+  ]
+ },
+ "espia_quemar": {
+  "blend": "screen",
+  "piezas": [
+   {
+    "f": "espia_quemar.webp",
+    "w": 1024,
+    "h": 683
+   }
+  ]
+ },
+ "fizzwick_derrota": {
+  "piezas": [
+   {
+    "f": "fizzwick_derrota_1.webp",
+    "w": 951,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "fizzwick_derrota_2.webp",
+    "w": 593,
+    "h": 146,
+    "x": 1124,
+    "y": 966
+   }
+  ]
+ },
+ "fizzwick_victoria": {
+  "piezas": [
+   {
+    "f": "fizzwick_victoria.webp",
+    "w": 460,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   }
+  ]
+ },
+ "gorrak_derrota": {
+  "piezas": [
+   {
+    "f": "gorrak_derrota_1.webp",
+    "w": 974,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "gorrak_derrota_2.webp",
+    "w": 702,
+    "h": 399,
+    "x": 1086,
+    "y": 779
+   }
+  ]
+ },
+ "gorrak_victoria": {
+  "piezas": [
+   {
+    "f": "gorrak_victoria.webp",
+    "w": 468,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   }
+  ]
+ },
+ "thorgrim_derrota": {
+  "piezas": [
+   {
+    "f": "thorgrim_derrota_1.webp",
+    "w": 942,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "thorgrim_derrota_2.webp",
+    "w": 655,
+    "h": 381,
+    "x": 1228,
+    "y": 822
+   }
+  ]
+ },
+ "thorgrim_victoria": {
+  "piezas": [
+   {
+    "f": "thorgrim_victoria.webp",
+    "w": 497,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   }
+  ]
+ },
+ "trampa_emboscada": {
+  "piezas": [
+   {
+    "f": "trampa_emboscada_1.webp",
+    "w": 880,
+    "h": 611,
+    "x": 0,
+    "y": 326
+   },
+   {
+    "f": "trampa_emboscada_2.webp",
+    "w": 910,
+    "h": 993,
+    "x": 898,
+    "y": 0
+   }
+  ]
+ },
+ "trampa_espejo": {
+  "piezas": [
+   {
+    "f": "trampa_espejo_1.webp",
+    "w": 390,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "trampa_espejo_2.webp",
+    "w": 418,
+    "h": 380,
+    "x": 494,
+    "y": 423
+   },
+   {
+    "f": "trampa_espejo_3.webp",
+    "w": 278,
+    "h": 232,
+    "x": 684,
+    "y": 840
+   },
+   {
+    "f": "trampa_espejo_4.webp",
+    "w": 577,
+    "h": 516,
+    "x": 990,
+    "y": 61
+   },
+   {
+    "f": "trampa_espejo_5.webp",
+    "w": 604,
+    "h": 371,
+    "x": 993,
+    "y": 816
+   },
+   {
+    "f": "trampa_espejo_6.webp",
+    "w": 658,
+    "h": 450,
+    "x": 1067,
+    "y": 338
+   }
+  ]
+ },
+ "trampa_foso": {
+  "piezas": [
+   {
+    "f": "trampa_foso_1.webp",
+    "w": 1024,
+    "h": 209,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "trampa_foso_2.webp",
+    "w": 1024,
+    "h": 289,
+    "x": 52,
+    "y": 641
+   }
+  ]
+ },
+ "trampa_milicia": {
+  "piezas": [
+   {
+    "f": "trampa_milicia_1.webp",
+    "w": 926,
+    "h": 956,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "trampa_milicia_2.webp",
+    "w": 912,
+    "h": 532,
+    "x": 956,
+    "y": 343
+   }
+  ]
+ },
+ "trampa_mina": {
+  "piezas": [
+   {
+    "f": "trampa_mina_1.webp",
+    "w": 697,
+    "h": 405,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "trampa_mina_2.webp",
+    "w": 395,
+    "h": 193,
+    "x": 709,
+    "y": 91
+   },
+   {
+    "f": "trampa_mina_3.webp",
+    "w": 206,
+    "h": 210,
+    "x": 1205,
+    "y": 79
+   },
+   {
+    "f": "trampa_mina_4.webp",
+    "w": 202,
+    "h": 205,
+    "x": 1442,
+    "y": 83
+   },
+   {
+    "f": "trampa_mina_5.webp",
+    "w": 155,
+    "h": 158,
+    "x": 1680,
+    "y": 108
+   }
+  ]
+ },
+ "trampa_puerta_hierro": {
+  "piezas": [
+   {
+    "f": "trampa_puerta_hierro_1.webp",
+    "w": 793,
+    "h": 443,
+    "x": 0,
+    "y": 732
+   },
+   {
+    "f": "trampa_puerta_hierro_2.webp",
+    "w": 1024,
+    "h": 540,
+    "x": 161,
+    "y": 0
+   },
+   {
+    "f": "trampa_puerta_hierro_3.webp",
+    "w": 788,
+    "h": 447,
+    "x": 1125,
+    "y": 728
+   }
+  ]
+ },
+ "trampa_red": {
+  "piezas": [
+   {
+    "f": "trampa_red_1.webp",
+    "w": 501,
+    "h": 866,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "trampa_red_2.webp",
+    "w": 1024,
+    "h": 763,
+    "x": 571,
+    "y": 18
+   }
+  ]
+ },
+ "trampa_runa": {
+  "blend": "screen",
+  "piezas": [
+   {
+    "f": "trampa_runa.webp",
+    "w": 1024,
+    "h": 683
+   }
+  ]
+ },
+ "vaelith_derrota": {
+  "piezas": [
+   {
+    "f": "vaelith_derrota_1.webp",
+    "w": 665,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   },
+   {
+    "f": "vaelith_derrota_2.webp",
+    "w": 442,
+    "h": 169,
+    "x": 838,
+    "y": 1294
+   }
+  ]
+ },
+ "vaelith_victoria": {
+  "piezas": [
+   {
+    "f": "vaelith_victoria.webp",
+    "w": 428,
+    "h": 1024,
+    "x": 0,
+    "y": 0
+   }
+  ]
+ }
+}

@@ -3734,7 +3734,7 @@ export const campaignRules = {
  "runeSlot": "룬 칸 +{amount}",
  "startCharge": "내 왕이 충전 {amount}로 시작",
  "dmgEvery": "{every}턴마다 성에 직접 {amount} 피해",
- "freeStrike": "전투당 한 번, 내 첫 턴에: 피해 {dmg}",
+ "freeStrike": "전투당 한 번, 내 첫 턴에: 피해 {dmg} (왕이나 전령의 생명력을 1 밑으로 내리지 못함)",
  "handPlus": "손패 +{amount}",
  "steal": {
   "top": "성에 닿는 공격마다 내가 가장 많이 가진 자원 {amount}을(를) 훔침",
@@ -3761,7 +3761,7 @@ export const campaignRules = {
  "sleep": "{turns}턴 동안 잠듦 (성벽 획득); 공격하면 깨어남",
  "guardian": "{threshold} 피해를 받으면 {turns}턴 동안 웅크림: 받는 피해 절반, 가시 {thorns} (내 공격이 내 성벽을 깎음)",
  "sacrifice": "매 턴 체력 {hp}을(를) 잃고 공격 +{atk} (누적)",
- "malleable": "피격될 때마다 성벽 획득: {start}, 그다음 {s1}, {s2}…",
+ "malleable": "피격될 때마다 성벽 획득: {start}, 그다음 {s1}, {s2}… (최대 {max}); 당신의 턴마다 {start}(으)로 돌아감",
  "regenCastle": "매 턴 {amount} 회복",
  "plates": "장갑판: 매 턴 성벽이 다시 {n}; 체력에 닿는 공격마다 장갑판 하나 제거",
  "timeEater": "카드를 {every}장 플레이할 때마다 내 턴을 끊고 공격 +{atk}",
