@@ -2,6 +2,10 @@
 
 Todas las versiones, de la más nueva a la más vieja. El juego se actualiza solo al abrirlo.
 
+## 0.85.0 · 2026-11-19
+
+- Cada sección del juego es su propio lugar: campaña, partida, online, editor y tutorial con su pantalla de carga, su música (fundido al cambiar) y sin el ambiente del menú de fondo. Campaña a pantalla completa.
+
 ## 0.84.0 · 2026-11-18
 
 - Míticas nuevas: cada rey con su poder propio y efectos visibles. Campaña: rendición, veteranos, refuerzo de la aldea, llamar al rey y sellos del Demonio ya en pantalla, con íconos pintados. Online: si se corta la conexión juega la CPU por vos. Celular: pantalla completa en iPhone y modo Bajo de verdad para celulares lentos.

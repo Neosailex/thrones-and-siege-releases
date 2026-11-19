@@ -1,1 +1,1 @@
-Míticas nuevas: cada rey con su poder propio y efectos visibles. Campaña: rendición, veteranos, refuerzo de la aldea, llamar al rey y sellos del Demonio ya en pantalla, con íconos pintados. Online: si se corta la conexión juega la CPU por vos. Celular: pantalla completa en iPhone y modo Bajo de verdad para celulares lentos.
+Cada sección del juego es su propio lugar: campaña, partida, online, editor y tutorial con su pantalla de carga, su música (fundido al cambiar) y sin el ambiente del menú de fondo. Campaña a pantalla completa.
